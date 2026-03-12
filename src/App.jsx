@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { supabase } from './lib/supabase'
 import { seedOrders } from './data/orders'
 import { STAGES, READY_SMS, PICKEDUP_SMS, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
 import Header     from './components/Header'
@@ -9,9 +10,41 @@ import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
 import styles from './App.module.css'
 
-let orderSeq = seedOrders.length
+let orderSeq = 0
 
-// Shared confirm modal
+// ── DB helpers: map DB row ↔ app object ──
+const fromDB = (row) => ({
+  id:            row.id,
+  customer:      row.customer,
+  initials:      row.initials || '',
+  phone:         row.phone || '',
+  email:         row.email || '',
+  items:         row.items || [],
+  pickupDate:    row.pickup_date,
+  pickupTime:    row.pickup_time,
+  notes:         row.notes || '',
+  notifications: row.notifications || [],
+  stage:         row.stage,
+  image:         row.image || null,
+  createdAt:     row.created_at,
+})
+
+const toDB = (o) => ({
+  id:            o.id,
+  customer:      o.customer,
+  initials:      o.initials,
+  phone:         o.phone,
+  email:         o.email,
+  items:         o.items,
+  pickup_date:   o.pickupDate,
+  pickup_time:   o.pickupTime,
+  notes:         o.notes,
+  notifications: o.notifications,
+  stage:         o.stage,
+  image:         o.image,
+})
+
+// ── Confirm modal ──
 function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, onCancel }) {
   return (
     <div className={styles.confirmOverlay} onClick={e => e.target === e.currentTarget && onCancel()}>
@@ -20,11 +53,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
         <div className={styles.confirmMsg}>{message}</div>
         <div className={styles.confirmActions}>
           <button className={styles.confirmCancel} onClick={onCancel}>Cancel</button>
-          <button
-            className={styles.confirmOk}
-            style={confirmStyle}
-            onClick={onConfirm}
-          >{confirmLabel}</button>
+          <button className={styles.confirmOk} style={confirmStyle} onClick={onConfirm}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -32,22 +61,48 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 }
 
 export default function App() {
-  const [orders, setOrders]           = useState(seedOrders)
+  const [orders, setOrders]           = useState([])
+  const [loading, setLoading]         = useState(true)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
   const [toast, setToast]             = useState(null)
-
-  // Confirmation modal state
-  const [confirmDelete, setConfirmDelete]   = useState(null) // orderId
-  const [confirmPickup, setConfirmPickup]   = useState(null) // orderId
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [confirmPickup, setConfirmPickup] = useState(null)
 
   const drawerOrder = orders.find(o => o.id === drawerOrderId) || null
   const editOrder   = orders.find(o => o.id === editingId)     || null
+  const showToast   = useCallback(t => setToast(t), [])
 
-  const showToast = useCallback(t => setToast(t), [])
+  // ── Load orders from Supabase on mount ──
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Load error:', error)
+        // Fall back to seed data if DB fails
+        setOrders(seedOrders)
+      } else if (data.length === 0) {
+        // First run — seed the DB with sample orders
+        const toInsert = seedOrders.map(toDB)
+        const { error: insertErr } = await supabase.from('orders').insert(toInsert)
+        if (!insertErr) setOrders(seedOrders)
+        else setOrders(seedOrders)
+      } else {
+        setOrders(data.map(fromDB))
+        orderSeq = data.length
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
 
   // ── Stage movement ──
   const handleMove = (id, dir) => {
@@ -56,76 +111,79 @@ export default function App() {
     const si = STAGES.findIndex(s => s.id === o.stage)
     const ni = si + dir
     if (ni < 0 || ni >= STAGES.length) return
-    const newStage = STAGES[ni].id
-
-    // Confirm before Picked Up
-    if (newStage === 'picked-up') {
-      setConfirmPickup(id)
-      return
-    }
+    if (STAGES[ni].id === 'picked-up') { setConfirmPickup(id); return }
     applyMove(id, dir)
   }
 
-  const applyMove = (id, dir) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== id) return o
-      const si = STAGES.findIndex(s => s.id === o.stage)
-      const ni = si + dir
-      if (ni < 0 || ni >= STAGES.length) return o
-      const newStage = STAGES[ni].id
-      const notifs = [...o.notifications]
-      if (dir === 1) {
-        // No auto SMS — user triggers manually via 📱 button
-        notifs.push(`→ Moved to ${STAGES[ni].label}`)
-        if (newStage === 'picked-up') notifs.push('✅ Order picked up')
-      } else {
-        notifs.push(`↩ Moved back to ${STAGES[ni].label}`)
-      }
-      return { ...o, stage: newStage, notifications: notifs }
-    }))
+  const applyMove = async (id, dir) => {
+    const o = orders.find(x => x.id === id)
+    if (!o) return
+    const si = STAGES.findIndex(s => s.id === o.stage)
+    const ni = si + dir
+    if (ni < 0 || ni >= STAGES.length) return
+    const newStage = STAGES[ni].id
+    const notifs = [...o.notifications]
+    if (dir === 1) {
+      notifs.push(`→ Moved to ${STAGES[ni].label}`)
+      if (newStage === 'picked-up') notifs.push('✅ Order picked up')
+    } else {
+      notifs.push(`↩ Moved back to ${STAGES[ni].label}`)
+    }
+    const updated = { ...o, stage: newStage, notifications: notifs }
+    setOrders(prev => prev.map(x => x.id === id ? updated : x))
+    await supabase.from('orders').update({ stage: newStage, notifications: notifs }).eq('id', id)
   }
 
-  // ── Manual SMS button on card ──
-  const handleSendSms = (id) => {
+  // ── Manual SMS ──
+  const handleSendSms = async (id) => {
     const o = orders.find(x => x.id === id)
     if (!o) return
     const msg = o.stage === 'ready' ? READY_SMS(o.customer) : PICKEDUP_SMS(o.customer)
-    setOrders(prev => prev.map(x =>
-      x.id !== id ? x : { ...x, notifications: [...x.notifications, `📱 SMS sent: "${msg.substring(0,55)}…"`] }
-    ))
+    const notifs = [...o.notifications, `📱 SMS sent: "${msg.substring(0,55)}…"`]
+    setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
+    await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
     showToast({ label: '📱 SMS sent', customer: o.customer, msg })
   }
 
   // ── Delete ──
   const handleDelete = (id) => setConfirmDelete(id)
-  const doDelete = () => {
+  const doDelete = async () => {
     const id = confirmDelete
+    const name = orders.find(o => o.id === id)?.customer || ''
     setOrders(prev => prev.filter(o => o.id !== id))
     if (drawerOrderId === id) setDrawerOrderId(null)
     setConfirmDelete(null)
-    showToast({ label: '🗑 Order deleted', customer: orders.find(o=>o.id===id)?.customer||'', msg: 'Order has been permanently removed.' })
+    await supabase.from('orders').delete().eq('id', id)
+    showToast({ label: '🗑 Order deleted', customer: name, msg: 'Order permanently removed.' })
   }
 
-  // ── Save edit ──
-  const handleSaveEdit = (data) => {
-    setOrders(prev => prev.map(o =>
-      o.id !== editingId ? o : { ...o, ...data, notifications: [...o.notifications, '✏ Order details updated by staff'] }
-    ))
+  // ── Edit ──
+  const handleSaveEdit = async (data) => {
+    const notifs = [...(editOrder?.notifications || []), '✏ Order updated by staff']
+    const updated = { ...editOrder, ...data, notifications: notifs }
+    setOrders(prev => prev.map(o => o.id !== editingId ? o : updated))
     setEditingId(null)
+    await supabase.from('orders').update(toDB(updated)).eq('id', editingId)
   }
 
   // ── Create ──
-  const handleCreateOrder = (data) => {
+  const handleCreateOrder = async (data) => {
     orderSeq++
     const id = `SRP-${String(orderSeq).padStart(3, '0')}`
-    setOrders(prev => [...prev, { id, ...data, notifications: ['✓ Order created by staff'], stage: 'received', createdAt: new Date().toISOString() }])
+    const newOrder = { id, ...data, notifications: ['✓ Order created'], stage: 'received', createdAt: new Date().toISOString() }
+    setOrders(prev => [...prev, newOrder])
     setShowNew(false)
     showToast({ label: '✓ Order created', customer: data.customer, msg: `${id} added to the board.` })
+    await supabase.from('orders').insert(toDB(newOrder))
   }
 
   // ── SMS log from drawer ──
-  const handleSmsLog = (id, entry) => {
-    setOrders(prev => prev.map(o => o.id !== id ? o : { ...o, notifications: [...o.notifications, entry] }))
+  const handleSmsLog = async (id, entry) => {
+    const o = orders.find(x => x.id === id)
+    if (!o) return
+    const notifs = [...o.notifications, entry]
+    setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
+    await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
   }
 
   // ── Jump from search ──
@@ -140,24 +198,19 @@ export default function App() {
 
   const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom) }
 
-  // Header top offset: header has two rows, ~62px + ~34px = ~96px
-  const headerHeight = 96
+  if (loading) {
+    return (
+      <div className={styles.loadingScreen}>
+        <div className={styles.loadingLogo}>🍑</div>
+        <div className={styles.loadingText}>Loading Sweet Red Peach…</div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.app}>
-      <Header
-        orders={orders}
-        onNewOrder={() => setShowNew(true)}
-        onJumpToOrder={handleJumpToOrder}
-      />
-
-      <CalStrip
-        orders={orders}
-        selectedDay={selectedDay}
-        customDateSelected={customDate}
-        onSelectDay={handleSelectDay}
-      />
-
+      <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} />
+      <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} onSelectDay={handleSelectDay} />
       <div className={styles.boardWrapper}>
         <Board
           orders={orders}
@@ -168,7 +221,6 @@ export default function App() {
           onDrawer={id => setDrawerOrderId(id)}
           onDelete={handleDelete}
           onSendSms={handleSendSms}
-          fmtDateFn={fmtDate}
         />
       </div>
 
@@ -179,14 +231,9 @@ export default function App() {
         </>
       )}
 
-      {editingId && (
-        <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} />
-      )}
-      {showNew && (
-        <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />
-      )}
+      {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} />}
+      {showNew    && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
 
-      {/* Delete confirmation */}
       {confirmDelete && (
         <ConfirmModal
           title="Delete order?"
@@ -197,12 +244,10 @@ export default function App() {
           onCancel={() => setConfirmDelete(null)}
         />
       )}
-
-      {/* Picked up confirmation */}
       {confirmPickup && (
         <ConfirmModal
           title="Mark as Picked Up?"
-          message={`Confirm that ${orders.find(o=>o.id===confirmPickup)?.customer}'s order has been picked up. This will move it to the final stage.`}
+          message={`Confirm that ${orders.find(o=>o.id===confirmPickup)?.customer}'s order has been picked up.`}
           confirmLabel="Yes, picked up"
           confirmStyle={{ background: 'var(--brand)', borderColor: 'var(--brand)' }}
           onConfirm={() => { applyMove(confirmPickup, 1); setConfirmPickup(null) }}
