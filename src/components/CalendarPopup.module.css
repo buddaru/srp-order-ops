@@ -1,0 +1,67 @@
+.popup {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-hover);
+  min-width: 268px;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.navBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.navBtn:hover { background: var(--bg); color: var(--text); }
+.monthLabel { font-size: 14px; font-weight: 600; color: var(--text); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.dow {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-muted);
+  padding: 4px 0;
+  letter-spacing: 0.05em;
+}
+.cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+  color: var(--text);
+}
+.cell:hover { background: var(--accent-light); color: var(--accent); }
+.todayCell { font-weight: 700; color: var(--brand); }
+.selected { background: var(--brand) !important; color: #fff !important; }
+.past { color: #ccc; cursor: not-allowed; }
+.past:hover { background: none; color: #ccc; }
+.hasOrders { position: relative; }
+.hasOrders::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.selected.hasOrders::after { background: rgba(255,255,255,0.7); }

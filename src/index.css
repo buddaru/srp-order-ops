@@ -1,0 +1,83 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F7F3EE;
+  --brand: #6B1414;
+  --brand-light: #8B2424;
+  --accent: #C4784A;
+  --accent-light: #FCEEE4;
+  --text: #1C1612;
+  --text-muted: #8A7E74;
+  --card: #FFFFFF;
+  --border: #E4DDD6;
+  --shadow: 0 1px 3px rgba(28,22,18,0.08), 0 4px 12px rgba(28,22,18,0.04);
+  --shadow-hover: 0 2px 8px rgba(28,22,18,0.12), 0 8px 24px rgba(28,22,18,0.08);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SHARED FORM ELEMENTS ── */
+input[type=text],
+input[type=email],
+input[type=tel],
+input[type=number],
+input[type=date],
+input[type=time],
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+input.invalid {
+  border-color: #DC2626 !important;
+  background: #FEF2F2;
+}
+textarea { resize: none; height: 68px; line-height: 1.55; }
+
+/* ── SHARED BUTTON ── */
+.btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--card); border-color: #B0A89E; }
+.btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+.btn-primary:hover { background: var(--brand-light); }
+.btn-back { background: #F5F3F0; color: var(--text-muted); border-color: var(--border); }
+.btn-back:hover { background: var(--card); color: var(--text); }
+
+/* ── CARD ANIMATION ── */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

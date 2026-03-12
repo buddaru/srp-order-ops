@@ -1,0 +1,41 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: cardIn 0.2s ease forwards;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.overdue { border-left: 3px solid #DC2626; }
+.done { opacity: 0.5; }
+
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.customerInfo { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-light); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.customerName { font-size: 14px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orderId { font-size: 11px; color: var(--text-muted); }
+
+.dueBadge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+.overdue  { background: #FEF2F2; color: #DC2626; }
+.today    { background: #FFFBEB; color: #B45309; }
+.tomorrow { background: #EFF6FF; color: #1D4ED8; }
+.future   { background: #F0FDF4; color: #15803D; }
+
+/* Prevent border override from card class */
+.card.overdue { border-left: 3px solid #DC2626; background: var(--card); }
+
+.items { margin: 8px 0 10px; }
+.itemRow { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 3px; }
+.itemDot { width: 4px; height: 4px; background: #D1C9C2; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.itemText { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+.total { font-size: 12px; font-weight: 600; color: var(--brand); margin-bottom: 10px; }
+.note { font-size: 11px; color: var(--accent); background: var(--accent-light); padding: 5px 8px; border-radius: 6px; margin-bottom: 10px; line-height: 1.45; font-style: italic; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }

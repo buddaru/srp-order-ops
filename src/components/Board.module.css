@@ -1,0 +1,19 @@
+.board { display: flex; gap: 14px; min-width: max-content; align-items: flex-start; }
+.column { width: 290px; flex-shrink: 0; }
+.colHeader { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; }
+.colLabel { display: flex; align-items: center; gap: 8px; }
+.colDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.colName { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); }
+.colCount { background: var(--border); color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.colCards { display: flex; flex-direction: column; gap: 10px; min-height: 60px; }
+
+/* Column dot colors by data-stage */
+.column[data-stage="received"]      .colDot { background: #2563EB; }
+.column[data-stage="in-production"] .colDot { background: #D97706; }
+.column[data-stage="ready"]         .colDot { background: #16A34A; }
+.column[data-stage="picked-up"]     .colDot { background: #9CA3AF; }
+
+.emptyState { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; width: 100%; }
+.emptyIcon { font-size: 48px; margin-bottom: 16px; }
+.emptyTitle { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.emptySub { font-size: 14px; color: var(--text-muted); }
