@@ -1,17 +1,18 @@
 import { STAGES, dueBadge, orderTotal, fmt$ } from '../utils/helpers'
 import styles from './OrderCard.module.css'
 
-export default function OrderCard({ order, onMove, onEdit, onDrawer }) {
+export default function OrderCard({ order, onMove, onEdit, onDrawer, onDelete, onSendSms }) {
   const si   = STAGES.findIndex(s => s.id === order.stage)
   const prev = si > 0 ? STAGES[si - 1] : null
   const next = si < STAGES.length - 1 ? STAGES[si + 1] : null
   const done = order.stage === 'picked-up'
   const badge = dueBadge(order)
   const total = orderTotal(order)
+  const isReady    = order.stage === 'ready'
+  const isPickedUp = order.stage === 'picked-up'
 
   return (
-    <div className={`${styles.card} ${badge.cls === 'overdue' ? styles.overdue : ''} ${done ? styles.done : ''}`}>
-      {/* Top row */}
+    <div className={`${styles.card} ${badge.cls === 'overdue' ? styles.overdueCard : ''} ${done ? styles.done : ''}`}>
       <div className={styles.top}>
         <div className={styles.customerInfo}>
           <div className={styles.avatar}>{order.initials}</div>
@@ -23,7 +24,6 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer }) {
         <div className={`${styles.dueBadge} ${styles[badge.cls]}`}>{badge.label}</div>
       </div>
 
-      {/* Items */}
       <div className={styles.items}>
         {order.items.map((item, i) => (
           <div key={i} className={styles.itemRow}>
@@ -33,17 +33,9 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer }) {
         ))}
       </div>
 
-      {/* Total */}
-      {total > 0 && (
-        <div className={styles.total}>Order total: {fmt$(total)}</div>
-      )}
+      {total > 0 && <div className={styles.total}>Order total: {fmt$(total)}</div>}
+      {order.notes && <div className={styles.note}>📝 {order.notes}</div>}
 
-      {/* Notes */}
-      {order.notes && (
-        <div className={styles.note}>📝 {order.notes}</div>
-      )}
-
-      {/* Actions */}
       <div className={styles.actions}>
         {prev && (
           <button className="btn btn-back" onClick={() => onMove(order.id, -1)}>
@@ -55,8 +47,19 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer }) {
             → {next.label}
           </button>
         )}
-        <button className="btn" onClick={() => onEdit(order.id)}>✏</button>
-        <button className="btn" onClick={() => onDrawer(order.id)}>☰</button>
+        {/* Phone SMS button — only on Ready for Pickup and Picked Up */}
+        {(isReady || isPickedUp) && (
+          <button
+            className={`btn ${styles.smsBtn}`}
+            title={isReady ? 'Send Ready SMS' : 'Send Thank You SMS'}
+            onClick={() => onSendSms(order.id)}
+          >
+            📱
+          </button>
+        )}
+        <button className="btn" onClick={() => onEdit(order.id)} title="Edit">✏</button>
+        <button className="btn" onClick={() => onDrawer(order.id)} title="Details">☰</button>
+        <button className={`btn ${styles.deleteBtn}`} onClick={() => onDelete(order.id)} title="Delete">🗑</button>
       </div>
     </div>
   )

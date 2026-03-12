@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { toDS, today, daysFromNow, diffDays, fmtDate } from '../utils/helpers'
+import { toDS, today, daysFromNow, diffDays, fmtDate, STRIP_DAYS } from '../utils/helpers'
 import CalendarPopup from './CalendarPopup'
 import styles from './CalStrip.module.css'
 
@@ -7,7 +7,6 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, onSe
   const [showCal, setShowCal] = useState(false)
   const calRef = useRef(null)
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (calRef.current && !calRef.current.contains(e.target)) setShowCal(false)
@@ -20,7 +19,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, onSe
 
   const inWindowCount = orders.filter(o => {
     const d = diffDays(o.pickupDate)
-    return d >= 0 && d <= 4
+    return d >= 0 && d <= STRIP_DAYS - 1
   }).length
 
   const browseBtnLabel = customDateSelected && selectedDay !== 'all'
@@ -34,15 +33,15 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, onSe
         className={`${styles.tab} ${styles.allTab} ${selectedDay === 'all' && !customDateSelected ? styles.active : ''}`}
         onClick={() => onSelectDay('all', false)}
       >
-        <div className={styles.tabLabel}>All days</div>
+        <div className={styles.tabLabel}>All</div>
         <div className={styles.tabDate}>All</div>
-        <div className={styles.tabCount}>{inWindowCount} order{inWindowCount !== 1 ? 's' : ''}</div>
+        <div className={styles.tabCount}>{inWindowCount}</div>
       </div>
 
       <div className={styles.divider} />
 
-      {/* 5-day tabs */}
-      {[0,1,2,3,4].map(i => {
+      {/* 10-day tabs */}
+      {Array.from({ length: STRIP_DAYS }, (_, i) => {
         const d   = daysFromNow(i)
         const ds  = toDS(d)
         const n   = orders.filter(o => o.pickupDate === ds).length
@@ -56,7 +55,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, onSe
           >
             <div className={styles.tabLabel}>{lbl}</div>
             <div className={styles.tabDate}>{d.getDate()}</div>
-            <div className={styles.tabCount}>{n} order{n !== 1 ? 's' : ''}</div>
+            <div className={styles.tabCount}>{n}</div>
           </div>
         )
       })}
