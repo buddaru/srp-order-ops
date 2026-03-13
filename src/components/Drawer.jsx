@@ -8,11 +8,11 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
 
   if (!order) return null
 
-  const fakeNotifTime = (i) => {
-    const base = new Date(order.createdAt || Date.now())
-    base.setMinutes(base.getMinutes() + i * 15)
-    return base.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' · ' +
-      base.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true })
+  const fmtNotifTime = (ts) => {
+    if (!ts) return ''
+    const d = new Date(ts)
+    return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' · ' +
+      d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true })
   }
   const total = orderTotal(order)
 

@@ -129,11 +129,12 @@ export default function App() {
     if (ni < 0 || ni >= STAGES.length) return
     const newStage = STAGES[ni].id
     const notifs = [...o.notifications]
+    const now = new Date().toISOString()
     if (dir === 1) {
-      notifs.push(`→ Moved to ${STAGES[ni].label}`)
-      if (newStage === 'picked-up') notifs.push('✅ Order picked up')
+      notifs.push({ text: `→ Moved to ${STAGES[ni].label}`, ts: now })
+      if (newStage === 'picked-up') notifs.push({ text: '✅ Order picked up', ts: now })
     } else {
-      notifs.push(`↩ Moved back to ${STAGES[ni].label}`)
+      notifs.push({ text: `↩ Moved back to ${STAGES[ni].label}`, ts: now })
     }
     const updated = { ...o, stage: newStage, notifications: notifs }
     setOrders(prev => prev.map(x => x.id === id ? updated : x))
@@ -147,7 +148,7 @@ export default function App() {
     const msg = o.stage === 'ready' ? READY_SMS(o.customer) : PICKEDUP_SMS(o.customer)
 
     // Optimistically update UI
-    const notifs = [...o.notifications, `📱 SMS sent to ${o.phone || 'customer'}`]
+    const notifs = [...o.notifications, { text: `📱 SMS sent to ${o.phone || 'customer'}`, ts: new Date().toISOString() }]
     setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
     await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
 
@@ -183,7 +184,7 @@ export default function App() {
 
   // ── Edit ──
   const handleSaveEdit = async (data) => {
-    const notifs = [...(editOrder?.notifications || []), '✏ Order updated by staff']
+    const notifs = [...(editOrder?.notifications || []), { text: '✏ Order updated by staff', ts: new Date().toISOString() }]
     const updated = { ...editOrder, ...data, notifications: notifs }
     setOrders(prev => prev.map(o => o.id !== editingId ? o : updated))
     setEditingId(null)
@@ -194,7 +195,7 @@ export default function App() {
   const handleCreateOrder = async (data) => {
     orderSeq++
     const id = `SRP-${String(orderSeq).padStart(3, '0')}`
-    const newOrder = { id, ...data, notifications: ['✓ Order created'], stage: 'received', createdAt: new Date().toISOString() }
+    const newOrder = { id, ...data, notifications: [{ text: '✓ Order created', ts: new Date().toISOString() }], stage: 'received', createdAt: new Date().toISOString() }
     setOrders(prev => [...prev, newOrder])
     setShowNew(false)
     showToast({ label: '✓ Order created', customer: data.customer, msg: `${id} added to the board.` })
@@ -205,7 +206,7 @@ export default function App() {
   const handleSmsLog = async (id, entry) => {
     const o = orders.find(x => x.id === id)
     if (!o) return
-    const notifs = [...o.notifications, entry]
+    const notifs = [...o.notifications, { text: entry, ts: new Date().toISOString() }]
     setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
     await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
   }
