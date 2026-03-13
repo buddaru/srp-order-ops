@@ -38,12 +38,3 @@
 /* Empty col update */
 .emptyCol { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 16px; color: var(--text-muted); font-size: 12px; text-align: center; }
 .emptyColIcon { font-size: 20px; opacity: 0.4; }
-
-[data-theme="dark"] .col { background: #161B22; border: 1px solid #30363D; }
-[data-theme="dark"] .colHeader { background: #161B22; border-bottom: 1px solid #30363D; }
-[data-theme="dark"] .colLabel { color: #7D8590; }
-[data-theme="dark"] .emptyCol { color: #7D8590; }
-[data-theme="dark"] .badge_received      { background: #21262D; color: #7D8590; }
-[data-theme="dark"] .badge_in_production { background: #1C1609; color: #D29922; }
-[data-theme="dark"] .badge_ready         { background: #0D1F0D; color: #3FB950; }
-[data-theme="dark"] .badge_picked_up     { background: #0D1626; color: #58A6FF; }

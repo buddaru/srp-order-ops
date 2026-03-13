@@ -65,11 +65,3 @@
   right: 0;
   z-index: 9999;
 }
-
-[data-theme="dark"] .strip { background: #161B22; border-bottom: 1px solid #30363D; }
-[data-theme="dark"] .tab { color: #7D8590; }
-[data-theme="dark"] .tab:hover { background: #21262D; color: #E6EDF3; }
-[data-theme="dark"] .active { color: #E6EDF3; border-bottom-color: #6B1414; }
-[data-theme="dark"] .dayNum { color: #E6EDF3; }
-[data-theme="dark"] .dayName { color: #7D8590; }
-[data-theme="dark"] .dayCount { color: #7D8590; }

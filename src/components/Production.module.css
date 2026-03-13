@@ -121,16 +121,3 @@
   opacity: 0.5;
 }
 .editItemBtn:hover { opacity: 1; color: var(--brand); }
-
-[data-theme="dark"] .page { background: #0D1117; }
-[data-theme="dark"] .toolbar { background: #161B22; border-bottom: 1px solid #30363D; }
-[data-theme="dark"] .section { background: #161B22; border: 1px solid #30363D; }
-[data-theme="dark"] .sectionHeader { border-bottom: 1px solid #30363D; }
-[data-theme="dark"] .sectionTitle { color: #E6EDF3; }
-[data-theme="dark"] .itemRow { border-color: #30363D; }
-[data-theme="dark"] .itemRow:hover { background: #21262D; }
-[data-theme="dark"] .itemName { color: #E6EDF3; }
-[data-theme="dark"] .itemMeta { color: #7D8590; }
-[data-theme="dark"] .notesArea { background: #161B22; border: 1px solid #30363D; color: #E6EDF3; }
-[data-theme="dark"] .progressBar { background: #21262D; }
-[data-theme="dark"] .dateNav { color: #E6EDF3; }

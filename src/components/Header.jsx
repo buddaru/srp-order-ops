@@ -18,12 +18,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
   const [query, setQuery]   = useState('')
   const [showRes, setShowRes] = useState(false)
   const [datetime, setDatetime] = useState(fmtNow())
-  const [dark, setDark] = useState(() => localStorage.getItem('srp_theme') === 'dark')
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
-    localStorage.setItem('srp_theme', dark ? 'dark' : 'light')
-  }, [dark])
 
   // Tick every minute
   useEffect(() => {
@@ -108,10 +102,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
         </div>
 
         <div className={styles.right}>
-          <button className={styles.themeToggle} onClick={() => setDark(d => !d)} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
-            {dark ? '☀' : '🌙'}
-          </button>
-          <button className={styles.btnNew} onClick={onNewOrder}>+ New Order</button>
+<button className={styles.btnNew} onClick={onNewOrder}>+ New Order</button>
         </div>
       </div>
 

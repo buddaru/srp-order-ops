@@ -77,10 +77,3 @@
   .mainNav { padding: 0 16px; }
   .navItem, .navActive { padding: 10px 14px; font-size: 12px; }
 }
-
-[data-theme="dark"] .mainNav { background: #161B22; border-bottom: 1px solid #30363D; }
-[data-theme="dark"] .confirmBox { background: #161B22; border: 1px solid #30363D; }
-[data-theme="dark"] .confirmTitle { color: #E6EDF3; }
-[data-theme="dark"] .confirmMsg { color: #7D8590; }
-[data-theme="dark"] .loadingScreen { background: #0D1117; }
-[data-theme="dark"] .loadingText { color: #7D8590; }
