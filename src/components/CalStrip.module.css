@@ -65,3 +65,9 @@
   right: 0;
   z-index: 9999;
 }
+
+[data-theme="dark"] .strip { background: var(--card); border-bottom-color: var(--border); }
+[data-theme="dark"] .tab { color: var(--text-muted); }
+[data-theme="dark"] .tab:hover { background: var(--bg); }
+[data-theme="dark"] .active { color: var(--accent); border-bottom-color: var(--accent); }
+[data-theme="dark"] .dayNum { color: var(--text); }

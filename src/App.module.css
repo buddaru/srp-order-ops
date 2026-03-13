@@ -77,3 +77,10 @@
   .mainNav { padding: 0 16px; }
   .navItem, .navActive { padding: 10px 14px; font-size: 12px; }
 }
+
+[data-theme="dark"] .mainNav { background: var(--card); border-bottom-color: var(--border); }
+[data-theme="dark"] .confirmBox { background: var(--card); border-color: var(--border); }
+[data-theme="dark"] .confirmTitle { color: var(--text); }
+[data-theme="dark"] .confirmMsg { color: var(--text-muted); }
+[data-theme="dark"] .loadingScreen { background: var(--bg); }
+[data-theme="dark"] .loadingText { color: var(--text-muted); }

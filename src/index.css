@@ -81,3 +81,47 @@ textarea { resize: none; height: 68px; line-height: 1.55; }
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] {
+  --bg: #1A1410;
+  --brand: #7A1F1F;
+  --brand-light: #8B2424;
+  --accent: #E8957A;
+  --accent-light: #3A2418;
+  --text: #F0EAE4;
+  --text-muted: #6B6058;
+  --card: #2A2420;
+  --border: #3A3028;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-hover: 0 2px 8px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #221E1A;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  background: #2A2420;
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .btn {
+  background: #2A2420;
+  color: var(--text);
+  border-color: var(--border);
+}
+[data-theme="dark"] .btn:hover { background: #3A3028; }
+[data-theme="dark"] .btn-back { background: #221E1A; color: var(--text-muted); }
+[data-theme="dark"] .btn-back:hover { background: #2A2420; color: var(--text); }

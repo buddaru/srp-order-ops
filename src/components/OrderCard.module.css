@@ -36,3 +36,8 @@
 .smsBtn:hover { background: rgba(74,222,128,0.2); }
 .deleteBtn { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
 .deleteBtn:hover { background: #FEE2E2; border-color: #DC2626; }
+
+[data-theme="dark"] .card { background: var(--card); border-color: var(--border); }
+[data-theme="dark"] .overdueCard { border-color: #7A1F1F; background: #2A1818; }
+[data-theme="dark"] .total { color: var(--accent); }
+[data-theme="dark"] .note { background: var(--accent-light); color: var(--accent); }

@@ -101,3 +101,11 @@
 .createdRow { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:16px; padding:8px 10px; background:var(--bg); border-radius:8px; }
 .createdLabel { color:var(--text-muted); font-weight:500; }
 .createdVal { color:var(--text); font-weight:600; }
+
+[data-theme="dark"] .drawer { background: var(--card); border-left-color: var(--border); }
+[data-theme="dark"] .header { background: var(--card); border-bottom-color: var(--border); }
+[data-theme="dark"] .name { color: var(--text); }
+[data-theme="dark"] .meta { color: var(--text-muted); }
+[data-theme="dark"] .sectionLabel { color: var(--text-muted); }
+[data-theme="dark"] .notes { background: var(--accent-light); color: var(--accent); }
+[data-theme="dark"] .sendBtn { background: var(--brand); }

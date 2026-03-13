@@ -113,3 +113,11 @@
   margin-right: auto;
 }
 .deleteBtn:hover { background: #FEF2F2; }
+
+[data-theme="dark"] .modal { background: var(--card); border-color: var(--border); }
+[data-theme="dark"] .header { background: var(--card); border-bottom-color: var(--border); }
+[data-theme="dark"] .title { color: var(--text); }
+[data-theme="dark"] .subtitle { color: var(--text-muted); }
+[data-theme="dark"] .footer { background: var(--card); border-top-color: var(--border); }
+[data-theme="dark"] .label { color: var(--text-muted); }
+[data-theme="dark"] .cancelBtn { background: var(--bg); color: var(--text); border-color: var(--border); }
