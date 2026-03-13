@@ -25,15 +25,19 @@ export default function Board({ orders, selectedDay, customDateSelected, onMove,
       {hasAny && STAGES.map(stage => {
         const stageOrders = visible.filter(o => o.stage === stage.id)
         return (
-          <div key={stage.id} className={styles.column}>
+          <div key={stage.id} className={`${styles.column} ${styles['col_' + stage.id.replace(/-/g,'_')]}`}>
             <div className={styles.colHeader}>
-              <div className={`${styles.colDot} ${styles['dot_' + stage.id.replace('-','_')]}`} />
-              <div className={styles.colTitle}>{stage.label}</div>
-              <div className={styles.colCount}>{stageOrders.length}</div>
+              <div className={styles.colLabel}>
+                <span className={styles.colName}>{stage.label}</span>
+              </div>
+              <div className={`${styles.colCount} ${styles['badge_' + stage.id.replace(/-/g,'_')]}`}>{stageOrders.length}</div>
             </div>
             <div className={styles.cards}>
               {stageOrders.length === 0
-                ? <div className={styles.emptyCol}>No orders here</div>
+                ? <div className={styles.emptyCol}>
+                    <div className={styles.emptyColIcon}>{stage.id === 'ready' ? '🎁' : stage.id === 'picked-up' ? '✓' : '📋'}</div>
+                    <div>{stage.id === 'ready' ? 'Nothing ready yet' : stage.id === 'picked-up' ? 'No pickups today' : 'No orders here'}</div>
+                  </div>
                 : stageOrders.map(o => (
                     <OrderCard
                       key={o.id}

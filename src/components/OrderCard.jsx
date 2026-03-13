@@ -12,7 +12,7 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer, onDelete, o
   const isPickedUp = order.stage === 'picked-up'
 
   return (
-    <div className={`${styles.card} ${badge.cls === 'overdue' ? styles.overdueCard : ''} ${done ? styles.done : ''}`}>
+    <div className={`${styles.card} ${badge.cls === 'overdue' ? styles.overdueCard : ''} ${done ? styles.done : ''}`} onClick={() => onDrawer(order.id)} style={{cursor:'pointer'}}>
       <div className={styles.top}>
         <div className={styles.customerInfo}>
           <div className={styles.avatar}>{order.initials}</div>
@@ -38,12 +38,12 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer, onDelete, o
 
       <div className={styles.actions}>
         {prev && (
-          <button className="btn btn-back" onClick={() => onMove(order.id, -1)}>
+          <button className="btn btn-back" onClick={e => { e.stopPropagation(); onMove(order.id, -1); }}>
             ← {prev.label}
           </button>
         )}
         {next && (
-          <button className="btn btn-primary" onClick={() => onMove(order.id, 1)}>
+          <button className="btn btn-primary" onClick={e => { e.stopPropagation(); onMove(order.id, 1); }}>
             → {next.label}
           </button>
         )}
@@ -52,14 +52,12 @@ export default function OrderCard({ order, onMove, onEdit, onDrawer, onDelete, o
           <button
             className={`btn ${styles.smsBtn}`}
             title={isReady ? 'Send Ready SMS' : 'Send Thank You SMS'}
-            onClick={() => onSendSms(order.id)}
+            onClick={e => { e.stopPropagation(); onSendSms(order.id); }}
           >
             📱
           </button>
         )}
-        <button className="btn" onClick={() => onEdit(order.id)} title="Edit">✏</button>
-        <button className="btn" onClick={() => onDrawer(order.id)} title="Details">☰</button>
-        <button className={`btn ${styles.deleteBtn}`} onClick={() => onDelete(order.id)} title="Delete">🗑</button>
+        <button className="btn" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit">✏</button>
       </div>
     </div>
   )

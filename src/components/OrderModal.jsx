@@ -6,7 +6,7 @@ import styles from './OrderModal.module.css'
 
 const DEFAULT_TIME = toTS(13, 0) // 1:00 PM
 
-export default function OrderModal({ mode, order, onSave, onClose }) {
+export default function OrderModal({ mode, order, onSave, onClose, onDelete }) {
   const isEdit = mode === 'edit'
 
   const [customer, setCustomer] = useState('')
@@ -39,6 +39,13 @@ export default function OrderModal({ mode, order, onSave, onClose }) {
     if (!items.some(i => i.name.trim())) e.items = 'At least one item is required'
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  const handleDelete = () => {
+    if (window.confirm('Delete this order? This cannot be undone.')) {
+      onDelete(order.id)
+      onClose()
+    }
   }
 
   const handleSubmit = () => {
@@ -97,6 +104,7 @@ export default function OrderModal({ mode, order, onSave, onClose }) {
           </div>
         </div>
         <div className={styles.footer}>
+          {isEdit && <button className={styles.deleteBtn} onClick={handleDelete}>Delete order</button>}
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button className={styles.saveBtn} onClick={handleSubmit}>{isEdit ? 'Save changes' : 'Create order'}</button>
         </div>

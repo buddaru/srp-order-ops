@@ -17,3 +17,24 @@
 .emptyIcon { font-size: 48px; margin-bottom: 16px; }
 .emptyTitle { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 8px; }
 .emptySub { font-size: 14px; color: var(--text-muted); }
+
+/* Column top border by stage */
+.col_received      { border-top: 3px solid #888780; border-radius: 0 0 8px 8px; }
+.col_in_production { border-top: 3px solid #BA7517; border-radius: 0 0 8px 8px; }
+.col_ready         { border-top: 3px solid #3B6D11; border-radius: 0 0 8px 8px; }
+.col_picked_up     { border-top: 3px solid #185FA5; border-radius: 0 0 8px 8px; }
+
+/* Count badge colors by stage */
+.badge_received      { background: #F1EFE8; color: #5F5E5A; }
+.badge_in_production { background: #FAEEDA; color: #854F0B; }
+.badge_ready         { background: #EAF3DE; color: #3B6D11; }
+.badge_picked_up     { background: #E6F1FB; color: #185FA5; }
+
+/* Column header update */
+.colHeader { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; margin-bottom: 10px; background: var(--card); border-bottom: 1px solid var(--border); }
+.colLabel { display: flex; align-items: center; gap: 8px; }
+.colName { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Empty col update */
+.emptyCol { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 16px; color: var(--text-muted); font-size: 12px; text-align: center; }
+.emptyColIcon { font-size: 20px; opacity: 0.4; }

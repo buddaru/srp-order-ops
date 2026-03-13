@@ -99,3 +99,17 @@
   transition: opacity 0.15s;
 }
 .saveBtn:hover { opacity: 0.88; }
+
+.deleteBtn {
+  background: none;
+  border: 1px solid #DC2626;
+  color: #DC2626;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-family: 'Proxima Nova', 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: auto;
+}
+.deleteBtn:hover { background: #FEF2F2; }
