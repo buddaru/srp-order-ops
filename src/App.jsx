@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { Routes, Route, NavLink } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { seedOrders } from './data/orders'
 import { STAGES, READY_SMS, PICKEDUP_SMS, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
@@ -8,6 +9,7 @@ import Board      from './components/Board'
 import Drawer     from './components/Drawer'
 import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
+import Production from './components/Production'
 import styles from './App.module.css'
 
 let orderSeq = 0
@@ -228,6 +230,13 @@ export default function App() {
   return (
     <div className={styles.app}>
       <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} />
+      <nav className={styles.mainNav}>
+        <NavLink to="/" end className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Order Board</NavLink>
+        <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
+      </nav>
+      <Routes>
+        <Route path="/production" element={<Production />} />
+        <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} onSelectDay={handleSelectDay} />
       <div className={styles.boardWrapper}>
         <Board
@@ -274,6 +283,8 @@ export default function App() {
       )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
+        </>} />
+      </Routes>
     </div>
   )
 }
