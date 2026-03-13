@@ -3,22 +3,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:           #F0F6FA;
-  --bg-2:         #E4EFF5;
-  --brand:        #1A4A62;
-  --brand-light:  #245E7A;
-  --brand-faint:  rgba(26,74,98,0.07);
-  --accent:       #B5D8E6;
-  --accent-mid:   #4E9BB5;
-  --accent-light: #E8F4F9;
-  --text:         #0F1F28;
-  --text-2:       #2E4A58;
-  --text-muted:   #7A96A3;
+  --bg:           #F7F3EE;
+  --bg-2:         #EDE7DF;
+  --brand:        #6B1414;
+  --brand-light:  #8B2424;
+  --brand-faint:  rgba(107,20,20,0.06);
+  --accent:       #C4784A;
+  --accent-light: #FCEEE4;
+  --header-bg:    #B5D8E6;
+  --text:         #1C1612;
+  --text-2:       #4A4039;
+  --text-muted:   #8A7E74;
   --card:         #FFFFFF;
-  --border:       rgba(26,74,98,0.12);
-  --border-2:     rgba(26,74,98,0.2);
-  --shadow:       0 1px 2px rgba(26,74,98,0.06), 0 3px 8px rgba(26,74,98,0.04);
-  --shadow-md:    0 2px 6px rgba(26,74,98,0.08), 0 8px 20px rgba(26,74,98,0.06);
+  --border:       rgba(107,70,40,0.13);
+  --border-2:     rgba(107,70,40,0.22);
+  --shadow:       0 1px 2px rgba(28,22,18,0.08), 0 4px 12px rgba(28,22,18,0.04);
+  --shadow-md:    0 2px 8px rgba(28,22,18,0.12), 0 8px 24px rgba(28,22,18,0.08);
   --radius:       10px;
   --radius-sm:    7px;
 }

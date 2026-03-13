@@ -60,10 +60,10 @@
   flex-shrink: 0;
   letter-spacing: 0.01em;
 }
-.overdue  { background: #FEE2E2; color: #B91C1C; }
-.today    { background: #D6EEF7; color: #1A4A62; font-weight: 600; }
-.tomorrow { background: #E4EFF5; color: #2E4A58; }
-.future   { background: #EFF6FA; color: #4E7A8A; }
+.overdue  { background: #FEF2F2; color: #DC2626; }
+.today    { background: #FFFBEB; color: #A16207; }
+.tomorrow { background: #EFF6FF; color: #1D4ED8; }
+.future   { background: #F0FDF4; color: #15803D; }
 
 /* ── Divider ── */
 .divider {
@@ -97,13 +97,13 @@
 /* ── Note ── */
 .note {
   font-size: 11px;
-  color: var(--text-2);
+  color: var(--accent);
   background: var(--accent-light);
   padding: 6px 9px;
   border-radius: 6px;
   margin-bottom: 10px;
   line-height: 1.5;
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid rgba(196,120,74,0.3);
 }
 
 /* ── Actions ── */

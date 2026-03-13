@@ -30,25 +30,25 @@
 .colCards { display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
 
 /* ── Stage color themes ── */
-.col_received .colHeader      { background: #E8F0F5; }
-.col_received .colDot         { background: #7A96A3; }
-.col_received .colName        { color: #2E4A58; }
-.col_received .colCount       { background: #D0E2EB; color: #2E4A58; }
+.col_received .colHeader      { background: #F0EDE8; }
+.col_received .colDot         { background: #6B7280; }
+.col_received .colName        { color: #4B5563; }
+.col_received .colCount       { background: #E5E0D8; color: #4B5563; }
 
-.col_in_production .colHeader { background: #D6EEF7; }
-.col_in_production .colDot    { background: #1A4A62; }
-.col_in_production .colName   { color: #1A4A62; }
-.col_in_production .colCount  { background: #B5D8E6; color: #1A4A62; }
+.col_in_production .colHeader { background: #FEF3D0; }
+.col_in_production .colDot    { background: #D97706; }
+.col_in_production .colName   { color: #92400E; }
+.col_in_production .colCount  { background: #FDE68A; color: #92400E; }
 
-.col_ready .colHeader         { background: #DDEEF5; }
-.col_ready .colDot            { background: #4E9BB5; }
-.col_ready .colName           { color: #1A4A62; }
-.col_ready .colCount          { background: #A8D4E3; color: #1A4A62; }
+.col_ready .colHeader         { background: #ECFDF5; }
+.col_ready .colDot            { background: #16A34A; }
+.col_ready .colName           { color: #14532D; }
+.col_ready .colCount          { background: #BBF7D0; color: #14532D; }
 
-.col_picked_up .colHeader     { background: #EFF6FA; }
-.col_picked_up .colDot        { background: #7ABCCE; }
-.col_picked_up .colName       { color: #2E4A58; }
-.col_picked_up .colCount      { background: #CAE5EF; color: #2E4A58; }
+.col_picked_up .colHeader     { background: #EFF6FF; }
+.col_picked_up .colDot        { background: #3B82F6; }
+.col_picked_up .colName       { color: #1E3A5F; }
+.col_picked_up .colCount      { background: #BFDBFE; color: #1E3A5F; }
 
 /* ── Empty column ── */
 .emptyCol {
