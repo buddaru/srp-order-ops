@@ -40,10 +40,10 @@
 .col_in_production .colName   { color: #92400E; }
 .col_in_production .colCount  { background: #FDE68A; color: #92400E; }
 
-.col_ready .colHeader         { background: #ECFDF5; }
-.col_ready .colDot            { background: #16A34A; }
-.col_ready .colName           { color: #14532D; }
-.col_ready .colCount          { background: #BBF7D0; color: #14532D; }
+.col_ready .colHeader         { background: #16A34A; }
+.col_ready .colDot            { background: #fff; }
+.col_ready .colName           { color: #fff; }
+.col_ready .colCount          { background: rgba(255,255,255,0.25); color: #fff; }
 
 .col_picked_up .colHeader     { background: #EFF6FF; }
 .col_picked_up .colDot        { background: #3B82F6; }

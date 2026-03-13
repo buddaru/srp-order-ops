@@ -115,7 +115,7 @@
 
 /* ── Sub row ── */
 .subRow {
-  background: rgba(0,0,0,0.07);
+  background: rgba(0,0,0,0.15);
   padding: 5px 28px;
   display: flex;
   align-items: center;
@@ -124,15 +124,15 @@
 }
 .datetime {
   font-size: 11px;
-  color: rgba(26,60,80,0.7);
+  color: #1C3040;
   font-weight: 400;
   letter-spacing: 0.02em;
 }
 .counters { display: flex; align-items: center; gap: 12px; }
 .counter { display: flex; align-items: center; gap: 5px; }
-.counterNum { font-size: 13px; font-weight: 600; color: #1C2E3A; }
-.counterLabel { font-size: 10px; color: rgba(26,60,80,0.6); font-weight: 400; letter-spacing: 0.02em; }
-.counterDivider { width: 1px; height: 12px; background: rgba(26,60,80,0.15); }
+.counterNum { font-size: 13px; font-weight: 700; color: #0F1E28; }
+.counterLabel { font-size: 10px; color: #2E4A58; font-weight: 400; letter-spacing: 0.02em; }
+.counterDivider { width: 1px; height: 12px; background: rgba(15,30,40,0.25); }
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
