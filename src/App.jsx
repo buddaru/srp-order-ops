@@ -10,6 +10,8 @@ import Drawer     from './components/Drawer'
 import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
 import Production from './components/Production'
+import Privacy     from './components/Privacy'
+import Terms       from './components/Terms'
 import styles from './App.module.css'
 
 let orderSeq = 0
@@ -236,6 +238,8 @@ export default function App() {
       </nav>
       <Routes>
         <Route path="/production" element={<Production />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} onSelectDay={handleSelectDay} />
       <div className={styles.boardWrapper}>
