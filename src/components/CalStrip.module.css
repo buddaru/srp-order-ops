@@ -202,3 +202,11 @@
   .browseWrap { padding-left: 6px; margin-right: 8px; flex-shrink: 0; }
   .browseBtn { padding: 5px 8px; font-size: 12px; }
 }
+
+/* ── Calendar popup mobile anchor ── */
+@media (max-width: 640px) {
+  .calWrap {
+    right: auto;
+    left: 0;
+  }
+}
