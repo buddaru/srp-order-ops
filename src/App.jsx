@@ -77,6 +77,7 @@ export default function App() {
   const [toast, setToast]             = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [confirmPickup, setConfirmPickup] = useState(null)
+  const [dateRange, setDateRange] = useState(null)
 
   const drawerOrder = orders.find(o => o.id === drawerOrderId) || null
   const editOrder   = orders.find(o => o.id === editingId)     || null
@@ -226,7 +227,7 @@ export default function App() {
     navigate('/')
   }
 
-  const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom) }
+  const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom); setDateRange(null) }
 
   if (loading) {
     return (
@@ -249,12 +250,13 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/production" element={<PasswordGate><Production /></PasswordGate>} />
         <Route path="/" element={<PasswordGate><>
-      <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} onSelectDay={handleSelectDay} />
+      <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>
         <Board
           orders={orders}
           selectedDay={selectedDay}
           customDateSelected={customDate}
+          dateRange={dateRange}
           onMove={handleMove}
           onEdit={id => setEditingId(id)}
           onDrawer={id => setDrawerOrderId(id)}
