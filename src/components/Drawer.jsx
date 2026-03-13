@@ -16,29 +16,14 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   }
   const total = orderTotal(order)
 
-  const sendSms = async () => {
+  const sendSms = () => {
     if (!msg.trim()) return
-    const text = msg.trim()
-    const preview = text.substring(0, 55) + (text.length > 55 ? '…' : '')
+    const preview = msg.substring(0, 55) + (msg.length > 55 ? '…' : '')
+    onSmsLog(order.id, `📱 SMS to ${order.phone || 'customer'}: "${preview}"`)
+    showToast({ label: '📱 SMS sent', customer: order.customer, msg: msg.substring(0, 80) })
     setMsg('')
     setSent(true)
     setTimeout(() => setSent(false), 3000)
-    onSmsLog(order.id, `📱 SMS to ${order.phone || 'customer'}: "${preview}"`)
-    try {
-      const res = await fetch('/api/send-sms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: order.phone, message: text }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        showToast({ label: '⚠️ SMS failed', customer: order.customer, msg: data.error || 'Could not send SMS.' })
-      } else {
-        showToast({ label: '📱 SMS sent!', customer: order.customer, msg: text.substring(0, 80) })
-      }
-    } catch {
-      showToast({ label: '⚠️ SMS error', customer: order.customer, msg: 'Network error — SMS not sent.' })
-    }
   }
 
   const createdLabel = order.createdAt
@@ -86,19 +71,15 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
         <div className={styles.notifLog}>
           {order.notifications.length === 0
             ? <div className={styles.emptyNotif}>No updates sent yet.</div>
-            : order.notifications.map((n, i) => {
-                const text = typeof n === 'object' ? n.text : n
-                const ts   = typeof n === 'object' ? n.ts : null
-                return (
-                  <div key={i} className={styles.notifItem}>
-                    <div className={styles.notifDot} />
-                    <div>
-                      <div className={styles.notifText}>{text}</div>
-                      {ts && <div className={styles.notifTime}>{fmtNotifTime(ts)}</div>}
-                    </div>
-                  </div>
-                )
-              })
+            : order.notifications.map((n, i) => (
+              <div key={i} className={styles.notifItem}>
+                <div className={styles.notifDot} />
+                <div>
+                  <div className={styles.notifText}>{n}</div>
+                  <div className={styles.notifTime}>{fakeNotifTime(i)}</div>
+                </div>
+              </div>
+            ))
           }
         </div>
 

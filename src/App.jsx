@@ -102,12 +102,8 @@ export default function App() {
         if (!insertErr) setOrders(seedOrders)
         else setOrders(seedOrders)
       } else {
-        const mapped = data.map(fromDB)
-        setOrders(mapped)
-        orderSeq = mapped.reduce((max, o) => {
-          const n = parseInt(o.id.replace('SRP-', '')) || 0
-          return Math.max(max, n)
-        }, 0)
+        setOrders(data.map(fromDB))
+        orderSeq = data.length
       }
       setLoading(false)
     }
