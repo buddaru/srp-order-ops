@@ -1,7 +1,7 @@
 .drawer {
   position: fixed;
   right: 0;
-  top: 62px;
+  top: 153px;
   bottom: 0;
   width: 360px;
   background: var(--card);

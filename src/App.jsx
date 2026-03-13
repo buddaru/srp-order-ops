@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Routes, Route, NavLink } from 'react-router-dom'
+import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { seedOrders } from './data/orders'
 import { STAGES, READY_SMS, PICKEDUP_SMS, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
@@ -73,6 +73,7 @@ export default function App() {
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
+  const navigate = useNavigate()
   const [toast, setToast]             = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [confirmPickup, setConfirmPickup] = useState(null)
@@ -217,6 +218,7 @@ export default function App() {
     setSelectedDay(o.pickupDate)
     setCustomDate(!(d >= 0 && d <= STRIP_DAYS - 1))
     setDrawerOrderId(id)
+    navigate('/')
   }
 
   const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom) }
