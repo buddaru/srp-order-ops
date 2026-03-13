@@ -55,3 +55,9 @@
 .emptyIcon { font-size: 48px; margin-bottom: 16px; }
 .emptyTitle { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 8px; }
 .emptySub { font-size: 14px; color: var(--text-muted); }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 560px; }
+}

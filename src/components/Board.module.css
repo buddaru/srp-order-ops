@@ -91,3 +91,16 @@
 .vtBtn:hover { background: var(--bg); color: var(--text); }
 .vtActive { background: var(--brand) !important; color: #fff !important; }
 .vtDivider { width: 1px; background: var(--border); flex-shrink: 0; }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .board {
+    flex-direction: column;
+    min-width: unset;
+    gap: 12px;
+  }
+  .column { width: 100% !important; }
+  .toolbar { padding: 8px 0 6px; }
+  .toolbarCount { font-size: 11px; }
+  .vtBtn { font-size: 10px; padding: 4px 9px; }
+}

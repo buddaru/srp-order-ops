@@ -113,3 +113,21 @@
   margin-right: auto;
 }
 .deleteBtn:hover { background: #FEF2F2; }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .overlay { align-items: flex-end; }
+}

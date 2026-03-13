@@ -101,3 +101,19 @@
 .createdRow { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:16px; padding:8px 10px; background:var(--bg); border-radius:8px; }
 .createdLabel { color:var(--text-muted); font-weight:500; }
 .createdVal { color:var(--text); font-weight:600; }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .drawer {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    top: auto !important;
+    bottom: 0;
+    height: 88vh;
+    overflow-y: auto;
+  }
+}

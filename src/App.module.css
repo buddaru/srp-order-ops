@@ -77,3 +77,11 @@
   .mainNav { padding: 0 16px; }
   .navItem, .navActive { padding: 10px 14px; font-size: 12px; }
 }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .boardWrapper {
+    padding: 12px;
+    overflow-x: unset;
+  }
+}

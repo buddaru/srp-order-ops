@@ -176,3 +176,21 @@
   right: 0;
   z-index: 9999;
 }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .strip::-webkit-scrollbar { display: none; }
+  .tabs { padding: 0 4px 0 12px; flex-shrink: 0; }
+  .tab { padding: 8px 12px; min-width: 52px; }
+  .tabDate { font-size: 17px; }
+  .tabLabel { font-size: 9px; }
+  .rangeSection { display: none; }
+  .browseWrap { padding-left: 6px; margin-right: 8px; flex-shrink: 0; }
+  .browseBtn { padding: 5px 8px; font-size: 12px; }
+}
