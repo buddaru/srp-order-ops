@@ -11,6 +11,7 @@ import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
 import Production from './components/Production'
 import Privacy     from './components/Privacy'
+import PasswordGate from './components/PasswordGate'
 import Terms       from './components/Terms'
 import styles from './App.module.css'
 
@@ -237,10 +238,10 @@ export default function App() {
         <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
       </nav>
       <Routes>
-        <Route path="/production" element={<Production />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/" element={<>
+        <Route path="/production" element={<PasswordGate><Production /></PasswordGate>} />
+        <Route path="/" element={<PasswordGate><>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} onSelectDay={handleSelectDay} />
       <div className={styles.boardWrapper}>
         <Board
@@ -287,7 +288,7 @@ export default function App() {
       )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
-        </>} />
+        </></PasswordGate>} />
       </Routes>
     </div>
   )
