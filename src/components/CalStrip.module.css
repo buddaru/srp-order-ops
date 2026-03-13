@@ -16,7 +16,7 @@
   padding: 0 8px 0 16px;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   transition: opacity 0.2s;
 }
 .tabsDimmed { opacity: 0.45; pointer-events: none; }
@@ -179,18 +179,26 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .strip {
+  .tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    flex-wrap: nowrap;
   }
-  .strip::-webkit-scrollbar { display: none; }
+  .tabs::-webkit-scrollbar { display: none; }
   .tabs { padding: 0 4px 0 12px; flex-shrink: 0; }
   .tab { padding: 8px 12px; min-width: 52px; }
   .tabDate { font-size: 17px; }
   .tabLabel { font-size: 9px; }
-  .rangeSection { display: none; }
+  .rangeSection {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    padding: 7px 12px;
+    flex-shrink: 0;
+  }
+  .strip {
+    flex-wrap: wrap;
+  }
   .browseWrap { padding-left: 6px; margin-right: 8px; flex-shrink: 0; }
   .browseBtn { padding: 5px 8px; font-size: 12px; }
 }
