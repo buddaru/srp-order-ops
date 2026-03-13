@@ -65,3 +65,21 @@
   border-radius: 50%;
 }
 .selected.hasOrders::after { background: rgba(255,255,255,0.7); }
+
+/* ── Range styles ── */
+.rangeStart { background: var(--brand) !important; color: #fff !important; border-radius: 6px 0 0 6px; }
+.rangeEnd   { background: var(--brand) !important; color: #fff !important; border-radius: 0 6px 6px 0; box-shadow: 0 0 0 2px var(--brand); }
+.rangeMid   { background: rgba(107,20,20,0.1) !important; color: var(--brand) !important; border-radius: 0; }
+.rangeStart.hasOrders::after,
+.rangeEnd.hasOrders::after { background: rgba(255,255,255,0.7); }
+
+/* ── Hint text ── */
+.hint {
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 500;
+  text-align: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
