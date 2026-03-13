@@ -53,9 +53,6 @@
   background: var(--card);
   border-bottom: 1px solid var(--border);
   padding: 0 28px;
-  position: sticky;
-  top: 120px;
-  z-index: 149;
 }
 .navItem {
   padding: 11px 18px;
