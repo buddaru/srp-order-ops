@@ -102,10 +102,25 @@
 .createdLabel { color:var(--text-muted); font-weight:500; }
 .createdVal { color:var(--text); font-weight:600; }
 
-[data-theme="dark"] .drawer { background: var(--card); border-left-color: var(--border); }
-[data-theme="dark"] .header { background: var(--card); border-bottom-color: var(--border); }
-[data-theme="dark"] .name { color: var(--text); }
-[data-theme="dark"] .meta { color: var(--text-muted); }
-[data-theme="dark"] .sectionLabel { color: var(--text-muted); }
-[data-theme="dark"] .notes { background: var(--accent-light); color: var(--accent); }
-[data-theme="dark"] .sendBtn { background: var(--brand); }
+[data-theme="dark"] .drawer { background: #161B22; border-left: 1px solid #30363D; }
+[data-theme="dark"] .header { background: #161B22; border-bottom: 1px solid #30363D; }
+[data-theme="dark"] .name { color: #E6EDF3; }
+[data-theme="dark"] .meta { color: #7D8590; }
+[data-theme="dark"] .body { background: #161B22; }
+[data-theme="dark"] .sectionLabel { color: #7D8590; }
+[data-theme="dark"] .pricingTable td { color: #E6EDF3; border-color: #30363D; }
+[data-theme="dark"] .totalRow td { color: #E6EDF3; border-color: #30363D; }
+[data-theme="dark"] .notes { background: #1E1209; color: #C4784A; }
+[data-theme="dark"] .createdRow { border-color: #30363D; }
+[data-theme="dark"] .createdLabel { color: #7D8590; }
+[data-theme="dark"] .createdVal { color: #7D8590; }
+[data-theme="dark"] .notifLog { background: #0D1117; border: 1px solid #30363D; }
+[data-theme="dark"] .notifItem { border-color: #30363D; }
+[data-theme="dark"] .notifDot { background: #30363D; }
+[data-theme="dark"] .notifText { color: #E6EDF3; }
+[data-theme="dark"] .notifTime { color: #7D8590; }
+[data-theme="dark"] .emptyNotif { color: #7D8590; }
+[data-theme="dark"] .contactSection { border-color: #30363D; }
+[data-theme="dark"] .contactTo { color: #7D8590; }
+[data-theme="dark"] .sendBtn { background: #6B1414; color: #fff; border-color: #6B1414; }
+[data-theme="dark"] .sentConfirm { color: #3FB950; }

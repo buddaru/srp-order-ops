@@ -37,7 +37,12 @@
 .deleteBtn { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
 .deleteBtn:hover { background: #FEE2E2; border-color: #DC2626; }
 
-[data-theme="dark"] .card { background: var(--card); border-color: var(--border); }
-[data-theme="dark"] .overdueCard { border-color: #7A1F1F; background: #2A1818; }
-[data-theme="dark"] .total { color: var(--accent); }
-[data-theme="dark"] .note { background: var(--accent-light); color: var(--accent); }
+[data-theme="dark"] .card { background: #161B22; border-color: #30363D; }
+[data-theme="dark"] .card:hover { border-color: #6B1414; }
+[data-theme="dark"] .overdueCard { border-color: #6B1414; background: #1A0D0D; }
+[data-theme="dark"] .customerName { color: #E6EDF3; }
+[data-theme="dark"] .orderId { color: #7D8590; }
+[data-theme="dark"] .items { color: #7D8590; }
+[data-theme="dark"] .total { color: #F87171; }
+[data-theme="dark"] .note { background: #1E1209; color: #C4784A; }
+[data-theme="dark"] .divider { border-color: #30363D; }
