@@ -4,11 +4,10 @@ import styles from './CalendarPopup.module.css'
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-export default function CalendarPopup({ selectedDate, rangeStart, onSelect, allowPast = false, orderDates = null }) {
+export default function CalendarPopup({ selectedDate, onSelect, allowPast = false, orderDates = null }) {
   const initDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date(today)
   const [year, setYear]   = useState(initDate.getFullYear())
   const [month, setMonth] = useState(initDate.getMonth())
-  const [hoverDate, setHoverDate] = useState(null)
 
   const navigate = (dir) => {
     let m = month + dir, y = year
@@ -30,24 +29,6 @@ export default function CalendarPopup({ selectedDate, rangeStart, onSelect, allo
     cells.push(dt)
   }
 
-  // Compute preview range end (hover or selected)
-  const previewEnd = rangeStart ? (hoverDate || selectedDate) : null
-
-  const getRangeState = (ds) => {
-    if (!rangeStart || !previewEnd) return null
-    const start = rangeStart < previewEnd ? rangeStart : previewEnd
-    const end   = rangeStart < previewEnd ? previewEnd : rangeStart
-    if (ds === start) return 'start'
-    if (ds === end)   return 'end'
-    if (ds > start && ds < end) return 'mid'
-    return null
-  }
-
-  const hintLabel = rangeStart ? (() => {
-    const d = new Date(rangeStart + 'T00:00:00')
-    return `Start: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · Click any date to set end`
-  })() : null
-
   return (
     <div className={styles.popup}>
       <div className={styles.nav}>
@@ -62,33 +43,20 @@ export default function CalendarPopup({ selectedDate, rangeStart, onSelect, allo
           const ds      = toDS(dt)
           const isPast  = !allowPast && dt < today && ds !== todayDS
           const isToday = ds === todayDS
-          const isSel   = ds === selectedDate && !rangeStart
+          const isSel   = ds === selectedDate
           const hasOrd  = orderDates?.has(ds)
-          const rstate  = getRangeState(ds)
-
           let cls = styles.cell
-          if (isPast)              cls += ` ${styles.past}`
-          if (isToday && !rstate)  cls += ` ${styles.todayCell}`
-          if (isSel)               cls += ` ${styles.selected}`
-          if (hasOrd)              cls += ` ${styles.hasOrders}`
-          if (rstate === 'start')  cls += ` ${styles.rangeStart}`
-          if (rstate === 'mid')    cls += ` ${styles.rangeMid}`
-          if (rstate === 'end')    cls += ` ${styles.rangeEnd}`
-
+          if (isPast)   cls += ` ${styles.past}`
+          if (isToday)  cls += ` ${styles.todayCell}`
+          if (isSel)    cls += ` ${styles.selected}`
+          if (hasOrd)   cls += ` ${styles.hasOrders}`
           return (
-            <div
-              key={ds}
-              className={cls}
-              onMouseEnter={() => rangeStart && setHoverDate(ds)}
-              onMouseLeave={() => rangeStart && setHoverDate(null)}
-              onClick={() => !isPast && onSelect(ds)}
-            >
+            <div key={ds} className={cls} onClick={() => !isPast && onSelect(ds)}>
               {dt.getDate()}
             </div>
           )
         })}
       </div>
-      {hintLabel && <div className={styles.hint}>{hintLabel}</div>}
     </div>
   )
 }

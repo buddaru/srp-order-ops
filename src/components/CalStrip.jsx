@@ -1,177 +1,110 @@
 import { useState, useRef, useEffect } from 'react'
 import { toDS, today, daysFromNow, diffDays, fmtDate, STRIP_DAYS } from '../utils/helpers'
-import CalendarPopup from './CalendarPopup'
 import styles from './CalStrip.module.css'
 
-export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect }) {
-  const [pendingStart, setPendingStart] = useState(null) // first click made, waiting for end
-  const [showCal, setShowCal]           = useState(false)
-  const calRef = useRef(null)
+const fmtRangeDate = (ds) => {
+  if (!ds) return ''
+  const d = new Date(ds + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
-  // Clear pending if range is cleared externally
+export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect }) {
+  const [startVal, setStartVal] = useState('')
+  const [endVal, setEndVal]     = useState('')
+  const [err, setErr]           = useState('')
+
   useEffect(() => {
-    if (!dateRange) setPendingStart(null)
+    if (!dateRange) { setStartVal(''); setEndVal(''); setErr('') }
   }, [dateRange])
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (calRef.current && !calRef.current.contains(e.target)) setShowCal(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
   const orderDates = new Set(orders.map(o => o.pickupDate))
-
   const inWindowCount = orders.filter(o => {
     const d = diffDays(o.pickupDate)
     return d >= 0 && d <= STRIP_DAYS - 1
   }).length
 
-  // ── Strip day click logic ──
-  const handleDayClick = (ds) => {
-    if (dateRange) {
-      // Range active — start fresh
-      setPendingStart(ds)
-      onRangeSelect(null)
-      onSelectDay(ds, false)
-      return
-    }
-    if (!pendingStart) {
-      // First click — set pending start, also show as selected
-      setPendingStart(ds)
-      onSelectDay(ds, false)
-    } else if (pendingStart === ds) {
-      // Clicked same day — cancel pending
-      setPendingStart(null)
-      onSelectDay(ds, false)
-    } else {
-      // Second click — complete the range
-      const start = pendingStart < ds ? pendingStart : ds
-      const end   = pendingStart < ds ? ds : pendingStart
-      setPendingStart(null)
-      onRangeSelect({ start, end })
-    }
+  const handleApply = () => {
+    setErr('')
+    if (!startVal || !endVal) { setErr('Enter both dates'); return }
+    if (startVal > endVal)    { setErr('Start must be before end'); return }
+    onRangeSelect({ start: startVal, end: endVal })
   }
 
-  // ── Calendar pick (used as end date when pendingStart set, or single browse) ──
-  const handleCalPick = (ds) => {
-    setShowCal(false)
-    if (pendingStart) {
-      const start = pendingStart < ds ? pendingStart : ds
-      const end   = pendingStart < ds ? ds : pendingStart
-      setPendingStart(null)
-      onRangeSelect({ start, end })
-    } else {
-      onSelectDay(ds, true)
-    }
-  }
-
-  const handleAllClick = () => {
-    setPendingStart(null)
+  const handleClear = () => {
+    setStartVal(''); setEndVal(''); setErr('')
     onRangeSelect(null)
     onSelectDay('all', false)
   }
 
-  const handleClearRange = () => {
-    setPendingStart(null)
-    onRangeSelect(null)
-    onSelectDay('all', false)
+  const handleTabClick = (ds, isCustom) => {
+    if (dateRange) handleClear()
+    onSelectDay(ds, isCustom)
   }
 
-  // ── Tab styling helpers ──
-  const getTabState = (ds) => {
-    if (dateRange) {
-      if (ds === dateRange.start) return 'rangeStart'
-      if (ds === dateRange.end)   return 'rangeEnd'
-      if (ds > dateRange.start && ds < dateRange.end) return 'rangeMid'
-    }
-    if (pendingStart === ds) return 'pendingStart'
-    if (!dateRange && !pendingStart && selectedDay === ds && !customDateSelected) return 'single'
-    return 'normal'
-  }
-
-  const tabCls = (state) => {
-    if (state === 'rangeStart')   return `${styles.tab} ${styles.tabRangeStart}`
-    if (state === 'rangeEnd')     return `${styles.tab} ${styles.tabRangeEnd}`
-    if (state === 'rangeMid')     return `${styles.tab} ${styles.tabRangeMid}`
-    if (state === 'pendingStart') return `${styles.tab} ${styles.tabPending}`
-    if (state === 'single')       return `${styles.tab} ${styles.active}`
-    return styles.tab
-  }
-
-  // Browse button label
-  const browseBtnLabel = pendingStart
-    ? 'Pick end date →'
-    : customDateSelected && !dateRange && selectedDay !== 'all'
-      ? fmtDate(selectedDay)
-      : 'Browse'
-
-  const browseBtnCls = pendingStart
-    ? `${styles.browseBtn} ${styles.browseBtnPicking}`
-    : customDateSelected && !dateRange
-      ? `${styles.browseBtn} ${styles.browseBtnActive}`
-      : styles.browseBtn
-
-  // Range label for clear pill
-  const rangeLabel = dateRange ? (() => {
-    const fmt = ds => {
-      const d = new Date(ds + 'T00:00:00')
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }
-    return `✕ ${fmt(dateRange.start)} – ${fmt(dateRange.end)}`
-  })() : null
+  const bothFilled = startVal && endVal
 
   return (
     <div className={styles.strip}>
-      {/* All tab */}
-      <div
-        className={`${styles.tab} ${styles.allTab} ${!dateRange && !pendingStart && selectedDay === 'all' && !customDateSelected ? styles.active : ''}`}
-        onClick={handleAllClick}
-      >
-        <div className={styles.tabLabel}>All</div>
-        <div className={styles.tabDate}>All</div>
-        <div className={styles.tabCount}>{inWindowCount}</div>
+      {/* ── Day tabs ── */}
+      <div className={`${styles.tabs} ${dateRange ? styles.tabsDimmed : ''}`}>
+        <div
+          className={`${styles.tab} ${styles.allTab} ${!dateRange && selectedDay === 'all' && !customDateSelected ? styles.active : ''}`}
+          onClick={() => handleTabClick('all', false)}
+        >
+          <div className={styles.tabLabel}>All</div>
+          <div className={styles.tabDate}>All</div>
+          <div className={styles.tabCount}>{inWindowCount}</div>
+        </div>
+
+        <div className={styles.divider} />
+
+        {Array.from({ length: STRIP_DAYS }, (_, i) => {
+          const d   = daysFromNow(i)
+          const ds  = toDS(d)
+          const n   = orders.filter(o => o.pickupDate === ds).length
+          const lbl = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })
+          const isActive = !dateRange && selectedDay === ds && !customDateSelected
+          return (
+            <div key={ds} className={`${styles.tab} ${isActive ? styles.active : ''}`} onClick={() => handleTabClick(ds, false)}>
+              <div className={styles.tabLabel}>{lbl}</div>
+              <div className={styles.tabDate}>{d.getDate()}</div>
+              <div className={styles.tabCount}>{n}</div>
+            </div>
+          )
+        })}
       </div>
 
-      <div className={styles.divider} />
+      {/* ── Range section ── */}
+      <div className={`${styles.rangeSection} ${dateRange ? styles.rangeSectionActive : ''}`}>
+        <span className={styles.rangeLabel}>Range</span>
 
-      {/* 10-day tabs */}
-      {Array.from({ length: STRIP_DAYS }, (_, i) => {
-        const d   = daysFromNow(i)
-        const ds  = toDS(d)
-        const n   = orders.filter(o => o.pickupDate === ds).length
-        const lbl = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })
-        const state = getTabState(ds)
-        return (
-          <div key={ds} className={tabCls(state)} onClick={() => handleDayClick(ds)}>
-            <div className={styles.tabLabel}>{lbl}</div>
-            <div className={styles.tabDate}>{d.getDate()}</div>
-            <div className={styles.tabCount}>{n}</div>
-          </div>
-        )
-      })}
-
-      {/* Browse / Clear pill */}
-      <div className={styles.end} ref={calRef}>
-        {dateRange
-          ? <button className={styles.clearPill} onClick={handleClearRange}>{rangeLabel}</button>
-          : (
-            <button className={browseBtnCls} onClick={() => setShowCal(v => !v)}>
-              📅 <span>{browseBtnLabel}</span>
-            </button>
-          )
-        }
-        {showCal && (
-          <div className={styles.calWrap}>
-            <CalendarPopup
-              selectedDate={pendingStart || (customDateSelected ? selectedDay : null)}
-              rangeStart={pendingStart}
-              allowPast={true}
-              orderDates={orderDates}
-              onSelect={handleCalPick}
+        {dateRange ? (
+          <>
+            <span className={styles.activeRangeText}>
+              {fmtRangeDate(dateRange.start)} – {fmtRangeDate(dateRange.end)}
+            </span>
+            <button className={styles.clearBtn} onClick={handleClear} title="Clear range">✕</button>
+          </>
+        ) : (
+          <>
+            <input
+              type="date"
+              className={`${styles.dateInput} ${startVal ? styles.dateInputFilled : ''}`}
+              value={startVal}
+              onChange={e => { setStartVal(e.target.value); setErr('') }}
             />
-          </div>
+            <span className={styles.rangeArrow}>→</span>
+            <input
+              type="date"
+              className={`${styles.dateInput} ${endVal ? styles.dateInputFilled : ''}`}
+              value={endVal}
+              onChange={e => { setEndVal(e.target.value); setErr('') }}
+            />
+            {bothFilled && (
+              <button className={styles.applyBtn} onClick={handleApply}>Apply</button>
+            )}
+            {err && <span className={styles.rangeErr}>{err}</span>}
+          </>
         )}
       </div>
     </div>

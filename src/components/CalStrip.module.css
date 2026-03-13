@@ -1,7 +1,6 @@
 .strip {
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px 0 24px;
   display: flex;
   align-items: stretch;
   position: sticky;
@@ -10,128 +9,135 @@
   overflow: visible;
 }
 
-/* ── Base tab ── */
+/* ── Tabs area ── */
+.tabs {
+  display: flex;
+  align-items: stretch;
+  padding: 0 8px 0 16px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+.tabsDimmed { opacity: 0.45; pointer-events: none; }
+
 .tab {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 18px;
+  padding: 10px 16px;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: background 0.12s;
-  min-width: 66px;
+  min-width: 62px;
   gap: 2px;
   user-select: none;
 }
 .tab:hover { background: var(--bg); }
-
-.tabLabel { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); }
-.tabDate  { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.1; }
-.tabCount { font-size: 10px; color: var(--text-muted); }
-
-/* ── Single selected ── */
 .active { border-bottom-color: var(--brand); background: rgba(107,20,20,0.04); }
 .active .tabLabel,
 .active .tabDate  { color: var(--brand); }
 .active .tabCount { color: var(--brand-light); font-weight: 600; }
 
-/* ── Pending start (first click, waiting for end) ── */
-.tabPending { background: var(--brand); border-radius: 8px 8px 0 0; }
-.tabPending .tabLabel,
-.tabPending .tabDate,
-.tabPending .tabCount { color: #fff; }
-.tabPending:hover { background: var(--brand-light); }
-
-/* ── Range start ── */
-.tabRangeStart { background: var(--brand); border-radius: 8px 0 0 0; }
-.tabRangeStart .tabLabel,
-.tabRangeStart .tabDate,
-.tabRangeStart .tabCount { color: #fff; }
-.tabRangeStart:hover { background: var(--brand-light); }
-
-/* ── Range middle ── */
-.tabRangeMid { background: rgba(107,20,20,0.08); }
-.tabRangeMid .tabLabel,
-.tabRangeMid .tabDate  { color: var(--brand); }
-.tabRangeMid:hover { background: rgba(107,20,20,0.14); }
-
-/* ── Range end ── */
-.tabRangeEnd { background: var(--brand); border-radius: 0 8px 0 0; }
-.tabRangeEnd .tabLabel,
-.tabRangeEnd .tabDate,
-.tabRangeEnd .tabCount { color: #fff; }
-.tabRangeEnd:hover { background: var(--brand-light); }
-
-/* ── All tab ── */
+.tabLabel { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); }
+.tabDate  { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.1; }
+.tabCount { font-size: 10px; color: var(--text-muted); }
 .allTab .tabDate { font-size: 13px; font-weight: 600; padding: 2px 0; }
 
-/* ── Divider ── */
 .divider { width: 1px; background: var(--border); margin: 10px 4px; flex-shrink: 0; }
 
-/* ── End section ── */
-.end {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  flex-shrink: 0;
-  position: relative;
-  gap: 8px;
-}
-
-/* ── Browse button ── */
-.browseBtn {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-muted);
-  font-family: 'Proxima Nova', 'Nunito', sans-serif;
-  font-weight: 500;
-  transition: all 0.15s;
+/* ── Range section ── */
+.rangeSection {
   display: flex;
   align-items: center;
   gap: 6px;
-  white-space: nowrap;
+  padding: 0 16px;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: background 0.15s;
 }
-.browseBtn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
-.browseBtnActive { background: rgba(107,20,20,0.06); border-color: var(--brand); color: var(--brand); }
-.browseBtnPicking {
-  background: rgba(107,20,20,0.06);
-  border-color: var(--brand);
-  color: var(--brand);
-  font-weight: 600;
-  animation: pulse 1.6s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.65; }
+.rangeSectionActive {
+  background: rgba(107,20,20,0.03);
 }
 
-/* ── Clear range pill ── */
-.clearPill {
-  background: rgba(107,20,20,0.07);
-  border: 1px solid rgba(107,20,20,0.2);
-  color: var(--brand);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 500;
+.rangeLabel {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+/* date inputs */
+.dateInput {
+  width: 118px !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
+  padding: 3px 2px !important;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+  outline: none !important;
+}
+.dateInput:focus {
+  border-bottom-color: var(--accent) !important;
+  color: var(--text) !important;
+}
+.dateInputFilled {
+  color: var(--brand) !important;
+  border-bottom-color: var(--brand) !important;
+  font-weight: 600 !important;
+}
+
+.rangeArrow { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+.applyBtn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   font-family: 'Proxima Nova', 'Nunito', sans-serif;
-  transition: all 0.15s;
+  transition: background 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.applyBtn:hover { background: var(--brand-light); }
+
+.rangeErr {
+  font-size: 10px;
+  color: #DC2626;
   white-space: nowrap;
 }
-.clearPill:hover { background: rgba(107,20,20,0.13); }
 
-/* ── Calendar popover ── */
-.calWrap {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 9999;
+/* active state */
+.activeRangeText {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  white-space: nowrap;
 }
+.clearBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.clearBtn:hover { background: var(--bg); color: var(--text); }
