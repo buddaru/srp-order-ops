@@ -139,10 +139,28 @@ export default function App() {
     const o = orders.find(x => x.id === id)
     if (!o) return
     const msg = o.stage === 'ready' ? READY_SMS(o.customer) : PICKEDUP_SMS(o.customer)
-    const notifs = [...o.notifications, `📱 SMS sent: "${msg.substring(0,55)}…"`]
+
+    // Optimistically update UI
+    const notifs = [...o.notifications, `📱 SMS sent to ${o.phone || 'customer'}`]
     setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
     await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
-    showToast({ label: '📱 SMS sent', customer: o.customer, msg })
+
+    // Send real SMS via serverless function
+    try {
+      const res = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: o.phone, message: msg }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast({ label: '⚠️ SMS failed', customer: o.customer, msg: data.error || 'Could not send SMS.' })
+      } else {
+        showToast({ label: '📱 SMS sent!', customer: o.customer, msg: msg.substring(0, 80) })
+      }
+    } catch (err) {
+      showToast({ label: '⚠️ SMS error', customer: o.customer, msg: 'Network error — SMS not sent.' })
+    }
   }
 
   // ── Delete ──
