@@ -141,3 +141,38 @@
   flex-shrink: 0;
 }
 .clearBtn:hover { background: var(--bg); color: var(--text); }
+
+/* ── Browse button ── */
+.browseWrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.browseBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: 'Proxima Nova', 'Nunito', sans-serif;
+  font-weight: 500;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.browseBtn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+.browseBtnActive { background: rgba(107,20,20,0.06); border-color: var(--brand); color: var(--brand); }
+.browseDateLabel { font-size: 11px; font-weight: 600; }
+.calWrap {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 9999;
+}

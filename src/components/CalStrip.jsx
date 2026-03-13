@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { toDS, today, daysFromNow, diffDays, fmtDate, STRIP_DAYS } from '../utils/helpers'
+import CalendarPopup from './CalendarPopup'
 import styles from './CalStrip.module.css'
 
 const fmtRangeDate = (ds) => {
@@ -12,10 +13,20 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
   const [startVal, setStartVal] = useState('')
   const [endVal, setEndVal]     = useState('')
   const [err, setErr]           = useState('')
+  const [showCal, setShowCal]   = useState(false)
+  const calRef = useRef(null)
 
   useEffect(() => {
     if (!dateRange) { setStartVal(''); setEndVal(''); setErr('') }
   }, [dateRange])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (calRef.current && !calRef.current.contains(e.target)) setShowCal(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const orderDates = new Set(orders.map(o => o.pickupDate))
   const inWindowCount = orders.filter(o => {
@@ -34,6 +45,12 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     setStartVal(''); setEndVal(''); setErr('')
     onRangeSelect(null)
     onSelectDay('all', false)
+  }
+
+  const handleCalSelect = (ds) => {
+    setShowCal(false)
+    if (dateRange) handleClear()
+    onSelectDay(ds, true)
   }
 
   const handleTabClick = (ds, isCustom) => {
@@ -105,6 +122,27 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
             )}
             {err && <span className={styles.rangeErr}>{err}</span>}
           </>
+        )}
+      </div>
+      {/* ── Browse button ── */}
+      <div className={styles.browseWrap} ref={calRef}>
+        <button
+          className={`${styles.browseBtn} ${customDateSelected && !dateRange ? styles.browseBtnActive : ''}`}
+          onClick={() => setShowCal(v => !v)}
+          title="Browse calendar"
+        >
+          📅
+          {customDateSelected && !dateRange && <span className={styles.browseDateLabel}>{fmtRangeDate(selectedDay)}</span>}
+        </button>
+        {showCal && (
+          <div className={styles.calWrap}>
+            <CalendarPopup
+              selectedDate={customDateSelected && !dateRange ? selectedDay : null}
+              allowPast={true}
+              orderDates={new Set(orders.map(o => o.pickupDate))}
+              onSelect={handleCalSelect}
+            />
+          </div>
         )}
       </div>
     </div>
