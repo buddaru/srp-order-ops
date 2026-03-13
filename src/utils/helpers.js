@@ -10,7 +10,7 @@ export const daysFromNow = (n) => {
   return d
 }
 
-export const toDS = (d) => d.toISOString().split('T')[0]
+export const toDS = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 export const toTS = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
 export const parseDate = (s) => { const d=new Date(s+'T00:00:00'); d.setHours(0,0,0,0); return d }
 export const diffDays = (ds) => Math.round((parseDate(ds)-today)/86400000)
@@ -29,11 +29,6 @@ export const dueBadge = (order) => {
   return { cls: 'future', label: `${fmtDate(order.pickupDate)} · ${fmtTime(order.pickupTime)}` }
 }
 
-export const fakeTime = (i, total) => {
-  const b = new Date(); b.setHours(8,0,0,0)
-  b.setMinutes(b.getMinutes()+Math.floor((i/Math.max(total-1,1))*300))
-  return b.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
-}
 
 export const STAGES = [
   { id: 'received',      label: 'Received' },
