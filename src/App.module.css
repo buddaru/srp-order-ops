@@ -1,5 +1,5 @@
 .app { min-height: 100vh; display: flex; flex-direction: column; }
-.boardWrapper { padding: 20px 24px; overflow-x: auto; flex: 1; }
+.boardWrapper { padding: 20px 28px; overflow-x: auto; flex: 1; }
 .drawerBackdrop { position: fixed; inset: 0; z-index: 140; }
 
 .loadingScreen {
@@ -52,30 +52,32 @@
   gap: 0;
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 28px;
+  position: sticky;
+  top: 120px;
+  z-index: 149;
 }
 .navItem {
-  padding: 12px 18px;
-  font-size: 13px;
+  padding: 11px 18px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s;
+  transition: color 0.12s;
+  letter-spacing: 0.02em;
+  font-family: 'DM Sans', sans-serif;
 }
-.navItem:hover { color: var(--text); }
+.navItem:hover { color: var(--text-2); }
 .navActive {
-  padding: 12px 18px;
-  font-size: 13px;
+  padding: 11px 18px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--brand);
   text-decoration: none;
   border-bottom: 2px solid var(--brand);
-}
-
-@media (max-width: 640px) {
-  .mainNav { padding: 0 16px; }
-  .navItem, .navActive { padding: 10px 14px; font-size: 12px; }
+  letter-spacing: 0.02em;
+  font-family: 'DM Sans', sans-serif;
 }
 
 /* ── Mobile ── */

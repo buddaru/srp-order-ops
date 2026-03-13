@@ -4,22 +4,22 @@
   display: flex;
   align-items: stretch;
   position: sticky;
-  top: 62px;
+  top: 64px;
   z-index: 150;
   overflow: visible;
 }
 
-/* ── Tabs area ── */
+/* ── Tabs ── */
 .tabs {
   display: flex;
   align-items: stretch;
-  padding: 0 8px 0 16px;
+  padding: 0 6px 0 14px;
   flex: 1;
   min-width: 0;
   overflow: visible;
   transition: opacity 0.2s;
 }
-.tabsDimmed { opacity: 0.45; pointer-events: none; }
+.tabsDimmed { opacity: 0.4; pointer-events: none; }
 
 .tab {
   flex-shrink: 0;
@@ -27,104 +27,106 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
+  padding: 9px 14px;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   transition: background 0.12s;
-  min-width: 62px;
-  gap: 2px;
+  min-width: 58px;
+  gap: 1px;
   user-select: none;
 }
 .tab:hover { background: var(--bg); }
-.active { border-bottom-color: var(--brand); background: rgba(107,20,20,0.04); }
+.active {
+  border-bottom-color: var(--brand);
+  background: var(--brand-faint);
+}
 .active .tabLabel,
 .active .tabDate  { color: var(--brand); }
-.active .tabCount { color: var(--brand-light); font-weight: 600; }
+.active .tabCount { color: var(--brand); opacity: 0.7; }
 
-.tabLabel { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); }
-.tabDate  { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.1; }
-.tabCount { font-size: 10px; color: var(--text-muted); }
-.allTab .tabDate { font-size: 13px; font-weight: 600; padding: 2px 0; }
+.tabLabel {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+}
+.tabDate  { font-size: 19px; font-weight: 400; color: var(--text); line-height: 1.15; }
+.tabCount { font-size: 9px; color: var(--text-muted); }
+.allTab .tabDate { font-size: 12px; font-weight: 600; padding: 2px 0; }
 
-.divider { width: 1px; background: var(--border); margin: 10px 4px; flex-shrink: 0; }
+.divider { width: 1px; background: var(--border); margin: 10px 3px; flex-shrink: 0; }
 
 /* ── Range section ── */
 .rangeSection {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-left: 1px solid var(--border);
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.rangeSectionActive {
-  background: rgba(107,20,20,0.03);
-}
+.rangeSectionActive { background: var(--brand-faint); }
 
 .rangeLabel {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   flex-shrink: 0;
   margin-right: 2px;
+  font-family: 'DM Sans', sans-serif;
 }
-
-/* date inputs */
 .dateInput {
-  width: 118px !important;
+  width: 116px !important;
   border: none !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border-2) !important;
   border-radius: 0 !important;
   background: transparent !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
   color: var(--text-muted) !important;
   padding: 3px 2px !important;
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
   outline: none !important;
+  box-shadow: none !important;
 }
 .dateInput:focus {
   border-bottom-color: var(--accent) !important;
   color: var(--text) !important;
+  box-shadow: none !important;
 }
 .dateInputFilled {
   color: var(--brand) !important;
   border-bottom-color: var(--brand) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
-
 .rangeArrow { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-
 .applyBtn {
   background: var(--brand);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 11px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  font-family: 'Proxima Nova', 'Nunito', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   transition: background 0.12s;
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 .applyBtn:hover { background: var(--brand-light); }
+.rangeErr { font-size: 10px; color: #DC2626; white-space: nowrap; }
 
-.rangeErr {
-  font-size: 10px;
-  color: #DC2626;
-  white-space: nowrap;
-}
-
-/* active state */
 .activeRangeText {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--brand);
   white-space: nowrap;
 }
@@ -132,7 +134,7 @@
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   padding: 2px 5px;
   border-radius: 4px;
@@ -142,7 +144,7 @@
 }
 .clearBtn:hover { background: var(--bg); color: var(--text); }
 
-/* ── Browse button ── */
+/* ── Browse ── */
 .browseWrap {
   display: flex;
   align-items: center;
@@ -150,26 +152,27 @@
   padding-left: 8px;
   border-left: 1px solid var(--border);
   flex-shrink: 0;
+  padding-right: 14px;
 }
 .browseBtn {
   background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
   padding: 5px 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
-  font-family: 'Proxima Nova', 'Nunito', sans-serif;
-  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
   transition: all 0.15s;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   white-space: nowrap;
 }
-.browseBtn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
-.browseBtnActive { background: rgba(107,20,20,0.06); border-color: var(--brand); color: var(--brand); }
-.browseDateLabel { font-size: 11px; font-weight: 600; }
+.browseBtn:hover { background: var(--bg); border-color: var(--border-2); color: var(--text-2); }
+.browseBtnActive { background: var(--brand-faint); border-color: rgba(107,20,20,0.2); color: var(--brand); }
+.browseDateLabel { font-size: 11px; font-weight: 500; }
 .calWrap {
   position: absolute;
   top: calc(100% + 8px);
@@ -179,16 +182,18 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
+  .strip { flex-wrap: wrap; overflow: visible; }
   .tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    flex-shrink: 0;
+    width: 100%;
+    padding: 0 4px 0 10px;
   }
   .tabs::-webkit-scrollbar { display: none; }
-  .tabs { padding: 0 4px 0 12px; flex-shrink: 0; }
-  .tab { padding: 8px 12px; min-width: 52px; }
-  .tabDate { font-size: 17px; }
-  .tabLabel { font-size: 9px; }
+  .tab { padding: 8px 11px; min-width: 50px; }
+  .tabDate { font-size: 16px; }
   .rangeSection {
     border-left: none;
     border-top: 1px solid var(--border);
@@ -196,17 +201,7 @@
     padding: 7px 12px;
     flex-shrink: 0;
   }
-  .strip {
-    flex-wrap: wrap;
-  }
-  .browseWrap { padding-left: 6px; margin-right: 8px; flex-shrink: 0; }
-  .browseBtn { padding: 5px 8px; font-size: 12px; }
-}
-
-/* ── Calendar popup mobile anchor ── */
-@media (max-width: 640px) {
-  .calWrap {
-    right: auto;
-    left: 0;
-  }
+  .browseWrap { padding-left: 6px; margin-right: 6px; flex-shrink: 0; }
+  .browseBtn { padding: 5px 8px; font-size: 11px; }
+  .calWrap { right: auto; left: 0; }
 }
