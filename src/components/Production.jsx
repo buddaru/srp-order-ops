@@ -95,6 +95,45 @@ export default function Production() {
     await supabase.from('production').delete().eq('id', id)
   }
 
+  // ── Template ──
+  const handleSaveTemplate = async () => {
+    if (items.length === 0) return
+    // Clear existing template
+    await supabase.from('production_template').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    // Save current items as template
+    const templateItems = items.map((item, i) => ({
+      item_name: item.item_name,
+      quantity: item.quantity,
+      category: item.category,
+      notes: item.notes,
+      sort_order: i,
+    }))
+    await supabase.from('production_template').insert(templateItems)
+    alert('Template saved! Load it any day with "Load Template".')
+  }
+
+  const handleLoadTemplate = async () => {
+    if (items.length > 0) {
+      const ok = window.confirm('This will add template items to today\'s list. Continue?')
+      if (!ok) return
+    }
+    const { data } = await supabase.from('production_template').select('*').order('sort_order')
+    if (!data || data.length === 0) {
+      alert('No template saved yet. Build your list and click "Save as Template" first.')
+      return
+    }
+    const toInsert = data.map(t => ({
+      date,
+      item_name: t.item_name,
+      quantity: t.quantity,
+      category: t.category,
+      notes: t.notes,
+      completed: false,
+    }))
+    const { data: inserted } = await supabase.from('production').insert(toInsert).select()
+    if (inserted) setItems(prev => [...prev, ...inserted])
+  }
+
   // Print
   const handlePrint = () => window.print()
 
@@ -118,6 +157,8 @@ export default function Production() {
         <div className={styles.title}>Daily Production List</div>
         <div className={styles.headerRight}>
           <button className={styles.printBtn} onClick={handlePrint}>🖨 Print</button>
+          <button className={styles.templateBtn} onClick={handleLoadTemplate}>📋 Load Template</button>
+          <button className={styles.templateSaveBtn} onClick={handleSaveTemplate}>💾 Save as Template</button>
           <div className={styles.dateNav}>
             <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
             <span className={styles.dateLabel}>{fmtDisplayDate(date)}</span>
