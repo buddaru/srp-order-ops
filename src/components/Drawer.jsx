@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fmtDate, fmtTime, orderTotal, fmt$, fakeTime } from '../utils/helpers'
+import { fmtDate, fmtTime, orderTotal, fmt$ } from '../utils/helpers'
 import styles from './Drawer.module.css'
 
 export default function Drawer({ order, onClose, onSmsLog, showToast }) {
@@ -7,6 +7,13 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   const [sent, setSent] = useState(false)
 
   if (!order) return null
+
+  const fakeNotifTime = (i) => {
+    const base = new Date(order.createdAt || Date.now())
+    base.setMinutes(base.getMinutes() + i * 15)
+    return base.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' · ' +
+      base.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true })
+  }
   const total = orderTotal(order)
 
   const sendSms = () => {
@@ -69,7 +76,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
                 <div className={styles.notifDot} />
                 <div>
                   <div className={styles.notifText}>{n}</div>
-                  <div className={styles.notifTime}>{fakeTime(i, order.notifications.length)}</div>
+                  <div className={styles.notifTime}>{fakeNotifTime(i)}</div>
                 </div>
               </div>
             ))

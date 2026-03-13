@@ -39,6 +39,7 @@ export default function Production() {
   const [newCat, setNewCat]       = useState('')
   const [newNotes, setNewNotes]   = useState('')
   const [showForm, setShowForm]   = useState(false)
+  const [editingItem, setEditingItem] = useState(null) // {id, item_name, quantity, category, notes}
   const noteTimer = useRef(null)
 
   // Load items + note for selected date
@@ -93,6 +94,19 @@ export default function Production() {
   const handleDelete = async (id) => {
     setItems(prev => prev.filter(i => i.id !== id))
     await supabase.from('production').delete().eq('id', id)
+  }
+
+  // ── Edit item ──
+  const handleEditItem = (item) => {
+    setEditingItem({ id: item.id, item_name: item.item_name, quantity: item.quantity, category: item.category, notes: item.notes || '' })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingItem || !editingItem.item_name.trim() || !editingItem.quantity.trim()) return
+    const { id, item_name, quantity, category, notes } = editingItem
+    setItems(prev => prev.map(i => i.id === id ? { ...i, item_name, quantity, category, notes } : i))
+    setEditingItem(null)
+    await supabase.from('production').update({ item_name, quantity, category, notes }).eq('id', id)
   }
 
   // ── Template ──
@@ -206,20 +220,40 @@ export default function Production() {
           <div>No items yet for this day.</div>
           <button className={styles.addFirstBtn} onClick={() => setShowForm(true)}>+ Add first item</button>
         </div>
-      ) : (
+      ) : total === 0 ? null : (
         Object.entries(grouped).map(([cat, catItems]) => (
           <div key={cat} className={styles.group}>
             <div className={styles.sectionLabel}>{cat}</div>
             {catItems.map(item => (
-              <div key={item.id} className={`${styles.itemCard} ${item.completed ? styles.done : ''}`}>
-                <button className={`${styles.check} ${item.completed ? styles.checked : ''}`} onClick={() => handleToggle(item.id, item.completed)} />
-                <div className={styles.itemBody}>
-                  <div className={styles.itemName}>{item.item_name}</div>
-                  {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+              <div key={item.id}>
+              {editingItem?.id === item.id ? (
+                <div className={styles.editForm}>
+                  <div className={styles.formRow}>
+                    <input className={styles.input} value={editingItem.item_name} onChange={e=>setEditingItem(p=>({...p,item_name:e.target.value}))} placeholder="Item name" />
+                    <input className={styles.inputSm} value={editingItem.quantity} onChange={e=>setEditingItem(p=>({...p,quantity:e.target.value}))} placeholder="Qty" />
+                  </div>
+                  <div className={styles.formRow}>
+                    <input className={styles.input} value={editingItem.category} onChange={e=>setEditingItem(p=>({...p,category:e.target.value}))} placeholder="Category" />
+                    <input className={styles.input} value={editingItem.notes} onChange={e=>setEditingItem(p=>({...p,notes:e.target.value}))} placeholder="Notes" />
+                  </div>
+                  <div className={styles.formActions}>
+                    <button className={styles.cancelBtn} onClick={() => setEditingItem(null)}>Cancel</button>
+                    <button className={styles.saveBtn} onClick={handleSaveEdit}>Save</button>
+                  </div>
                 </div>
-                <div className={styles.itemQty}>{item.quantity}</div>
-                <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
-              </div>
+              ) : (
+                <div className={`${styles.itemCard} ${item.completed ? styles.done : ''}`}>
+                  <button className={`${styles.check} ${item.completed ? styles.checked : ''}`} onClick={() => handleToggle(item.id, item.completed)} />
+                  <div className={styles.itemBody}>
+                    <div className={styles.itemName}>{item.item_name}</div>
+                    {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+                  </div>
+                  <div className={styles.itemQty}>{item.quantity}</div>
+                  <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
+                  <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
+                </div>
+              )}
+            </div>
             ))}
           </div>
         ))

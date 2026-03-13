@@ -25,9 +25,14 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
     return () => clearInterval(t)
   }, [])
 
-  // Counts
-  const todayDS    = toDS(new Date())
-  const tomorrowDS = toDS((() => { const d=new Date(); d.setDate(d.getDate()+1); return d })())
+  // Counts — use local date to avoid timezone issues
+  const localDS = (offset = 0) => {
+    const d = new Date()
+    d.setDate(d.getDate() + offset)
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+  const todayDS    = localDS(0)
+  const tomorrowDS = localDS(1)
   const todayCount    = orders.filter(o => o.pickupDate === todayDS && o.stage !== 'picked-up').length
   const tomorrowCount = orders.filter(o => o.pickupDate === tomorrowDS && o.stage !== 'picked-up').length
   const readyCount    = orders.filter(o => o.stage === 'ready').length
@@ -107,12 +112,12 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
         <div className={styles.counters}>
           <div className={styles.counter}>
             <span className={styles.counterNum}>{todayCount}</span>
-            <span className={styles.counterLabel}>Today</span>
+            <span className={styles.counterLabel}>Orders Due Today</span>
           </div>
           <div className={styles.counterDivider} />
           <div className={styles.counter}>
             <span className={styles.counterNum}>{tomorrowCount}</span>
-            <span className={styles.counterLabel}>Tomorrow</span>
+            <span className={styles.counterLabel}>Orders Due Tomorrow</span>
           </div>
           <div className={styles.counterDivider} />
           <div className={styles.counter}>
