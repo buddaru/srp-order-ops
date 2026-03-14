@@ -357,20 +357,20 @@ export default function Waste() {
             <div className={styles.summaryTotal}>
               {fmt$(totalCost)}
               <span className={styles.summaryUnit}>total waste</span>
+              {topReason && (
+                <span className={styles.summaryTopReason}>
+                  <span className={styles.summaryTopLabel}>Top reason</span>
+                  <span className={styles.summaryTopVal} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
+                    {topReason.reason}
+                  </span>
+                  <span className={styles.summaryTopCount}>· {topReason.count}×</span>
+                </span>
+              )}
             </div>
             <div className={styles.summarySub}>
               <b>{filtered.length} {filtered.length === 1 ? 'item' : 'items'}</b> logged · {getPeriodLabel(period, anchor)}
             </div>
           </div>
-          {topReason && (
-            <div className={styles.summaryTopReason}>
-              <div className={styles.summaryTopLabel}>Top reason</div>
-              <div className={styles.summaryTopVal} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
-                {topReason.reason}
-              </div>
-              <div className={styles.summaryTopCount}>{topReason.count} {topReason.count === 1 ? 'time' : 'times'}</div>
-            </div>
-          )}
         </div>
       </div>
 

@@ -5,9 +5,9 @@
 :root {
   --bg:           #F7F3EE;
   --bg-2:         #EDE7DF;
-  --brand:        #6B1414;
-  --brand-light:  #8B2424;
-  --brand-faint:  rgba(107,20,20,0.06);
+  --brand:        #C4784A;
+  --brand-light:  #A85E34;
+  --brand-faint:  rgba(196,120,74,0.08);
   --accent:       #C4784A;
   --accent-light: #FCEEE4;
   --header-bg:    #B5D8E6;
