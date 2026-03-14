@@ -352,8 +352,8 @@ export default function Waste() {
 
       {/* Summary */}
       <div className={styles.summaryBlock}>
-        <div className={styles.summaryGrid}>
-          <div className={styles.totalCard}>
+        <div className={styles.summaryCard}>
+          <div>
             <div>
               <span className={styles.summaryTotal}>{fmt$(totalCost)}</span>
               <span className={styles.summaryUnit}>total waste</span>
@@ -363,13 +363,16 @@ export default function Waste() {
             </div>
           </div>
           {topReason && (
-            <div className={styles.reasonCard}>
-              <div className={styles.reasonCardLabel}>Top reason</div>
-              <div className={styles.reasonCardPill} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
-                {topReason.reason}
+            <>
+              <div className={styles.summaryDivider} />
+              <div className={styles.reasonSection}>
+                <div className={styles.reasonCardLabel}>Top reason</div>
+                <div className={styles.reasonCardPill} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
+                  {topReason.reason}
+                </div>
+                <div className={styles.reasonCardCount}>{topReason.count} {topReason.count === 1 ? 'time' : 'times'}</div>
               </div>
-              <div className={styles.reasonCardCount}>{topReason.count} {topReason.count === 1 ? 'time' : 'times'}</div>
-            </div>
+            </>
           )}
         </div>
       </div>
