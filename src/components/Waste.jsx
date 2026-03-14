@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './Waste.module.css'
 
@@ -250,7 +249,6 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 
 // ── Main page ──
 export default function Waste() {
-  const navigate = useNavigate()
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [period, setPeriod]       = useState('M')
@@ -317,10 +315,7 @@ export default function Waste() {
       {/* Header */}
       <div className={styles.topbar}>
         <div className={styles.pageTitle}>Food Waste Tracker</div>
-        <div style={{display:'flex',gap:'8px'}}>
-          <button className={styles.newOrderBtn} onClick={() => navigate('/?neworder=1')}>+ New Order</button>
-          <button className={styles.logBtn} onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
-        </div>
+        <button className={styles.logBtn} onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
       </div>
 
       {/* Period tabs */}

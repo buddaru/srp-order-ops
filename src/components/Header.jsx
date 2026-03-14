@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { STAGES, fmtDate, diffDays, fmtNow, toDS } from '../utils/helpers'
 import styles from './Header.module.css'
 
@@ -15,6 +16,16 @@ function highlight(str, q) {
 }
 
 export default function Header({ orders, onNewOrder, onJumpToOrder }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const handleNewOrder = () => {
+    if (location.pathname === '/') {
+      onNewOrder()
+    } else {
+      navigate('/?neworder=1')
+    }
+  }
   const [query, setQuery]   = useState('')
   const [showRes, setShowRes] = useState(false)
   const [datetime, setDatetime] = useState(fmtNow())
@@ -102,7 +113,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
         </div>
 
         <div className={styles.right}>
-<button className={styles.btnNew} onClick={onNewOrder}>+ New Order</button>
+<button className={styles.btnNew} onClick={handleNewOrder}>+ New Order</button>
         </div>
       </div>
 

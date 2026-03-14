@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { toDS } from '../utils/helpers'
 import styles from './Production.module.css'
@@ -27,7 +26,6 @@ const shiftDate = (ds, n) => {
 }
 
 export default function Production() {
-  const navigate = useNavigate()
   const [date, setDate]       = useState(todayDS())
   const [items, setItems]     = useState([])
   const [note, setNote]       = useState('')
@@ -172,7 +170,6 @@ export default function Production() {
       <div className={styles.header}>
         <div className={styles.title}>Daily Production List</div>
         <div className={styles.headerRight}>
-          <button className={styles.newOrderBtnProd} onClick={() => navigate('/?neworder=1')}>+ New Order</button>
           <button className={styles.printBtn} onClick={handlePrint}>🖨 Print</button>
           <button className={styles.templateBtn} onClick={handleLoadTemplate}>📋 Load Template</button>
           <button className={styles.templateSaveBtn} onClick={handleSaveTemplate}>💾 Save as Template</button>
