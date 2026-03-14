@@ -17,24 +17,14 @@ function CreateUserModal({ onClose, onCreated }) {
     setSaving(true)
     setError('')
     try {
-      // Sign up the user
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { data: { full_name: name.trim(), role } }
+      // Call our Vercel API endpoint which uses the service role key
+      const res = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role })
       })
-      if (authErr) throw authErr
-      if (!authData.user) throw new Error('User creation failed')
-
-      // Manually insert profile since trigger may not fire
-      const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: authData.user.id,
-        email: email.trim(),
-        full_name: name.trim(),
-        role,
-      })
-      if (profileErr) throw profileErr
-
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to create user')
       onCreated()
       onClose()
     } catch (err) {
