@@ -236,7 +236,7 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 export default function Waste() {
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
-  const [period, setPeriod]       = useState('M')
+  const [period, setPeriod]       = useState('D')
   const [anchor, setAnchor]       = useState(toDS(today()))
   const [sort, setSort]           = useState('date')
   const [showModal, setShowModal] = useState(false)
@@ -360,8 +360,7 @@ export default function Waste() {
                 <div className={`${styles.typeDot} ${e.type === 'prepared' ? styles.dotP : styles.dotU}`} />
                 <div>
                   <div className={styles.ename}>{e.item_name}</div>
-                  <div className={styles.emeta}>{e.qty}{e.unit ? ` ${e.unit}` : ''}</div>
-                  <div className={styles.entryTimestamp}>{fmtDate(e.logged_date)}{e.created_at ? ` · ${fmtTime(e.created_at)}` : ''}</div>
+                  <div className={styles.emeta}>{e.qty}{e.unit ? ` ${e.unit}` : ''} · {fmtDate(e.logged_date)}{e.created_at ? ` · ${fmtTime(e.created_at)}` : ''}</div>
                 </div>
               </div>
               <div className={styles.ecell}>{e.type === 'prepared' ? 'Prepared' : 'Unprepared'}</div>
