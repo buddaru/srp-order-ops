@@ -52,6 +52,7 @@
 .dotU { background: #D97706; }
 .ename { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .emeta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.entryTimestamp { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
 .ecell { font-size: 12px; color: var(--text-2); }
 .reasonPill { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #FAEEDA; color: #854F0B; white-space: nowrap; display: inline-block; }
 .ecost { font-size: 13px; font-weight: 600; color: var(--brand); }
