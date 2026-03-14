@@ -52,6 +52,7 @@
 .dotU { background: #D97706; }
 .ename { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .emeta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.entryTimestamp { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
 .ecell { font-size: 12px; color: var(--text-2); }
 .reasonPill { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #FAEEDA; color: #854F0B; white-space: nowrap; display: inline-block; }
 .ecost { font-size: 13px; font-weight: 600; color: var(--brand); }
@@ -124,4 +125,33 @@
   .pnLabel { min-width: 150px; font-size: 12px; padding: 8px 12px; }
   .modal { max-width: 100%; margin: 0; border-radius: 16px 16px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-height: 92vh; }
   .overlay { align-items: flex-end; padding: 0; }
+}
+
+/* ── Calendar icon picker ── */
+.calWrap { position: relative; display: flex; align-items: center; }
+.calIconBtn {
+  background: var(--card);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.calIconBtn:hover { background: var(--bg); }
+.calInput {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 300;
+  width: 160px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }

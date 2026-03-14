@@ -236,12 +236,13 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 export default function Waste() {
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
-  const [period, setPeriod]       = useState('D')
+  const [period, setPeriod]       = useState('M')
   const [anchor, setAnchor]       = useState(toDS(today()))
-  const [sort, setSort]           = useState('date')
+  const [sort, setSort]           = useState('newest')
   const [showModal, setShowModal] = useState(false)
   const [editEntry, setEditEntry] = useState(null)
   const [deleteId, setDeleteId]   = useState(null)
+  const [showCal, setShowCal]       = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -258,9 +259,10 @@ export default function Waste() {
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
-      if (sort === 'date') return new Date(b.created_at) - new Date(a.created_at)
-      if (sort === 'desc') return b.total_cost - a.total_cost
-      if (sort === 'asc')  return a.total_cost - b.total_cost
+      if (sort === 'newest') return new Date(b.created_at) - new Date(a.created_at)
+      if (sort === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
+      if (sort === 'desc')   return b.total_cost - a.total_cost
+      if (sort === 'asc')    return a.total_cost - b.total_cost
       return 0
     })
   }, [filtered, sort])
@@ -309,14 +311,19 @@ export default function Waste() {
           <button className={styles.pnArrow} onClick={() => setAnchor(stepAnchor(period, anchor, 1))}>›</button>
         </div>
         <button className={styles.todayBtn} onClick={() => setAnchor(toDS(today()))}>Today</button>
-        {period === 'D' && (
-          <input
-            type="date"
-            className={styles.datePick}
-            value={anchor}
-            onChange={e => e.target.value && setAnchor(e.target.value)}
-          />
-        )}
+        <div className={styles.calWrap}>
+          <button className={styles.calIconBtn} onClick={() => setShowCal(v => !v)} title="Pick a date">📅</button>
+          {showCal && (
+            <input
+              type="date"
+              className={styles.calInput}
+              value={anchor}
+              autoFocus
+              onChange={e => { if (e.target.value) { setAnchor(e.target.value); setShowCal(false) } }}
+              onBlur={() => setShowCal(false)}
+            />
+          )}
+        </div>
       </div>
 
       {/* Summary */}
@@ -334,7 +341,8 @@ export default function Waste() {
       <div className={styles.sortRow}>
         <div className={styles.sortLabel}>{sorted.length} {sorted.length === 1 ? 'entry' : 'entries'}</div>
         <div className={styles.sortBtns}>
-          <button className={`${styles.sortBtn} ${sort==='date'?styles.sortActive:''}`} onClick={()=>setSort('date')}>Date</button>
+          <button className={`${styles.sortBtn} ${sort==='newest'?styles.sortActive:''}`} onClick={()=>setSort('newest')}>Newest</button>
+          <button className={`${styles.sortBtn} ${sort==='oldest'?styles.sortActive:''}`} onClick={()=>setSort('oldest')}>Oldest</button>
           <button className={`${styles.sortBtn} ${sort==='desc'?styles.sortActive:''}`} onClick={()=>setSort('desc')}>Cost ↓</button>
           <button className={`${styles.sortBtn} ${sort==='asc' ?styles.sortActive:''}`} onClick={()=>setSort('asc')}>Cost ↑</button>
         </div>
@@ -360,7 +368,8 @@ export default function Waste() {
                 <div className={`${styles.typeDot} ${e.type === 'prepared' ? styles.dotP : styles.dotU}`} />
                 <div>
                   <div className={styles.ename}>{e.item_name}</div>
-                  <div className={styles.emeta}>{e.qty}{e.unit ? ` ${e.unit}` : ''} · {fmtDate(e.logged_date)}{e.created_at ? ` · ${fmtTime(e.created_at)}` : ''}</div>
+                  <div className={styles.emeta}>{e.qty}{e.unit ? ` ${e.unit}` : ''}</div>
+                  <div className={styles.entryTimestamp}>{fmtDate(e.logged_date)}{e.created_at ? ` · ${fmtTime(e.created_at)}` : ''}</div>
                 </div>
               </div>
               <div className={styles.ecell}>{e.type === 'prepared' ? 'Prepared' : 'Unprepared'}</div>
