@@ -130,3 +130,26 @@
   .overlay { align-items: flex-end; padding: 0; }
   .roleGrid { grid-template-columns: repeat(2,1fr); }
 }
+
+/* ── Employee panel ── */
+.empPanel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; }
+.empPanelHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.empPanelTitle { font-size: 13px; font-weight: 600; color: var(--text); }
+.empPanelEmpty { font-size: 13px; color: var(--text-muted); padding: 8px 0; }
+.empList { display: flex; flex-direction: column; gap: 8px; }
+.empListRow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); }
+.empActions { display: flex; gap: 5px; margin-left: auto; flex-shrink: 0; }
+.empMeta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.empRole { font-weight: 500; }
+
+/* ── Hour tallies ── */
+.calDayHours { font-size: 10px; font-weight: 600; color: var(--brand); background: var(--brand-faint); padding: 2px 8px 3px; text-align: center; letter-spacing: 0.04em; }
+.weekHoursBadge { font-size: 12px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 5px 12px; }
+.weekHoursBadge strong { color: var(--brand); }
+.listHours { font-size: 12px; font-weight: 500; color: var(--brand); }
+
+/* ── Three-col footer (delete + cancel + save) ── */
+.modalFooter3 { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; padding: 0 20px 18px; align-items: center; }
+
+/* ── No employees message ── */
+.noEmpMsg { font-size: 13px; color: var(--text-muted); background: var(--bg); border-radius: var(--radius-sm); padding: 14px; text-align: center; line-height: 1.5; }
