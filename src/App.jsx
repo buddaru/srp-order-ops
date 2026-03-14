@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom'
+import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { seedOrders } from './data/orders'
 import { STAGES, READY_SMS, PICKEDUP_SMS, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
@@ -75,6 +75,15 @@ export default function App() {
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Auto-open new order modal when navigated with ?neworder=1
+  useEffect(() => {
+    if (location.search.includes('neworder=1')) {
+      setShowNew(true)
+      navigate('/', { replace: true })
+    }
+  }, [location.search])
   const [toast, setToast]             = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [confirmPickup, setConfirmPickup] = useState(null)

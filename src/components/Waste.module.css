@@ -140,18 +140,40 @@
   transition: background 0.12s;
 }
 .calIconBtn:hover { background: var(--bg); }
+
+
+/* ── New Order button ── */
+.newOrderBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.newOrderBtn:hover { opacity: 0.88; }
+
+/* ── Summary row with top reason ── */
+.summaryRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.summaryTopReason { text-align: right; flex-shrink: 0; }
+.summaryTopLabel { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+.summaryTopVal { font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 4px; }
+.summaryTopCount { font-size: 11px; color: var(--text-muted); }
+
+/* ── Disabled forward arrow ── */
+.pnArrowDisabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Calendar input hidden but accessible ── */
 .calInput {
   position: absolute;
-  top: calc(100% + 6px);
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  top: 100%;
   left: 0;
-  z-index: 300;
-  width: 160px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  font-size: 13px;
-  font-family: 'DM Sans', sans-serif;
-  background: var(--card);
-  color: var(--text);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }

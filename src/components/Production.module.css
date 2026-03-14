@@ -121,3 +121,17 @@
   opacity: 0.5;
 }
 .editItemBtn:hover { opacity: 1; color: var(--brand); }
+
+.newOrderBtnProd {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.newOrderBtnProd:hover { opacity: 0.88; }

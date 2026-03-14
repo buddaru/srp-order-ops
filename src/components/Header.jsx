@@ -60,7 +60,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder }) {
       <div className={styles.topRow}>
         <div className={styles.logo}>
           <img src="/srp-logo.png" alt="Sweet Red Peach" className={styles.logoImg} />
-          <div className={styles.logoSub}>Operations</div>
+          <div className={styles.logoSub}>Carson Operations</div>
         </div>
 
         <div className={styles.searchWrap}>

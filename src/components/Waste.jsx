@@ -1,8 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './Waste.module.css'
 
 const REASONS = ['Overproduction', 'Order cancelled', 'Quality issue', 'Expired / spoiled', 'Wrong order', 'Other']
+
+const REASON_COLORS = {
+  'Overproduction':    { bg: '#FEE2E2', text: '#991B1B', pill: '#FEE2E2', pillText: '#991B1B' },
+  'Order cancelled':   { bg: '#FEF3C7', text: '#92400E', pill: '#FEF3C7', pillText: '#92400E' },
+  'Quality issue':     { bg: '#EDE9FE', text: '#5B21B6', pill: '#EDE9FE', pillText: '#5B21B6' },
+  'Expired / spoiled': { bg: '#DCFCE7', text: '#166534', pill: '#DCFCE7', pillText: '#166534' },
+  'Wrong order':       { bg: '#E0F2FE', text: '#075985', pill: '#E0F2FE', pillText: '#075985' },
+  'Other':             { bg: '#F1F5F9', text: '#475569', pill: '#F1F5F9', pillText: '#475569' },
+}
 const PERIODS = ['D', 'W', 'M', '6M', 'Y']
 
 // ── Date helpers ──
@@ -35,6 +45,12 @@ function stepAnchor(period, anchor, dir) {
   if (period === '6M') { d.setMonth(d.getMonth() + dir * 6) }
   if (period === 'Y')  { d.setFullYear(d.getFullYear() + dir) }
   return toDS(d)
+}
+
+function isFuture(ds) {
+  const d = new Date(ds + 'T00:00:00')
+  const t = today()
+  return d > t
 }
 
 function inPeriod(dateStr, period, anchor) {
@@ -234,6 +250,7 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 
 // ── Main page ──
 export default function Waste() {
+  const navigate = useNavigate()
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [period, setPeriod]       = useState('M')
@@ -269,6 +286,13 @@ export default function Waste() {
 
   const totalCost = filtered.reduce((s, e) => s + (e.total_cost || 0), 0)
 
+  const topReason = (() => {
+    const counts = {}
+    filtered.forEach(e => { if (e.reason) counts[e.reason] = (counts[e.reason] || 0) + 1 })
+    const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0]
+    return top ? { reason: top[0], count: top[1] } : null
+  })()
+
   const handlePeriodChange = (p) => {
     setPeriod(p)
     setAnchor(toDS(today()))
@@ -293,7 +317,10 @@ export default function Waste() {
       {/* Header */}
       <div className={styles.topbar}>
         <div className={styles.pageTitle}>Food Waste Tracker</div>
-        <button className={styles.logBtn} onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
+        <div style={{display:'flex',gap:'8px'}}>
+          <button className={styles.newOrderBtn} onClick={() => navigate('/?neworder=1')}>+ New Order</button>
+          <button className={styles.logBtn} onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
+        </div>
       </div>
 
       {/* Period tabs */}
@@ -308,21 +335,23 @@ export default function Waste() {
         <div className={styles.periodNav}>
           <button className={styles.pnArrow} onClick={() => setAnchor(stepAnchor(period, anchor, -1))}>‹</button>
           <div className={styles.pnLabel}>{getPeriodLabel(period, anchor)}</div>
-          <button className={styles.pnArrow} onClick={() => setAnchor(stepAnchor(period, anchor, 1))}>›</button>
+          <button
+            className={`${styles.pnArrow} ${isFuture(stepAnchor(period, anchor, 1)) ? styles.pnArrowDisabled : ''}`}
+            onClick={() => { const next = stepAnchor(period, anchor, 1); if (!isFuture(next)) setAnchor(next) }}
+            disabled={isFuture(stepAnchor(period, anchor, 1))}
+          >›</button>
         </div>
         <button className={styles.todayBtn} onClick={() => setAnchor(toDS(today()))}>Today</button>
         <div className={styles.calWrap}>
-          <button className={styles.calIconBtn} onClick={() => setShowCal(v => !v)} title="Pick a date">📅</button>
-          {showCal && (
-            <input
-              type="date"
-              className={styles.calInput}
-              value={anchor}
-              autoFocus
-              onChange={e => { if (e.target.value) { setAnchor(e.target.value); setShowCal(false) } }}
-              onBlur={() => setShowCal(false)}
-            />
-          )}
+          <button className={styles.calIconBtn} onClick={() => { const el = document.getElementById('waste-date-pick'); el && el.showPicker && el.showPicker(); el && el.focus(); }} title="Pick a date">📅</button>
+          <input
+            id="waste-date-pick"
+            type="date"
+            className={styles.calInput}
+            value={anchor}
+            max={toDS(today())}
+            onChange={e => { if (e.target.value) setAnchor(e.target.value) }}
+          />
         </div>
       </div>
 
@@ -373,7 +402,7 @@ export default function Waste() {
                 </div>
               </div>
               <div className={styles.ecell}>{e.type === 'prepared' ? 'Prepared' : 'Unprepared'}</div>
-              <div><span className={styles.reasonPill}>{e.reason}</span></div>
+              <div><span className={styles.reasonPill} style={{background: REASON_COLORS[e.reason]?.bg || '#F1F5F9', color: REASON_COLORS[e.reason]?.text || '#475569'}}>{e.reason}</span></div>
               <div className={styles.ecost}>{fmt$(e.total_cost)}</div>
               <div className={styles.eActions}>
                 <button className={styles.ea} onClick={() => openEdit(e)}>Edit</button>
