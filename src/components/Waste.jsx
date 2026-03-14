@@ -357,12 +357,25 @@ export default function Waste() {
 
       {/* Summary */}
       <div className={styles.summaryBlock}>
-        <div className={styles.summaryTotal}>
-          {fmt$(totalCost)}
-          <span className={styles.summaryUnit}>total waste</span>
-        </div>
-        <div className={styles.summarySub}>
-          <b>{filtered.length} {filtered.length === 1 ? 'item' : 'items'}</b> logged · {getPeriodLabel(period, anchor)}
+        <div className={styles.summaryRow}>
+          <div>
+            <div className={styles.summaryTotal}>
+              {fmt$(totalCost)}
+              <span className={styles.summaryUnit}>total waste</span>
+            </div>
+            <div className={styles.summarySub}>
+              <b>{filtered.length} {filtered.length === 1 ? 'item' : 'items'}</b> logged · {getPeriodLabel(period, anchor)}
+            </div>
+          </div>
+          {topReason && (
+            <div className={styles.summaryTopReason}>
+              <div className={styles.summaryTopLabel}>Top reason</div>
+              <div className={styles.summaryTopVal} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
+                {topReason.reason}
+              </div>
+              <div className={styles.summaryTopCount}>{topReason.count} {topReason.count === 1 ? 'time' : 'times'}</div>
+            </div>
+          )}
         </div>
       </div>
 
