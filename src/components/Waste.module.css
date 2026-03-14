@@ -26,11 +26,17 @@
 .datePick { padding: 7px 10px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--card); color: var(--text); cursor: pointer; }
 
 /* ── Summary ── */
-.summaryBlock { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.summaryBlock { margin-bottom: 18px; }
+.summaryGrid { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch; }
+.totalCard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
 .summaryTotal { font-size: 36px; font-weight: 400; color: var(--text); font-family: 'Cormorant Garamond', serif; line-height: 1; }
-.summaryUnit { font-size: 16px; font-weight: 400; color: var(--text-muted); margin-left: 8px; font-family: 'DM Sans', sans-serif; }
-.summarySub { font-size: 12px; color: var(--text-muted); margin-top: 5px; font-family: 'DM Sans', sans-serif; }
+.summaryUnit { font-size: 15px; font-weight: 400; color: var(--text-muted); margin-left: 8px; font-family: 'DM Sans', sans-serif; }
+.summarySub { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-family: 'DM Sans', sans-serif; }
 .summarySub b { color: var(--text); font-weight: 600; }
+.reasonCard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 160px; text-align: center; gap: 8px; }
+.reasonCardLabel { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); }
+.reasonCardPill { font-size: 13px; font-weight: 500; padding: 5px 14px; border-radius: 20px; display: inline-block; }
+.reasonCardCount { font-size: 11px; color: var(--text-muted); }
 
 /* ── Sort ── */
 .sortRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -158,11 +164,6 @@
 .newOrderBtn:hover { opacity: 0.88; }
 
 /* ── Summary row with top reason ── */
-.summaryRow { display: flex; align-items: center; gap: 16px; }
-.summaryTopReason { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.summaryTopLabel { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
-.summaryTopVal { font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 4px; }
-.summaryTopCount { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* ── Disabled forward arrow ── */
 .pnArrowDisabled { opacity: 0.3; cursor: not-allowed; }
