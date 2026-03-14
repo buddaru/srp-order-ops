@@ -285,7 +285,6 @@ export default function App() {
       )}
 
       {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} />}
-      {showNew    && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
 
       {confirmDelete && (
         <ConfirmModal
@@ -311,6 +310,7 @@ export default function App() {
       <Toast toast={toast} onClose={() => setToast(null)} />
         </></PasswordGate>} />
       </Routes>
+      {showNew && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
     </div>
   )
 }
