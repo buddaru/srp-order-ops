@@ -53,3 +53,21 @@
 .confirmMsg { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
 .confirmActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .deleteBtn { background: #DC2626; color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+.stepInstructions { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+.stepNum { background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
+.stepText { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.stepText strong { color: var(--text); font-weight: 600; }
+.sqlBlock {
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}

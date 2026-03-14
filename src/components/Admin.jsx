@@ -4,67 +4,75 @@ import { useAuth } from '../context/AuthContext'
 import styles from './Admin.module.css'
 
 function CreateUserModal({ onClose, onCreated }) {
-  const [email, setEmail]       = useState('')
-  const [name, setName]         = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole]         = useState('employee')
-  const [saving, setSaving]     = useState(false)
-  const [error, setError]       = useState('')
+  const [name, setName]     = useState('')
+  const [email, setEmail]   = useState('')
+  const [role, setRole]     = useState('employee')
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState('')
+  const [step, setStep]     = useState(1) // 1=fill form, 2=show SQL
 
-  const handleCreate = async () => {
-    if (!email.trim() || !password.trim() || !name.trim()) { setError('All fields required'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
-    setSaving(true)
+  const sql = `insert into profiles (id, email, full_name, role)
+select id, email, '${name}', '${role}'
+from auth.users
+where email = '${email}';`
+
+  const handleNext = () => {
+    if (!name.trim() || !email.trim()) { setError('Name and email required'); return }
     setError('')
-    try {
-      // Call our Vercel API endpoint which uses the service role key
-      const res = await fetch('/api/create-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role })
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Failed to create user')
-      onCreated()
-      onClose()
-    } catch (err) {
-      setError(err.message || 'Failed to create user')
-      setSaving(false)
-    }
+    setStep(2)
   }
 
   return (
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
-          <div className={styles.modalTitle}>Create account</div>
+          <div className={styles.modalTitle}>{step === 1 ? 'Add team member' : 'Complete setup'}</div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.modalBody}>
-          <div className={styles.formRow}>
-            <label className={styles.flabel}>Full name</label>
-            <input className={styles.finput} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
-          </div>
-          <div className={styles.formRow}>
-            <label className={styles.flabel}>Email</label>
-            <input className={styles.finput} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
-          </div>
-          <div className={styles.formRow}>
-            <label className={styles.flabel}>Password</label>
-            <input className={styles.finput} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" />
-          </div>
-          <div className={styles.formRow}>
-            <label className={styles.flabel}>Role</label>
-            <div className={styles.roleToggle}>
-              <button className={`${styles.roleBtn} ${role==='employee' ? styles.roleActive : ''}`} onClick={() => setRole('employee')}>Employee</button>
-              <button className={`${styles.roleBtn} ${role==='admin' ? styles.roleActiveAdmin : ''}`} onClick={() => setRole('admin')}>Admin</button>
-            </div>
-          </div>
-          {error && <div className={styles.errorMsg}>{error}</div>}
+          {step === 1 ? (
+            <>
+              <div className={styles.formRow}>
+                <label className={styles.flabel}>Full name</label>
+                <input className={styles.finput} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.flabel}>Email</label>
+                <input className={styles.finput} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.flabel}>Role</label>
+                <div className={styles.roleToggle}>
+                  <button className={`${styles.roleBtn} ${role==='employee' ? styles.roleActive : ''}`} onClick={() => setRole('employee')}>Employee</button>
+                  <button className={`${styles.roleBtn} ${role==='admin' ? styles.roleActiveAdmin : ''}`} onClick={() => setRole('admin')}>Admin</button>
+                </div>
+              </div>
+              {error && <div className={styles.errorMsg}>{error}</div>}
+            </>
+          ) : (
+            <>
+              <div className={styles.stepInstructions}>
+                <div className={styles.stepNum}>Step 1</div>
+                <div className={styles.stepText}>Go to <strong>Supabase → Authentication → Users → Add user</strong> and create a user with email <strong>{email}</strong> and a password. Check <em>Auto Confirm User</em>.</div>
+              </div>
+              <div className={styles.stepInstructions}>
+                <div className={styles.stepNum}>Step 2</div>
+                <div className={styles.stepText}>Then run this in <strong>Supabase → SQL Editor</strong>:</div>
+              </div>
+              <pre className={styles.sqlBlock}>{sql}</pre>
+              <div className={styles.stepInstructions}>
+                <div className={styles.stepNum}>Step 3</div>
+                <div className={styles.stepText}>Click <strong>Done</strong> to refresh the team list.</div>
+              </div>
+            </>
+          )}
         </div>
         <div className={styles.modalFooter}>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-          <button className={styles.saveBtn} onClick={handleCreate} disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
+          {step === 1
+            ? <button className={styles.saveBtn} onClick={handleNext}>Next →</button>
+            : <button className={styles.saveBtn} onClick={() => { onCreated(); onClose() }}>Done</button>
+          }
         </div>
       </div>
     </div>

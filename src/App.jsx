@@ -14,7 +14,6 @@ import Waste      from './components/Waste'
 import Privacy  from './components/Privacy'
 import Terms    from './components/Terms'
 import Login    from './components/Login'
-import Admin    from './components/Admin'
 import { useAuth } from './context/AuthContext'
 import styles from './App.module.css'
 
@@ -260,14 +259,12 @@ export default function App() {
         <NavLink to="/" end className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Order Board</NavLink>
         <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
         <NavLink to="/waste" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Food Waste</NavLink>
-        {isAdmin && <NavLink to="/admin" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Team</NavLink>}
       </nav>
       <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/production" element={<Production />} />
         <Route path="/waste" element={<Waste />} />
-        <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>
