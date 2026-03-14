@@ -8,6 +8,8 @@ export default async function handler(req, res) {
 
   // Use service role key — can create users server-side
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  console.log('Using URL:', supabaseUrl)
+  console.log('Has service key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
   const supabase = createClient(
     supabaseUrl,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -34,6 +36,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true })
   } catch (err) {
-    return res.status(500).json({ error: err.message })
+    console.error('Create user error:', JSON.stringify(err))
+    return res.status(500).json({ error: err.message, details: JSON.stringify(err) })
   }
 }
