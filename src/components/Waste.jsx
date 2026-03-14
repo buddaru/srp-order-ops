@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import styles from './Waste.module.css'
 
@@ -249,6 +250,7 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 
 // ── Main page ──
 export default function Waste() {
+  const { isAdmin } = useAuth()
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [period, setPeriod]       = useState('M')
@@ -415,10 +417,12 @@ export default function Waste() {
               <div className={styles.ecell}>{e.type === 'prepared' ? 'Prepared' : 'Unprepared'}</div>
               <div><span className={styles.reasonPill} style={{background: REASON_COLORS[e.reason]?.bg || '#F1F5F9', color: REASON_COLORS[e.reason]?.text || '#475569'}}>{e.reason}</span></div>
               <div className={styles.ecost}>{fmt$(e.total_cost)}</div>
+              {isAdmin && (
               <div className={styles.eActions}>
                 <button className={styles.ea} onClick={() => openEdit(e)}>Edit</button>
                 <button className={`${styles.ea} ${styles.eaDel}`} onClick={() => setDeleteId(e.id)}>Delete</button>
               </div>
+              )}
             </div>
           ))}
         </div>

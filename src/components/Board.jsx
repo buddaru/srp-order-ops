@@ -4,7 +4,7 @@ import OrderCard from './OrderCard'
 import ListView from './ListView'
 import styles from './Board.module.css'
 
-export default function Board({ orders, selectedDay, customDateSelected, dateRange, onMove, onEdit, onDrawer, onDelete, onSendSms }) {
+export default function Board({ orders, selectedDay, customDateSelected, dateRange, isAdmin, onMove, onEdit, onDrawer, onDelete, onSendSms }) {
   const [viewMode, setViewMode] = useState('cards')
 
   const visible = orders.filter(o => {

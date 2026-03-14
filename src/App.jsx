@@ -11,9 +11,11 @@ import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
 import Production from './components/Production'
 import Waste      from './components/Waste'
-import Privacy     from './components/Privacy'
-import PasswordGate from './components/PasswordGate'
-import Terms       from './components/Terms'
+import Privacy  from './components/Privacy'
+import Terms    from './components/Terms'
+import Login    from './components/Login'
+import Admin    from './components/Admin'
+import { useAuth } from './context/AuthContext'
 import styles from './App.module.css'
 
 let orderSeq = 0
@@ -74,6 +76,7 @@ export default function App() {
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
+  const { user, profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -243,25 +246,27 @@ export default function App() {
     return (
       <div className={styles.loadingScreen}>
         <div className={styles.loadingLogo}>🍑</div>
-        <div className={styles.loadingText}>Loading Sweet Red Peach…</div>
+        <div className={styles.loadingText}>Loading…</div>
       </div>
     )
   }
 
   return (
     <div className={styles.app}>
-      <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} />
+      <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
       <nav className={styles.mainNav}>
         <NavLink to="/" end className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Order Board</NavLink>
         <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
         <NavLink to="/waste" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Food Waste</NavLink>
+        {isAdmin && <NavLink to="/admin" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Team</NavLink>}
       </nav>
       <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/production" element={<PasswordGate><Production /></PasswordGate>} />
-        <Route path="/waste" element={<PasswordGate><Waste /></PasswordGate>} />
-        <Route path="/" element={<PasswordGate><>
+        <Route path="/production" element={<Production />} />
+        <Route path="/waste" element={<Waste />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>
         <Board
@@ -269,6 +274,7 @@ export default function App() {
           selectedDay={selectedDay}
           customDateSelected={customDate}
           dateRange={dateRange}
+          isAdmin={isAdmin}
           onMove={handleMove}
           onEdit={id => setEditingId(id)}
           onDrawer={id => setDrawerOrderId(id)}
@@ -308,7 +314,7 @@ export default function App() {
       )}
 
       <Toast toast={toast} onClose={() => setToast(null)} />
-        </></PasswordGate>} />
+        </>} />
       </Routes>
       {showNew && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
     </div>

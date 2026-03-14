@@ -1,7 +1,7 @@
 import { STAGES, dueBadge, orderTotal, fmt$ } from '../utils/helpers'
 import styles from './OrderCard.module.css'
 
-export default function OrderCard({ order, onMove, onEdit, onDrawer, onDelete, onSendSms }) {
+export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, onDelete, onSendSms }) {
   const si   = STAGES.findIndex(s => s.id === order.stage)
   const prev = si > 0 ? STAGES[si - 1] : null
   const next = si < STAGES.length - 1 ? STAGES[si + 1] : null

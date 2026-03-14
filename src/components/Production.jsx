@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { toDS } from '../utils/helpers'
 import styles from './Production.module.css'
@@ -26,6 +27,7 @@ const shiftDate = (ds, n) => {
 }
 
 export default function Production() {
+  const { isAdmin } = useAuth()
   const [date, setDate]       = useState(todayDS())
   const [items, setItems]     = useState([])
   const [note, setNote]       = useState('')
