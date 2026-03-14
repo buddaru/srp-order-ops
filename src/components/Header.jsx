@@ -27,6 +27,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
     }
   }
   const [query, setQuery]   = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [showRes, setShowRes] = useState(false)
   const [datetime, setDatetime] = useState(fmtNow())
 
@@ -115,13 +116,18 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
         <div className={styles.right}>
 <button className={styles.btnNew} onClick={handleNewOrder}>+ New Order</button>
           <div className={styles.userMenu}>
-            <div className={styles.userAvatar}>{(profile?.full_name || profile?.email || '?').slice(0,2).toUpperCase()}</div>
-            <div className={styles.userDropdown}>
-              <div className={styles.userDropdownName}>{profile?.full_name || profile?.email}</div>
-              <div className={styles.userDropdownRole}>{profile?.role || 'employee'}</div>
-              <div className={styles.userDropdownDivider} />
-              <button className={styles.signOutBtn} onClick={onSignOut}>Sign out</button>
-            </div>
+            <div className={styles.userAvatar} onClick={() => setMenuOpen(v => !v)}>{(profile?.full_name || profile?.email || '?').slice(0,2).toUpperCase()}</div>
+            {menuOpen && (
+              <>
+                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+                <div className={styles.userDropdown}>
+                  <div className={styles.userDropdownName}>{profile?.full_name || profile?.email}</div>
+                  <div className={styles.userDropdownRole}>{profile?.role || 'employee'}</div>
+                  <div className={styles.userDropdownDivider} />
+                  <button className={styles.signOutBtn} onClick={() => { setMenuOpen(false); onSignOut() }}>Sign out</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

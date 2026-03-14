@@ -11,6 +11,7 @@ import OrderModal from './components/OrderModal'
 import Toast      from './components/Toast'
 import Production from './components/Production'
 import Waste      from './components/Waste'
+import Schedule   from './components/Schedule'
 import Privacy  from './components/Privacy'
 import Terms    from './components/Terms'
 import Login    from './components/Login'
@@ -259,12 +260,14 @@ export default function App() {
         <NavLink to="/" end className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Order Board</NavLink>
         <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
         <NavLink to="/waste" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Food Waste</NavLink>
+        <NavLink to="/schedule" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Schedule</NavLink>
       </nav>
       <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/production" element={<Production />} />
         <Route path="/waste" element={<Waste />} />
+        <Route path="/schedule" element={<Schedule />} />
         <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>
@@ -289,7 +292,7 @@ export default function App() {
         </>
       )}
 
-      {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} isAdmin={isAdmin} />}
+      {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} onDelete={handleDelete} isAdmin={isAdmin} />}
 
       {confirmDelete && (
         <ConfirmModal

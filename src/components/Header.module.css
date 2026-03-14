@@ -166,9 +166,8 @@
   transition: background 0.15s;
 }
 .userAvatar:hover { background: rgba(255,255,255,0.3); }
-.userMenu:hover .userDropdown { display: flex; }
 .userDropdown {
-  display: none;
+  display: flex;
   flex-direction: column;
   position: absolute;
   top: calc(100% + 8px);
@@ -190,3 +189,9 @@
   font-family: 'DM Sans', sans-serif; font-weight: 500;
 }
 .signOutBtn:hover { text-decoration: underline; }
+
+.menuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 399;
+}
