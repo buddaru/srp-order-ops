@@ -6,7 +6,7 @@ import styles from './OrderModal.module.css'
 
 const DEFAULT_TIME = toTS(13, 0) // 1:00 PM
 
-export default function OrderModal({ mode, order, onSave, onClose, onDelete }) {
+export default function OrderModal({ mode, order, onSave, onClose, onDelete, isAdmin }) {
   const isEdit = mode === 'edit'
 
   const [customer, setCustomer] = useState('')
@@ -104,7 +104,7 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete }) {
           </div>
         </div>
         <div className={styles.footer}>
-          {isEdit && <button className={styles.deleteBtn} onClick={handleDelete}>Delete order</button>}
+          {isEdit && isAdmin && <button className={styles.deleteBtn} onClick={handleDelete}>Delete order</button>}
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button className={styles.saveBtn} onClick={handleSubmit}>{isEdit ? 'Save changes' : 'Create order'}</button>
         </div>

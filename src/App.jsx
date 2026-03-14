@@ -292,7 +292,7 @@ export default function App() {
         </>
       )}
 
-      {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} />}
+      {editingId  && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} isAdmin={isAdmin} />}
 
       {confirmDelete && (
         <ConfirmModal
