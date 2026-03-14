@@ -242,6 +242,8 @@ export default function App() {
 
   const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom); setDateRange(null) }
 
+  if (!user) return <Login />
+
   if (loading) {
     return (
       <div className={styles.loadingScreen}>
