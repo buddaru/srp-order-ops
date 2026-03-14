@@ -7,8 +7,9 @@ export default async function handler(req, res) {
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' })
 
   // Use service role key — can create users server-side
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
+    supabaseUrl,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
