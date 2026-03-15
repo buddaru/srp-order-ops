@@ -14,7 +14,13 @@ export function AuthProvider({ children }) {
       .select('*')
       .eq('id', userId)
       .single()
-    setProfile(data || null)
+    if (data) {
+      setProfile(data)
+    } else {
+      // Auth session exists but no profile — sign out cleanly
+      setProfile(null)
+      await supabase.auth.signOut()
+    }
   }
 
   useEffect(() => {

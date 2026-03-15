@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { STAGES, fmtDate, diffDays, fmtNow, toDS } from '../utils/helpers'
 import styles from './Header.module.css'
+import { useAuth } from '../context/AuthContext'
 
 function highlight(str, q) {
   const i = str.toLowerCase().indexOf(q.toLowerCase())
@@ -16,6 +17,7 @@ function highlight(str, q) {
 }
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut }) {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -116,7 +118,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
         <div className={styles.right}>
 <button className={styles.btnNew} onClick={handleNewOrder}>+ New Order</button>
           <div className={styles.userMenu}>
-            <div className={styles.userAvatar} onClick={() => setMenuOpen(v => !v)}>{(profile?.full_name || profile?.email || '?').slice(0,2).toUpperCase()}</div>
+            <div className={styles.userAvatar} onClick={() => setMenuOpen(v => !v)}>{(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}</div>
             {menuOpen && (
               <>
                 <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
