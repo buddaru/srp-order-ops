@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase, safeQuery } from '../lib/supabase'
 import { toDS } from '../utils/helpers'
 import styles from './Production.module.css'
 
@@ -49,16 +49,14 @@ export default function Production() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      try {
-        const [{ data: prodData }, { data: noteData }] = await Promise.all([
-          supabase.from('production').select('*').eq('date', date).order('created_at'),
-          supabase.from('production_notes').select('*').eq('date', date).maybeSingle(),
-        ])
-        setItems(prodData || [])
-        setNote(noteData?.content || '')
-        setNoteId(noteData?.id || null)
-      } catch(e) { console.error('production load error', e) }
-      finally { setLoading(false) }
+      const [r1, r2] = await Promise.all([
+        safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
+        safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).maybeSingle()),
+      ])
+      setItems(r1.data || [])
+      setNote(r2.data?.content || '')
+      setNoteId(r2.data?.id || null)
+      setLoading(false)
     }
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }

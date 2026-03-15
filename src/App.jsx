@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { supabase } from './lib/supabase'
+import { supabase, withTimeout } from './lib/supabase'
 import { seedOrders } from './data/orders'
 import { STAGES, READY_SMS, PICKEDUP_SMS, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
 import Header     from './components/Header'
@@ -101,10 +101,9 @@ export default function App() {
     const load = async () => {
       setLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: true })
+        const { data, error } = await withTimeout(
+          supabase.from('orders').select('*').order('created_at', { ascending: true })
+        )
 
         if (error) {
           console.error('Load error:', error)

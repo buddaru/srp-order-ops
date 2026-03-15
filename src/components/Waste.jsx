@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase, safeQuery } from '../lib/supabase'
 import styles from './Waste.module.css'
 
 const REASONS = ['Overproduction', 'Order cancelled', 'Quality issue', 'Expired / spoiled', 'Wrong order', 'Other']
@@ -252,7 +252,7 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 export default function Waste() {
   const { isAdmin } = useAuth()
   const [entries, setEntries]     = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [loading, setLoading]     = useState(false)
   const [period, setPeriod]       = useState('M')
   const [anchor, setAnchor]       = useState(toDS(today()))
   const [sort, setSort]           = useState('newest')
@@ -264,9 +264,9 @@ export default function Waste() {
   const load = async () => {
     setLoading(true)
     try {
-      const { data } = await supabase.from('waste_log').select('*').order('created_at', { ascending: false })
+      const { data } = await withTimeout(supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
       setEntries(data || [])
-    } catch(e) { console.error('waste load error', e) }
+    } catch(e) { console.error('waste load error', e); setEntries([]) }
     finally { setLoading(false) }
   }
 

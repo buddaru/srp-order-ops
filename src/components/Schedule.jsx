@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, safeQuery } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import styles from './Schedule.module.css'
 
@@ -338,7 +338,7 @@ export default function Schedule() {
   const { isAdmin } = useAuth()
   const [shifts, setShifts]         = useState([])
   const [employees, setEmployees]   = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [loading, setLoading]       = useState(false)
   const [weekStart, setWeekStart]   = useState(()=>getWeekStart(new Date()))
   const [view, setView]             = useState('calendar')
   const [showShiftModal, setShowShiftModal] = useState(false)
@@ -361,12 +361,12 @@ export default function Schedule() {
     setLoading(true)
     try {
       const [{ data:s },{ data:e }] = await Promise.all([
-        supabase.from('shifts').select('*').order('shift_date').order('start_time'),
-        supabase.from('employees').select('*').order('name'),
+        withTimeout(supabase.from('shifts').select('*').order('shift_date').order('start_time')),
+        withTimeout(supabase.from('employees').select('*').order('name')),
       ])
       setShifts(s||[])
       setEmployees(e||[])
-    } catch(err) { console.error('schedule load error', err) }
+    } catch(err) { console.error('schedule load error', err); setShifts([]); setEmployees([]) }
     finally { setLoading(false) }
   }
 
