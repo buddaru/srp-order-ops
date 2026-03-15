@@ -263,9 +263,12 @@ export default function Waste() {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
-    setEntries(data || [])
-    setLoading(false)
+    try {
+      const { data } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
+      setEntries(data || [])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {

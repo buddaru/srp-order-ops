@@ -34,7 +34,7 @@ export default function Production() {
   const [note, setNote]       = useState('')
   const [noteId, setNoteId]   = useState(null)
   const [noteSaved, setNoteSaved] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   // Add item form
   const [newName, setNewName]     = useState('')
@@ -49,14 +49,17 @@ export default function Production() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [r1, r2] = await Promise.all([
-        safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
-        safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).maybeSingle()),
-      ])
-      setItems(r1.data || [])
-      setNote(r2.data?.content || '')
-      setNoteId(r2.data?.id || null)
-      setLoading(false)
+      try {
+        const [r1, r2] = await Promise.all([
+          safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
+          safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).maybeSingle()),
+        ])
+        setItems(r1.data || [])
+        setNote(r2.data?.content || '')
+        setNoteId(r2.data?.id || null)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
