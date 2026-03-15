@@ -268,7 +268,12 @@ export default function Waste() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
 
   const filtered = useMemo(() => {
     return entries.filter(e => inPeriod(e.logged_date, period, anchor))

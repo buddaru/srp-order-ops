@@ -5,57 +5,49 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)
-  const [profile, setProfile] = useState(null) // { id, email, full_name, role }
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const loadProfile = async (userId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
     if (data) {
       setProfile(data)
-    } else {
-      // Auth session exists but no profile — sign out cleanly
+      return true
+    }
+    // Only sign out if it's a real 404 (no profile row), not a network error
+    if (error?.code === 'PGRST116') {
       setProfile(null)
       await supabase.auth.signOut()
     }
+    return false
   }
 
   useEffect(() => {
-    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) loadProfile(session.user.id).finally(() => setLoading(false))
       else setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) await loadProfile(session.user.id)
-      else setProfile(null)
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+      if (session?.user) {
+        setUser(session.user)
+        await loadProfile(session.user.id)
+      }
       setLoading(false)
     })
 
-    // Refresh data when tab becomes visible again (fixes loading after inactivity)
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.user) {
-            setUser(session.user)
-            loadProfile(session.user.id)
-          }
-        })
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      subscription.unsubscribe()
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
   const signIn = async (email, password) => {

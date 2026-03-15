@@ -368,7 +368,12 @@ export default function Schedule() {
     setLoading(false)
   }
 
-  useEffect(()=>{ loadAll() },[])
+  useEffect(()=>{
+    loadAll()
+    const onVisible = () => { if (document.visibilityState === 'visible') loadAll() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  },[])
 
   const weekShifts = useMemo(()=>{
     const ws=toDS(weekStart), we=toDS(weekEnd)
@@ -475,7 +480,7 @@ export default function Schedule() {
                   <div className={styles.empInfo}>
                     <div className={styles.empName}>{e.name}</div>
                     <div className={styles.empMeta}>
-                      {e.email||'No email'} · {e.phone||'No phone'} · <span style={{color:ROLE_COLORS[e.default_role]?.text}}>{e.default_role}</span>{e.pay_rate?` · $${e.pay_rate}/hr`:''}
+                      {e.email||'No email'} · {e.phone||'No phone'} · <span style={{color:ROLE_COLORS[e.default_role]?.text}}>{e.default_role}</span>{isAdmin&&e.pay_rate?` · $${e.pay_rate}/hr`:''}
                     </div>
                   </div>
                   <div className={styles.empActions}>
@@ -501,7 +506,7 @@ export default function Schedule() {
           <div className={styles.weekStat}><span className={styles.wsVal}>{weekShifts.length}</span><span className={styles.wsLbl}>shifts</span></div>
           <div className={styles.weekStatDiv}/>
           <div className={styles.weekStat}><span className={styles.wsVal}>{fmtHrs(weekTotalHrs)}</span><span className={styles.wsLbl}>total hours</span></div>
-          {weekTotalWage>0&&(
+          {isAdmin&&weekTotalWage>0&&(
             <>
               <div className={styles.weekStatDiv}/>
               <div className={styles.weekStat}>
@@ -583,7 +588,10 @@ export default function Schedule() {
                         <div className={styles.empAvatar}>{emp.name.slice(0,2).toUpperCase()}</div>
                         <div>
                           <div className={styles.empName}>{emp.name}</div>
-                          <div className={styles.empMeta2}>{emp.default_role}{emp.pay_rate?` · $${emp.pay_rate}/hr`:''}</div>
+                          <div className={styles.empMeta2}>{emp.default_role}{(() => {
+                            const h = weekShifts.filter(s=>s.employee_id===emp.id).reduce((sum,s)=>sum+shiftHours(s),0)
+                            return h > 0 ? ` · ${fmtHrs(h)} this week` : ''
+                          })()}</div>
                         </div>
                       </div>
                     </td>
@@ -618,7 +626,7 @@ export default function Schedule() {
                   return <td key={ds} className={styles.footerHrs}>{h>0?fmtHrs(h):'—'}</td>
                 })}
               </tr>
-              {weekTotalWage>0&&(
+              {isAdmin&&weekTotalWage>0&&(
                 <tr className={styles.footerRow}>
                   <td className={styles.footerLabel}>{wageLbl}</td>
                   {weekDays.map(day=>{

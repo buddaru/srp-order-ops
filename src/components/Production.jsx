@@ -58,6 +58,9 @@ export default function Production() {
       setLoading(false)
     }
     load()
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [date])
 
   // Auto-save note with debounce
