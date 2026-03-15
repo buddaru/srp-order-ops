@@ -144,8 +144,8 @@
     padding-top: 10px;
     padding-bottom: 10px;
   }
-  .logoImg { height: 36px; }
-  .logoSub { display: none; }
+  .logoImg { height: 32px; }
+  .logoSub { font-size: 9px; display: block; }
   .searchWrap { order: 3; flex: 0 0 100%; max-width: 100%; }
   .right { margin-left: auto; flex-shrink: 0; }
   .btnNew { font-size: 11px; padding: 7px 12px; }

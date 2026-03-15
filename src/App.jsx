@@ -70,7 +70,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 
 export default function App() {
   const [orders, setOrders]           = useState([])
-  const [loading, setLoading]         = useState(true)
+  const [loading, setLoading]         = useState(false)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [drawerOrderId, setDrawerOrderId] = useState(null)
@@ -245,15 +245,6 @@ export default function App() {
   const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom); setDateRange(null) }
 
   if (!user) return <Login />
-
-  if (loading) {
-    return (
-      <div className={styles.loadingScreen}>
-        <div className={styles.loadingLogo}>🍑</div>
-        <div className={styles.loadingText}>Loading…</div>
-      </div>
-    )
-  }
 
   return (
     <div className={styles.app}>
