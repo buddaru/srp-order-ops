@@ -39,7 +39,23 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    // Refresh data when tab becomes visible again (fixes loading after inactivity)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            setUser(session.user)
+            loadProfile(session.user.id)
+          }
+        })
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
   const signIn = async (email, password) => {

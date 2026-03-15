@@ -351,6 +351,8 @@ export default function Schedule() {
   const [copyingWeek, setCopyingWeek] = useState(false)
   const [toast, setToast]           = useState('')
   const [withTax, setWithTax]       = useState(false)
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const [mobileDay, setMobileDay]   = useState(() => toDS(new Date()))
 
   const weekDays = getWeekDays(weekStart)
   const weekEnd  = weekDays[6]
@@ -429,14 +431,28 @@ export default function Schedule() {
         <div className={styles.topbarRight}>
           {isAdmin && (
             <>
-              <button className={styles.copyBtn} onClick={()=>setShowEmpPanel(v=>!v)}>
-                Employees{employees.length>0?` (${employees.length})`:''}
-              </button>
-              <button className={styles.copyBtn} onClick={handleCopyLastWeek} disabled={copyingWeek}>
-                {copyingWeek?'Copying…':'↩ Copy last week'}
-              </button>
-              <button className={styles.sendBtn} onClick={()=>setShowSendAll(true)}>✉ Send schedule</button>
               <button className={styles.addBtn} onClick={()=>{setEditShift(null);setShowShiftModal(true)}}>+ Add shift</button>
+              <div className={styles.menuWrap}>
+                <button className={styles.hamburger} onClick={()=>setMenuOpen(v=>!v)}>
+                  <span/><span/><span/>
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className={styles.menuBackdrop} onClick={()=>setMenuOpen(false)} />
+                    <div className={styles.menuDropdown}>
+                      <button className={styles.menuItem} onClick={()=>{setShowEmpPanel(v=>!v);setMenuOpen(false)}}>
+                        👥 Employees{employees.length>0?` (${employees.length})`:''}
+                      </button>
+                      <button className={styles.menuItem} onClick={()=>{handleCopyLastWeek();setMenuOpen(false)}} disabled={copyingWeek}>
+                        ↩ {copyingWeek?'Copying…':'Copy last week'}
+                      </button>
+                      <button className={styles.menuItem} onClick={()=>{setShowSendAll(true);setMenuOpen(false)}}>
+                        ✉ Send schedule
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -510,6 +526,34 @@ export default function Schedule() {
         <div className={styles.empty}>Loading…</div>
       ) : view==='calendar' ? (
         /* ── Calendar / Grid view ── */
+        <>
+        {/* Mobile day strip */}
+        <div className={styles.mobileDayNav}>
+          <button className={styles.weekArrow} onClick={()=>{const d=parseDS(mobileDay);d.setDate(d.getDate()-1);setMobileDay(toDS(d))}}>‹</button>
+          <div className={styles.mobileDayLabel}>
+            {parseDS(mobileDay).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}
+            {mobileDay===todayDS&&<span className={styles.mobileTodayBadge}>Today</span>}
+          </div>
+          <button className={styles.weekArrow} onClick={()=>{const d=parseDS(mobileDay);d.setDate(d.getDate()+1);setMobileDay(toDS(d))}}>›</button>
+        </div>
+        {/* Mobile day view */}
+        <div className={styles.mobileDayView}>
+          {(() => {
+            const dayShifts = weekShifts.filter(s=>s.shift_date===mobileDay)
+            if (dayShifts.length===0) return <div className={styles.mobileDayEmpty}>No shifts scheduled</div>
+            return dayShifts.map(s=>(
+              <div key={s.id} className={styles.mobileDayShift}
+                style={{background:ROLE_COLORS[s.role]?.bg, borderLeft:`4px solid ${ROLE_COLORS[s.role]?.dot}`}}
+                onClick={()=>isAdmin&&(setEditShift(s),setShowShiftModal(true))}>
+                <div className={styles.mdsTime}>{fmt12(s.start_time)} – {fmt12(s.end_time)} · {fmtHrs(shiftHours(s))}</div>
+                <div className={styles.mdsName}>{s.employee_name}</div>
+                <div className={styles.mdsRole} style={{color:ROLE_COLORS[s.role]?.text}}>{s.role}</div>
+                {s.notes&&<div className={styles.mdsNotes}>{s.notes}</div>}
+              </div>
+            ))
+          })()}
+          {isAdmin&&<button className={styles.mobileAddShift} onClick={()=>{setEditShift({shift_date:mobileDay});setShowShiftModal(true)}}>+ Add shift for this day</button>}
+        </div>
         <div className={styles.tableWrap}>
           <table className={styles.schedTable}>
             <thead>
@@ -588,6 +632,7 @@ export default function Schedule() {
             </tfoot>
           </table>
         </div>
+        </>
       ) : (
         /* ── List view ── */
         <div className={styles.listWrap}>

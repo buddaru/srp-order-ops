@@ -338,7 +338,6 @@ export default function Waste() {
             disabled={isFuture(stepAnchor(period, anchor, 1))}
           >›</button>
         </div>
-        <button className={styles.todayBtn} onClick={() => setAnchor(toDS(today()))}>Today</button>
         <div className={styles.calWrap}>
           <button className={styles.calIconBtn} onClick={() => { const el = document.getElementById('waste-date-pick'); el && el.showPicker && el.showPicker(); el && el.focus(); }} title="Pick a date">📅</button>
           <input

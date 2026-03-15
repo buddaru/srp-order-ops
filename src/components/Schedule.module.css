@@ -164,3 +164,52 @@
   .overlay { align-items: flex-end; padding: 0; }
   .roleGrid { grid-template-columns: repeat(2,1fr); }
 }
+
+/* ── Hamburger menu ── */
+.menuWrap { position: relative; }
+.hamburger { background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 36px; height: 34px; }
+.hamburger span { display: block; width: 14px; height: 1.5px; background: var(--text-2); border-radius: 2px; }
+.menuBackdrop { position: fixed; inset: 0; z-index: 399; }
+.menuDropdown { position: absolute; top: calc(100% + 6px); right: 0; background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius); padding: 6px; min-width: 200px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 400; }
+.menuItem { display: flex; width: 100%; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: left; transition: background 0.1s; }
+.menuItem:hover { background: var(--bg); color: var(--text); }
+.menuItem:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Mobile day view (hidden on desktop) ── */
+.mobileDayNav { display: none; }
+.mobileDayView { display: none; }
+
+@media (max-width: 768px) {
+  .page { padding: 12px 14px; }
+  .topbar { margin-bottom: 12px; }
+  .pageTitle { font-size: 18px; }
+
+  /* Hide desktop table on mobile */
+  .tableWrap { display: none; }
+  .listWrap { display: none; }
+  .weekNav { gap: 8px; }
+  .weekStats { gap: 8px; }
+  .wsVal { font-size: 14px; }
+  .viewToggle { display: none; }
+
+  /* Show mobile day nav */
+  .mobileDayNav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+  .mobileDayLabel { flex: 1; text-align: center; font-size: 14px; font-weight: 500; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .mobileTodayBadge { font-size: 10px; font-weight: 600; background: var(--brand); color: #fff; padding: 2px 7px; border-radius: 20px; }
+
+  /* Show mobile day view */
+  .mobileDayView { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .mobileDayEmpty { text-align: center; font-size: 13px; color: var(--text-muted); padding: 32px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .mobileDayShift { border-radius: var(--radius); padding: 14px 16px; cursor: pointer; }
+  .mdsTime { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .mdsName { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .mdsRole { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+  .mdsNotes { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 4px; }
+  .mobileAddShift { background: none; border: 1.5px dashed var(--border-2); border-radius: var(--radius); padding: 14px; font-size: 13px; color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center; width: 100%; transition: background 0.1s; }
+  .mobileAddShift:hover { background: var(--bg); }
+
+  /* Modal slides up from bottom on mobile */
+  .modal { border-radius: 16px 16px 0 0; position: fixed; bottom: 0; left: 0; right: 0; max-height: 92vh; }
+  .overlay { align-items: flex-end; padding: 0; }
+  .roleGrid { grid-template-columns: repeat(2,1fr); }
+}
