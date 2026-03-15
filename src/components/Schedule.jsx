@@ -359,15 +359,13 @@ export default function Schedule() {
 
   const loadAll = async () => {
     setLoading(true)
-    try {
-      const [{ data:s },{ data:e }] = await Promise.all([
-        withTimeout(supabase.from('shifts').select('*').order('shift_date').order('start_time')),
-        withTimeout(supabase.from('employees').select('*').order('name')),
-      ])
-      setShifts(s||[])
-      setEmployees(e||[])
-    } catch(err) { console.error('schedule load error', err); setShifts([]); setEmployees([]) }
-    finally { setLoading(false) }
+    const [r1, r2] = await Promise.all([
+      safeQuery(() => supabase.from('shifts').select('*').order('shift_date').order('start_time')),
+      safeQuery(() => supabase.from('employees').select('*').order('name')),
+    ])
+    setShifts(r1.data || [])
+    setEmployees(r2.data || [])
+    setLoading(false)
   }
 
   useEffect(()=>{
