@@ -104,21 +104,25 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
           </>
         ) : (
           <>
-            <input
-              type="date"
-              className={`${styles.dateInput} ${startVal ? styles.dateInputFilled : ''}`}
-              value={startVal}
-              style={!startVal ? {color:'transparent'} : {}}
-              onChange={e => { setStartVal(e.target.value); setErr('') }}
-            />
+            <div className={styles.dateWrap}>
+              <input
+                type="date"
+                className={`${styles.dateInput} ${startVal ? styles.dateInputFilled : ''}`}
+                value={startVal}
+                onChange={e => { setStartVal(e.target.value); setErr('') }}
+              />
+              {!startVal && <div className={styles.datePlaceholder}>Start date</div>}
+            </div>
             <span className={styles.rangeArrow}>→</span>
-            <input
-              type="date"
-              className={`${styles.dateInput} ${endVal ? styles.dateInputFilled : ''}`}
-              value={endVal}
-              style={!endVal ? {color:'transparent'} : {}}
-              onChange={e => { setEndVal(e.target.value); setErr('') }}
-            />
+            <div className={styles.dateWrap}>
+              <input
+                type="date"
+                className={`${styles.dateInput} ${endVal ? styles.dateInputFilled : ''}`}
+                value={endVal}
+                onChange={e => { setEndVal(e.target.value); setErr('') }}
+              />
+              {!endVal && <div className={styles.datePlaceholder}>End date</div>}
+            </div>
             {bothFilled && (
               <button className={styles.applyBtn} onClick={handleApply}>Apply</button>
             )}

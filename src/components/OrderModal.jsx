@@ -42,10 +42,8 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
   }
 
   const handleDelete = () => {
-    if (window.confirm('Delete this order? This cannot be undone.')) {
-      onDelete(order.id)
-      onClose()
-    }
+    onDelete(order.id)
+    onClose()
   }
 
   const handleSubmit = () => {

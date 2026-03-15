@@ -205,3 +205,18 @@
   .browseBtn { padding: 5px 8px; font-size: 11px; }
   .calWrap { right: auto; left: 0; }
 }
+
+.dateWrap { position: relative; display: inline-block; }
+.datePlaceholder {
+  position: absolute;
+  inset: 0;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+  border: 1px solid var(--border-2);
+}
