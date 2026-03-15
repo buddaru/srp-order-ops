@@ -100,32 +100,34 @@ export default function App() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: true })
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: true })
 
-      if (error) {
-        console.error('Load error:', error)
-        // Fall back to seed data if DB fails
-        setOrders(seedOrders)
-      } else if (data.length === 0) {
-        // First run — seed the DB with sample orders
-        const toInsert = seedOrders.map(toDB)
-        const { error: insertErr } = await supabase.from('orders').insert(toInsert)
-        if (!insertErr) setOrders(seedOrders)
-        else setOrders(seedOrders)
-      } else {
-        const mapped = data.map(fromDB)
-        setOrders(mapped)
-        orderSeq = mapped.reduce((max, o) => {
-          const n = parseInt(o.id.replace('SRP-', '')) || 0
-          return Math.max(max, n)
-        }, 0)
-      }
-      setLoading(false)
+        if (error) {
+          console.error('Load error:', error)
+          setOrders(seedOrders)
+        } else if (data.length === 0) {
+          const toInsert = seedOrders.map(toDB)
+          const { error: insertErr } = await supabase.from('orders').insert(toInsert)
+          setOrders(seedOrders)
+        } else {
+          const mapped = data.map(fromDB)
+          setOrders(mapped)
+          orderSeq = mapped.reduce((max, o) => {
+            const n = parseInt(o.id.replace('SRP-', '')) || 0
+            return Math.max(max, n)
+          }, 0)
+        }
+      } catch(e) { console.error('Orders load error', e); setOrders(seedOrders) }
+      finally { setLoading(false) }
     }
     load()
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   // ── Stage movement ──

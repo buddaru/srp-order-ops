@@ -108,6 +108,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
               type="date"
               className={`${styles.dateInput} ${startVal ? styles.dateInputFilled : ''}`}
               value={startVal}
+              style={!startVal ? {color:'transparent'} : {}}
               onChange={e => { setStartVal(e.target.value); setErr('') }}
             />
             <span className={styles.rangeArrow}>→</span>
@@ -115,6 +116,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
               type="date"
               className={`${styles.dateInput} ${endVal ? styles.dateInputFilled : ''}`}
               value={endVal}
+              style={!endVal ? {color:'transparent'} : {}}
               onChange={e => { setEndVal(e.target.value); setErr('') }}
             />
             {bothFilled && (

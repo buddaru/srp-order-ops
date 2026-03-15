@@ -28,6 +28,7 @@ const shiftDate = (ds, n) => {
 
 export default function Production() {
   const { isAdmin } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
   const [date, setDate]       = useState(todayDS())
   const [items, setItems]     = useState([])
   const [note, setNote]       = useState('')
@@ -48,14 +49,16 @@ export default function Production() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [{ data: prodData }, { data: noteData }] = await Promise.all([
-        supabase.from('production').select('*').eq('date', date).order('created_at'),
-        supabase.from('production_notes').select('*').eq('date', date).maybeSingle(),
-      ])
-      setItems(prodData || [])
-      setNote(noteData?.content || '')
-      setNoteId(noteData?.id || null)
-      setLoading(false)
+      try {
+        const [{ data: prodData }, { data: noteData }] = await Promise.all([
+          supabase.from('production').select('*').eq('date', date).order('created_at'),
+          supabase.from('production_notes').select('*').eq('date', date).maybeSingle(),
+        ])
+        setItems(prodData || [])
+        setNote(noteData?.content || '')
+        setNoteId(noteData?.id || null)
+      } catch(e) { console.error('production load error', e) }
+      finally { setLoading(false) }
     }
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
@@ -175,9 +178,21 @@ export default function Production() {
       <div className={styles.header}>
         <div className={styles.title}>Daily Production List</div>
         <div className={styles.headerRight}>
-          <button className={styles.printBtn} onClick={handlePrint}>🖨 Print</button>
-          <button className={styles.templateBtn} onClick={handleLoadTemplate}>📋 Load Template</button>
-          <button className={styles.templateSaveBtn} onClick={handleSaveTemplate}>💾 Save as Template</button>
+          <div className={styles.menuWrap}>
+            <button className={styles.hamburger} onClick={()=>setMenuOpen(v=>!v)}>
+              <span/><span/><span/>
+            </button>
+            {menuOpen && (
+              <>
+                <div className={styles.menuBackdrop} onClick={()=>setMenuOpen(false)} />
+                <div className={styles.menuDropdown}>
+                  <button className={styles.menuItem} onClick={()=>{handlePrint();setMenuOpen(false)}}>🖨 Print</button>
+                  <button className={styles.menuItem} onClick={()=>{handleLoadTemplate();setMenuOpen(false)}}>📋 Load Template</button>
+                  <button className={styles.menuItem} onClick={()=>{handleSaveTemplate();setMenuOpen(false)}}>💾 Save as Template</button>
+                </div>
+              </>
+            )}
+          </div>
           <div className={styles.dateNav}>
             <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
             <span className={styles.dateLabel}>{fmtDisplayDate(date)}</span>

@@ -135,3 +135,12 @@
   transition: opacity 0.15s;
 }
 .newOrderBtnProd:hover { opacity: 0.88; }
+
+/* ── Hamburger menu ── */
+.menuWrap { position: relative; }
+.hamburger { background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 36px; height: 34px; }
+.hamburger span { display: block; width: 14px; height: 1.5px; background: var(--text-2); border-radius: 2px; }
+.menuBackdrop { position: fixed; inset: 0; z-index: 399; }
+.menuDropdown { position: absolute; top: calc(100% + 6px); right: 0; background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius); padding: 6px; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 400; }
+.menuItem { display: flex; width: 100%; align-items: center; gap: 8px; padding: 9px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: left; transition: background 0.1s; }
+.menuItem:hover { background: var(--bg); color: var(--text); }

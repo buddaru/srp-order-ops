@@ -263,9 +263,11 @@ export default function Waste() {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await supabase.from('waste_log').select('*').order('created_at', { ascending: false })
-    setEntries(data || [])
-    setLoading(false)
+    try {
+      const { data } = await supabase.from('waste_log').select('*').order('created_at', { ascending: false })
+      setEntries(data || [])
+    } catch(e) { console.error('waste load error', e) }
+    finally { setLoading(false) }
   }
 
   useEffect(() => {

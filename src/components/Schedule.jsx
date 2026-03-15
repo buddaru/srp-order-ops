@@ -359,13 +359,15 @@ export default function Schedule() {
 
   const loadAll = async () => {
     setLoading(true)
-    const [{ data:s },{ data:e }] = await Promise.all([
-      supabase.from('shifts').select('*').order('shift_date').order('start_time'),
-      supabase.from('employees').select('*').order('name'),
-    ])
-    setShifts(s||[])
-    setEmployees(e||[])
-    setLoading(false)
+    try {
+      const [{ data:s },{ data:e }] = await Promise.all([
+        supabase.from('shifts').select('*').order('shift_date').order('start_time'),
+        supabase.from('employees').select('*').order('name'),
+      ])
+      setShifts(s||[])
+      setEmployees(e||[])
+    } catch(err) { console.error('schedule load error', err) }
+    finally { setLoading(false) }
   }
 
   useEffect(()=>{
@@ -468,7 +470,10 @@ export default function Schedule() {
         <div className={styles.empPanel}>
           <div className={styles.empPanelHeader}>
             <div className={styles.empPanelTitle}>Employees</div>
-            <button className={styles.addBtn} style={{fontSize:11,padding:'5px 12px'}} onClick={()=>{setEditEmp(null);setShowEmpModal(true)}}>+ Add employee</button>
+            <div style={{display:'flex',gap:8}}>
+              <button className={styles.addBtn} style={{fontSize:11,padding:'5px 12px'}} onClick={()=>{setEditEmp(null);setShowEmpModal(true)}}>+ Add employee</button>
+              <button className={styles.copyBtn} style={{fontSize:11,padding:'5px 12px'}} onClick={()=>setShowEmpPanel(false)}>Hide ✕</button>
+            </div>
           </div>
           {employees.length===0 ? (
             <div className={styles.empPanelEmpty}>No employees yet.</div>
