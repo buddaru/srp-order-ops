@@ -84,3 +84,10 @@ textarea { resize: none; height: 68px; line-height: 1.6; }
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Prevent iOS auto-zoom on input focus */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
