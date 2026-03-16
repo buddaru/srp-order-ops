@@ -8,46 +8,63 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (data) {
-      setProfile(data)
-      return true
+  async function loadProfile(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (data) {
+        setProfile(data)
+      } else if (error?.code === 'PGRST116') {
+        // No profile row — genuine missing profile, sign out
+        setProfile(null)
+        await supabase.auth.signOut()
+      }
+      // Any other error (network, timeout) — keep user logged in, profile stays null
+    } catch (e) {
+      console.warn('loadProfile error:', e.message)
+      // Don't sign out on network errors
     }
-    // Only sign out if it's a real 404 (no profile row), not a network error
-    if (error?.code === 'PGRST116') {
-      setProfile(null)
-      await supabase.auth.signOut()
-    }
-    return false
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) loadProfile(session.user.id).finally(() => setLoading(false))
-      else setLoading(false)
+    let mounted = true
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return
+      if (session?.user) {
+        setUser(session.user)
+        loadProfile(session.user.id).finally(() => {
+          if (mounted) setLoading(false)
+        })
+      } else {
+        setLoading(false)
+      }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setProfile(null)
         setLoading(false)
-        return
-      }
-      if (session?.user) {
+      } else if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user)
-        await loadProfile(session.user.id)
+        loadProfile(session.user.id).finally(() => {
+          if (mounted) setLoading(false)
+        })
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        setUser(session.user)
       }
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email, password) => {
@@ -57,9 +74,9 @@ export function AuthProvider({ children }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    await supabase.auth.signOut()
   }
 
   const isAdmin = profile?.role === 'admin'

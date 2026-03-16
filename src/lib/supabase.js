@@ -9,24 +9,27 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     storageKey: 'srp-auth',
     autoRefreshToken: true,
     detectSessionInUrl: false,
+  },
+  global: {
+    // 10-second fetch timeout for all requests
+    fetch: (url, options = {}) => {
+      const controller = new AbortController()
+      const id = setTimeout(() => controller.abort(), 10000)
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id))
+    }
   }
 })
 
-// Run any Supabase query with a hard 8s timeout.
-// Never throws — always returns { data, error }.
-// Does NOT call ensureSession (autoRefreshToken handles that automatically).
+// Safe query wrapper — always resolves, never hangs
 export async function safeQuery(queryFn) {
   try {
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 8000)
-    )
-    const result = await Promise.race([queryFn(), timeout])
+    const result = await queryFn()
     return result ?? { data: null, error: null }
   } catch (err) {
-    console.warn('safeQuery failed:', err.message)
+    console.warn('safeQuery error:', err.message)
     return { data: null, error: err }
   }
 }
 
-// Legacy alias
 export const withTimeout = safeQuery

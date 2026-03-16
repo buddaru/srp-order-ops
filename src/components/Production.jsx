@@ -28,6 +28,7 @@ const shiftDate = (ds, n) => {
 
 export default function Production() {
   const { isAdmin } = useAuth()
+  const loadRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [date, setDate]       = useState(todayDS())
   const [items, setItems]     = useState([])
@@ -35,6 +36,7 @@ export default function Production() {
   const [noteId, setNoteId]   = useState(null)
   const [noteSaved, setNoteSaved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
 
   // Add item form
   const [newName, setNewName]     = useState('')
@@ -49,18 +51,25 @@ export default function Production() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
+      setLoadError(false)
       try {
         const [r1, r2] = await Promise.all([
           safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
           safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).maybeSingle()),
         ])
-        setItems(r1.data || [])
-        setNote(r2.data?.content || '')
-        setNoteId(r2.data?.id || null)
+        if (r1.error?.message === 'timeout' || r2.error?.message === 'timeout') {
+          setLoadError(true)
+        } else {
+          setItems(r1.data || [])
+          setNote(r2.data?.content || '')
+          setNoteId(r2.data?.id || null)
+        }
       } finally {
         setLoading(false)
       }
     }
+    // expose load so retry button can call it
+    loadRef.current = load
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
     document.addEventListener('visibilitychange', onVisible)
@@ -235,6 +244,11 @@ export default function Production() {
       {/* Production Items */}
       {loading ? (
         <div className={styles.empty}>Loading…</div>
+      ) : loadError ? (
+        <div className={styles.empty}>
+          <div style={{marginBottom:12,color:'var(--text-muted)'}}>Couldn't load — connection timed out.</div>
+          <button onClick={()=>loadRef.current&&loadRef.current()} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',cursor:'pointer',fontFamily:'DM Sans, sans-serif',fontSize:13}}>Retry</button>
+        </div>
       ) : total === 0 && !showForm ? (
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>🧁</div>

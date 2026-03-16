@@ -253,6 +253,7 @@ export default function Waste() {
   const { isAdmin } = useAuth()
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(false)
+  const [loadError, setLoadError]   = useState(false)
   const [period, setPeriod]       = useState('M')
   const [anchor, setAnchor]       = useState(toDS(today()))
   const [sort, setSort]           = useState('newest')
@@ -263,9 +264,11 @@ export default function Waste() {
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
-      const { data } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
-      setEntries(data || [])
+      const { data, error } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
+      if (error?.message === 'timeout') { setLoadError(true) }
+      else { setEntries(data || []) }
     } finally {
       setLoading(false)
     }

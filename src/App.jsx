@@ -70,7 +70,6 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 
 export default function App() {
   const [orders, setOrders]           = useState([])
-  const [loading, setLoading]         = useState(false)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [drawerOrderId, setDrawerOrderId] = useState(null)
@@ -99,20 +98,17 @@ export default function App() {
   // ── Load orders from Supabase on mount ──
   useEffect(() => {
     const load = async () => {
-      setLoading(true)
       try {
-        const { data, error } = await withTimeout(
-          supabase.from('orders').select('*').order('created_at', { ascending: true })
-        )
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: true })
 
         if (error) {
-          console.error('Load error:', error)
-          setOrders(seedOrders)
-        } else if (data.length === 0) {
-          const toInsert = seedOrders.map(toDB)
-          const { error: insertErr } = await supabase.from('orders').insert(toInsert)
-          setOrders(seedOrders)
-        } else {
+          console.error('Load orders error:', error)
+          return
+        }
+        if (data && data.length > 0) {
           const mapped = data.map(fromDB)
           setOrders(mapped)
           orderSeq = mapped.reduce((max, o) => {
@@ -120,13 +116,12 @@ export default function App() {
             return Math.max(max, n)
           }, 0)
         }
-      } catch(e) { console.error('Orders load error', e); setOrders(seedOrders) }
-      finally { setLoading(false) }
+      } catch(e) {
+        console.error('Orders load exception:', e)
+      }
     }
     load()
-    const onVisible = () => { if (document.visibilityState === 'visible') load() }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    return () => {}
   }, [])
 
   // ── Stage movement ──
@@ -205,9 +200,14 @@ export default function App() {
   const handleSaveEdit = async (data) => {
     const notifs = [...(editOrder?.notifications || []), { text: '✏ Order updated by staff', ts: new Date().toISOString() }]
     const updated = { ...editOrder, ...data, notifications: notifs }
+    const { error } = await supabase.from('orders').update(toDB(updated)).eq('id', editingId)
+    if (error) {
+      console.error('Update order error:', error)
+      showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Could not save changes. Check your connection.' })
+      return
+    }
     setOrders(prev => prev.map(o => o.id !== editingId ? o : updated))
     setEditingId(null)
-    await supabase.from('orders').update(toDB(updated)).eq('id', editingId)
   }
 
   // ── Create ──
@@ -215,10 +215,16 @@ export default function App() {
     orderSeq++
     const id = `SRP-${String(orderSeq).padStart(3, '0')}`
     const newOrder = { id, ...data, notifications: [{ text: '✓ Order created', ts: new Date().toISOString() }], stage: 'received', createdAt: new Date().toISOString() }
+    const dbRow = toDB(newOrder)
+    const { error } = await supabase.from('orders').insert(dbRow)
+    if (error) {
+      console.error('Create order error:', error)
+      showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Order could not be saved. Check your connection.' })
+      return
+    }
     setOrders(prev => [...prev, newOrder])
     setShowNew(false)
     showToast({ label: '✓ Order created', customer: data.customer, msg: `${id} added to the board.` })
-    await supabase.from('orders').insert(toDB(newOrder))
   }
 
   // ── SMS log from drawer ──
