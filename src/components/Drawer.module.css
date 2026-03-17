@@ -108,40 +108,45 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .drawer {
-    width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    border-left: none !important;
-    border-top: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
-    top: auto !important;
-    bottom: 0;
-    height: 85dvh;
-    max-height: 85dvh;
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: env(safe-area-inset-bottom, 16px);
-  }
   .backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.5);
     z-index: 149;
+  }
+  .drawer {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-top: none !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 24px);
+    z-index: 300;
   }
   .header {
     position: sticky;
     top: 0;
     background: var(--card);
-    z-index: 1;
-    padding: 16px 16px 12px;
+    z-index: 10;
+    padding: 16px 20px 14px;
     padding-top: max(16px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
   }
   .closeBtn {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 18px !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 16px !important;
     background: var(--bg) !important;
     border-radius: 50% !important;
     display: flex !important;
@@ -149,6 +154,7 @@
     justify-content: center !important;
     border: 1px solid var(--border-2) !important;
     flex-shrink: 0 !important;
+    color: var(--text-muted) !important;
   }
   .body {
     padding: 16px 16px 40px;
