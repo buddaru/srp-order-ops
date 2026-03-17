@@ -1,3 +1,7 @@
+.backdrop {
+  display: none;
+}
+
 .drawer {
   position: fixed;
   right: 0;
@@ -113,18 +117,38 @@
     border-radius: 16px 16px 0 0;
     top: auto !important;
     bottom: 0;
-    height: 90dvh;
-    max-height: 90dvh;
+    height: 85dvh;
+    max-height: 85dvh;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 149;
   }
   .header {
     position: sticky;
     top: 0;
     background: var(--card);
     z-index: 1;
-    padding-bottom: 12px;
+    padding: 16px 16px 12px;
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  .closeBtn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+    background: var(--bg) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid var(--border-2) !important;
+    flex-shrink: 0 !important;
   }
   .body {
     padding: 16px 16px 40px;

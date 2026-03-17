@@ -3,6 +3,7 @@ import { fmtDate, fmtTime, orderTotal, fmt$ } from '../utils/helpers'
 import styles from './Drawer.module.css'
 
 export default function Drawer({ order, onClose, onSmsLog, showToast }) {
+  const isMobile = window.innerWidth <= 768
   const [msg, setMsg] = useState('')
   const [sent, setSent] = useState(false)
 
@@ -46,13 +47,15 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
     : '—'
 
   return (
-    <div className={styles.drawer}>
+    <>
+      <div className={styles.backdrop} onClick={onClose} />
+      <div className={styles.drawer}>
       <div className={styles.header}>
         <div>
           <div className={styles.name}>{order.customer}</div>
           <div className={styles.meta}>{order.id} · {fmtDate(order.pickupDate)} at {fmtTime(order.pickupTime)}</div>
         </div>
-        <button className={styles.closeBtn} onClick={onClose}>×</button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
       </div>
       <div className={styles.body}>
         {order.image && <img src={order.image} alt="Order" className={styles.orderImg} />}
@@ -113,5 +116,6 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
