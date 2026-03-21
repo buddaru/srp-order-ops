@@ -6,6 +6,12 @@ import styles from './Production.module.css'
 
 const todayDS = () => toDS(new Date())
 
+const yesterdayDS = () => {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return toDS(d)
+}
+
 const fmtDisplayDate = (ds) => {
   const d = new Date(ds + 'T00:00:00')
   const today = todayDS()
@@ -31,8 +37,9 @@ export default function Production() {
   const loadRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [date, setDate]       = useState(todayDS())
-  const [items, setItems]     = useState([])
-  const [note, setNote]       = useState('')
+  const [items, setItems]         = useState([])
+  const [carryoverItems, setCarryoverItems] = useState([])
+  const [note, setNote]           = useState('')
   const [noteId, setNoteId]   = useState(null)
   const [noteSaved, setNoteSaved] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -63,6 +70,17 @@ export default function Production() {
           setItems(r1.data || [])
           setNote(r2.data?.content || '')
           setNoteId(r2.data?.id || null)
+          // Load carryovers only when viewing today
+          if (date === todayDS()) {
+            const { data: yData } = await supabase
+              .from('production')
+              .select('*')
+              .eq('date', yesterdayDS())
+              .eq('completed', false)
+            setCarryoverItems(yData || [])
+          } else {
+            setCarryoverItems([])
+          }
         }
       } finally {
         setLoading(false)
@@ -105,6 +123,12 @@ export default function Production() {
   // Toggle complete
   const handleToggle = async (id, completed) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !completed } : i))
+    await supabase.from('production').update({ completed: !completed }).eq('id', id)
+  }
+
+  // Toggle carryover item (updates yesterday's record)
+  const handleCarryoverToggle = async (id, completed) => {
+    setCarryoverItems(prev => prev.map(i => i.id === id ? { ...i, completed: !completed } : i))
     await supabase.from('production').update({ completed: !completed }).eq('id', id)
   }
 
@@ -184,21 +208,27 @@ export default function Production() {
 
   return (
     <div className={styles.page}>
+      {/* Print header — only visible when printing */}
+      <div className={styles.printHeader}>
+        <div className={styles.printTitle}>Sweet Red Peach — Daily Production</div>
+        <div className={styles.printDate}>{fmtDisplayDate(date)}</div>
+      </div>
+
       {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.title}>Daily Production List</div>
+      <div className={`${styles.header} ${styles.noPrint}`}>
+        <div className={styles.title}>Daily Production</div>
         <div className={styles.headerRight}>
           <div className={styles.menuWrap}>
-            <button className={styles.hamburger} onClick={()=>setMenuOpen(v=>!v)}>
+            <button className={styles.hamburger} onClick={() => setMenuOpen(v => !v)}>
               <span/><span/><span/>
             </button>
             {menuOpen && (
               <>
-                <div className={styles.menuBackdrop} onClick={()=>setMenuOpen(false)} />
+                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
                 <div className={styles.menuDropdown}>
-                  <button className={styles.menuItem} onClick={()=>{handlePrint();setMenuOpen(false)}}>🖨 Print</button>
-                  <button className={styles.menuItem} onClick={()=>{handleLoadTemplate();setMenuOpen(false)}}>📋 Load Template</button>
-                  <button className={styles.menuItem} onClick={()=>{handleSaveTemplate();setMenuOpen(false)}}>💾 Save as Template</button>
+                  <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
+                  <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
+                  <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
                 </div>
               </>
             )}
@@ -215,20 +245,20 @@ export default function Production() {
       </div>
 
       {/* Stats */}
-      <div className={styles.stats}>
-        <div className={styles.stat}><div className={styles.statNum}>{total}</div><div className={styles.statLabel}>Total items</div></div>
-        <div className={styles.stat}><div className={styles.statNum} style={{color:'#15803D'}}>{completed}</div><div className={styles.statLabel}>Completed</div></div>
-        <div className={styles.stat}><div className={styles.statNum} style={{color:'#B45309'}}>{remaining}</div><div className={styles.statLabel}>Remaining</div></div>
+      <div className={`${styles.stats} ${styles.noPrint}`}>
+        <div className={styles.stat}><div className={styles.statNum}>{total}</div><div className={styles.statLabel}>Total</div></div>
+        <div className={styles.stat}><div className={styles.statNum} style={{color:'#15803D'}}>{completed}</div><div className={styles.statLabel}>Done</div></div>
+        <div className={styles.stat}><div className={styles.statNum} style={{color:'#B45309'}}>{remaining}</div><div className={styles.statLabel}>Left</div></div>
       </div>
 
       {total > 0 && (
-        <div className={styles.progressBar}>
+        <div className={`${styles.progressBar} ${styles.noPrint}`}>
           <div className={styles.progressFill} style={{width: `${pct}%`}} />
         </div>
       )}
 
-      {/* Daily Note */}
-      <div className={styles.noteSection}>
+      {/* Shift Notes */}
+      <div className={`${styles.noteSection} ${styles.noPrint}`}>
         <div className={styles.noteLabelRow}>
           <div className={styles.sectionLabel}>📋 Shift Notes</div>
           {noteSaved && <span className={styles.savedBadge}>Saved</span>}
@@ -241,13 +271,36 @@ export default function Production() {
         />
       </div>
 
+      {/* Carryover section */}
+      {carryoverItems.length > 0 && (
+        <div className={styles.carryoverSection}>
+          <div className={styles.carryoverHeader}>
+            <span className={styles.carryoverBadge}>Carried Over from Yesterday</span>
+            <span className={styles.carryoverCount}>{carryoverItems.filter(i => !i.completed).length} remaining</span>
+          </div>
+          {carryoverItems.map(item => (
+            <div key={item.id} className={`${styles.itemCard} ${item.completed ? styles.done : ''} ${styles.carryoverCard}`}>
+              <button
+                className={`${styles.check} ${item.completed ? styles.checked : ''}`}
+                onClick={() => handleCarryoverToggle(item.id, item.completed)}
+              />
+              <div className={styles.itemBody}>
+                <div className={styles.itemName}>{item.item_name}</div>
+                {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+              </div>
+              <div className={styles.itemQty}>{item.quantity}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Production Items */}
       {loading ? (
         <div className={styles.empty}>Loading…</div>
       ) : loadError ? (
         <div className={styles.empty}>
           <div style={{marginBottom:12,color:'var(--text-muted)'}}>Couldn't load — connection timed out.</div>
-          <button onClick={()=>loadRef.current&&loadRef.current()} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',cursor:'pointer',fontFamily:'DM Sans, sans-serif',fontSize:13}}>Retry</button>
+          <button onClick={() => loadRef.current && loadRef.current()} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',cursor:'pointer',fontFamily:'DM Sans, sans-serif',fontSize:13}}>Retry</button>
         </div>
       ) : total === 0 && !showForm ? (
         <div className={styles.empty}>
@@ -261,58 +314,65 @@ export default function Production() {
             <div className={styles.sectionLabel}>{cat}</div>
             {catItems.map(item => (
               <div key={item.id}>
-              {editingItem?.id === item.id ? (
-                <div className={styles.editForm}>
-                  <div className={styles.formRow}>
-                    <input className={styles.input} value={editingItem.item_name} onChange={e=>setEditingItem(p=>({...p,item_name:e.target.value}))} placeholder="Item name" />
-                    <input className={styles.inputSm} value={editingItem.quantity} onChange={e=>setEditingItem(p=>({...p,quantity:e.target.value}))} placeholder="Qty" />
+                {editingItem?.id === item.id ? (
+                  <div className={`${styles.editForm} ${styles.noPrint}`}>
+                    <div className={styles.formRow}>
+                      <input className={styles.input} value={editingItem.item_name} onChange={e => setEditingItem(p => ({...p, item_name: e.target.value}))} placeholder="Item name" />
+                      <input className={styles.inputSm} value={editingItem.quantity} onChange={e => setEditingItem(p => ({...p, quantity: e.target.value}))} placeholder="Qty" />
+                    </div>
+                    <div className={styles.formRow}>
+                      <input className={styles.input} value={editingItem.category} onChange={e => setEditingItem(p => ({...p, category: e.target.value}))} placeholder="Category" />
+                      <input className={styles.input} value={editingItem.notes} onChange={e => setEditingItem(p => ({...p, notes: e.target.value}))} placeholder="Notes" />
+                    </div>
+                    <div className={styles.formActions}>
+                      <button className={styles.cancelBtn} onClick={() => setEditingItem(null)}>Cancel</button>
+                      <button className={styles.saveBtn} onClick={handleSaveEdit}>Save</button>
+                    </div>
                   </div>
-                  <div className={styles.formRow}>
-                    <input className={styles.input} value={editingItem.category} onChange={e=>setEditingItem(p=>({...p,category:e.target.value}))} placeholder="Category" />
-                    <input className={styles.input} value={editingItem.notes} onChange={e=>setEditingItem(p=>({...p,notes:e.target.value}))} placeholder="Notes" />
+                ) : (
+                  <div className={`${styles.itemCard} ${item.completed ? styles.done : ''}`}>
+                    <button
+                      className={`${styles.check} ${item.completed ? styles.checked : ''}`}
+                      onClick={() => handleToggle(item.id, item.completed)}
+                    />
+                    <div className={styles.itemBody}>
+                      <div className={styles.itemName}>{item.item_name}</div>
+                      {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+                    </div>
+                    <div className={styles.itemQty}>{item.quantity}</div>
+                    <div className={`${styles.itemActions} ${styles.noPrint}`}>
+                      <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
+                      <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
+                    </div>
                   </div>
-                  <div className={styles.formActions}>
-                    <button className={styles.cancelBtn} onClick={() => setEditingItem(null)}>Cancel</button>
-                    <button className={styles.saveBtn} onClick={handleSaveEdit}>Save</button>
-                  </div>
-                </div>
-              ) : (
-                <div className={`${styles.itemCard} ${item.completed ? styles.done : ''}`}>
-                  <button className={`${styles.check} ${item.completed ? styles.checked : ''}`} onClick={() => handleToggle(item.id, item.completed)} />
-                  <div className={styles.itemBody}>
-                    <div className={styles.itemName}>{item.item_name}</div>
-                    {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
-                  </div>
-                  <div className={styles.itemQty}>{item.quantity}</div>
-                  <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
-                  <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             ))}
           </div>
         ))
       )}
 
       {/* Add item form */}
-      {showForm ? (
-        <div className={styles.addForm}>
-          <div className={styles.formRow}>
-            <input placeholder="Item name *" value={newName} onChange={e=>setNewName(e.target.value)} className={styles.input} />
-            <input placeholder="Qty *" value={newQty} onChange={e=>setNewQty(e.target.value)} className={styles.inputSm} />
+      <div className={styles.noPrint}>
+        {showForm ? (
+          <div className={styles.addForm}>
+            <div className={styles.formRow}>
+              <input placeholder="Item name *" value={newName} onChange={e => setNewName(e.target.value)} className={styles.input} />
+              <input placeholder="Qty *" value={newQty} onChange={e => setNewQty(e.target.value)} className={styles.inputSm} />
+            </div>
+            <div className={styles.formRow}>
+              <input placeholder="Category (e.g. Cupcakes)" value={newCat} onChange={e => setNewCat(e.target.value)} className={styles.input} />
+              <input placeholder="Notes (optional)" value={newNotes} onChange={e => setNewNotes(e.target.value)} className={styles.input} />
+            </div>
+            <div className={styles.formActions}>
+              <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
+              <button className={styles.saveBtn} onClick={handleAdd}>Add item</button>
+            </div>
           </div>
-          <div className={styles.formRow}>
-            <input placeholder="Category (e.g. Cupcakes)" value={newCat} onChange={e=>setNewCat(e.target.value)} className={styles.input} />
-            <input placeholder="Notes (optional)" value={newNotes} onChange={e=>setNewNotes(e.target.value)} className={styles.input} />
-          </div>
-          <div className={styles.formActions}>
-            <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
-            <button className={styles.saveBtn} onClick={handleAdd}>Add item</button>
-          </div>
-        </div>
-      ) : (
-        <button className={styles.addBtn} onClick={() => setShowForm(true)}>+ Add item</button>
-      )}
+        ) : (
+          <button className={styles.addBtn} onClick={() => setShowForm(true)}>+ Add item</button>
+        )}
+      </div>
     </div>
   )
 }
