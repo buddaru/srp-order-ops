@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
-import { toDS, today, daysFromNow, diffDays, fmtDate, STRIP_DAYS } from '../utils/helpers'
+import { toDS } from '../utils/helpers'
 import CalendarPopup from './CalendarPopup'
 import styles from './CalStrip.module.css'
 
-const fmtRangeDate = (ds) => {
+const todayDS = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+const offsetDS = (n) => {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+const fmtShort = (ds) => {
   if (!ds) return ''
   const d = new Date(ds + 'T00:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -12,12 +21,11 @@ const fmtRangeDate = (ds) => {
 export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect }) {
   const [startVal, setStartVal] = useState('')
   const [endVal, setEndVal]     = useState('')
-  const [err, setErr]           = useState('')
   const [showCal, setShowCal]   = useState(false)
   const calRef = useRef(null)
 
   useEffect(() => {
-    if (!dateRange) { setStartVal(''); setEndVal(''); setErr('') }
+    if (!dateRange) { setStartVal(''); setEndVal('') }
   }, [dateRange])
 
   useEffect(() => {
@@ -28,122 +36,124 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const orderDates = new Set(orders.map(o => o.pickupDate))
-  const inWindowCount = orders.filter(o => {
-    const d = diffDays(o.pickupDate)
-    return d >= 0 && d <= STRIP_DAYS - 1
-  }).length
+  const today = todayDS()
+  const tomorrow = offsetDS(1)
+
+  // Determine active preset
+  const getActivePreset = () => {
+    if (dateRange) {
+      const d7end = offsetDS(7)
+      const d30end = offsetDS(30)
+      const mtdStart = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-01`
+      if (dateRange.start === today && dateRange.end === d7end) return '7d'
+      if (dateRange.start === today && dateRange.end === d30end) return '30d'
+      if (dateRange.start === mtdStart && dateRange.end === today) return 'mtd'
+      return 'custom'
+    }
+    if (selectedDay === 'all' && !customDateSelected) return 'all'
+    if (selectedDay === today && !customDateSelected) return 'today'
+    if (selectedDay === tomorrow && !customDateSelected) return 'tomorrow'
+    return 'custom'
+  }
+  const activePreset = getActivePreset()
+
+  const handlePreset = (preset) => {
+    onRangeSelect(null)
+    if (preset === 'all')      { onSelectDay('all', false) }
+    if (preset === 'today')    { onSelectDay(today, false) }
+    if (preset === 'tomorrow') { onSelectDay(tomorrow, false) }
+    if (preset === '7d')       { onRangeSelect({ start: today, end: offsetDS(7) }) }
+    if (preset === '30d')      { onRangeSelect({ start: today, end: offsetDS(30) }) }
+    if (preset === 'mtd') {
+      const mtdStart = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-01`
+      onRangeSelect({ start: mtdStart, end: today })
+    }
+  }
 
   const handleApply = () => {
-    setErr('')
-    if (!startVal || !endVal) { setErr('Enter both dates'); return }
-    if (startVal > endVal)    { setErr('Start must be before end'); return }
+    if (!startVal || !endVal || startVal > endVal) return
     onRangeSelect({ start: startVal, end: endVal })
   }
 
   const handleClear = () => {
-    setStartVal(''); setEndVal(''); setErr('')
+    setStartVal(''); setEndVal('')
     onRangeSelect(null)
     onSelectDay('all', false)
   }
 
   const handleCalSelect = (ds) => {
     setShowCal(false)
-    if (dateRange) handleClear()
+    onRangeSelect(null)
     onSelectDay(ds, true)
   }
 
-  const handleTabClick = (ds, isCustom) => {
-    if (dateRange) handleClear()
-    onSelectDay(ds, isCustom)
-  }
-
-  const bothFilled = startVal && endVal
+  const PRESETS = [
+    { id: 'all', label: 'All' },
+    { id: 'today', label: 'Today' },
+    { id: 'tomorrow', label: 'Tomorrow' },
+    { id: '7d', label: '7d' },
+    { id: '30d', label: '30d' },
+    { id: 'mtd', label: 'MTD' },
+  ]
 
   return (
     <div className={styles.strip}>
-      {/* ── Day tabs ── */}
-      <div className={`${styles.tabs} ${dateRange ? styles.tabsDimmed : ''}`}>
-        <div
-          className={`${styles.tab} ${styles.allTab} ${!dateRange && selectedDay === 'all' && !customDateSelected ? styles.active : ''}`}
-          onClick={() => handleTabClick('all', false)}
-        >
-          <div className={styles.tabLabel}>All</div>
-          <div className={styles.tabDate}>All</div>
-          <div className={styles.tabCount}>{inWindowCount}</div>
-        </div>
-
-        <div className={styles.divider} />
-
-        {Array.from({ length: STRIP_DAYS }, (_, i) => {
-          const d   = daysFromNow(i)
-          const ds  = toDS(d)
-          const n   = orders.filter(o => o.pickupDate === ds).length
-          const lbl = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })
-          const isActive = !dateRange && selectedDay === ds && !customDateSelected
-          return (
-            <div key={ds} className={`${styles.tab} ${isActive ? styles.active : ''}`} onClick={() => handleTabClick(ds, false)}>
-              <div className={styles.tabLabel}>{lbl}</div>
-              <div className={styles.tabDate}>{d.getDate()}</div>
-              <div className={styles.tabCount}>{n}</div>
-            </div>
-          )
-        })}
+      {/* Preset pills */}
+      <div className={styles.presets}>
+        {PRESETS.map(p => (
+          <button
+            key={p.id}
+            className={`${styles.preset} ${activePreset === p.id ? styles.presetActive : ''}`}
+            onClick={() => handlePreset(p.id)}
+          >{p.label}</button>
+        ))}
       </div>
 
-      {/* ── Range section ── */}
-      <div className={`${styles.rangeSection} ${dateRange ? styles.rangeSectionActive : ''}`}>
-        <span className={styles.rangeLabel}>Range</span>
+      <div className={styles.divider} />
 
-        {dateRange ? (
+      {/* Custom date range */}
+      <div className={styles.rangeRow}>
+        {activePreset === 'custom' && dateRange ? (
           <>
-            <span className={styles.activeRangeText}>
-              {fmtRangeDate(dateRange.start)} – {fmtRangeDate(dateRange.end)}
-            </span>
-            <button className={styles.clearBtn} onClick={handleClear} title="Clear range">✕</button>
+            <span className={styles.activeRange}>{fmtShort(dateRange.start)} – {fmtShort(dateRange.end)}</span>
+            <button className={styles.clearBtn} onClick={handleClear}>✕</button>
           </>
         ) : (
           <>
-            <div className={styles.dateWrap}>
-              <input
-                type="date"
-                className={`${styles.dateInput} ${startVal ? styles.dateInputFilled : ''}`}
-                value={startVal}
-                onChange={e => { setStartVal(e.target.value); setErr('') }}
-              />
-              {!startVal && <div className={styles.datePlaceholder}>Start date</div>}
-            </div>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={startVal}
+              onChange={e => { setStartVal(e.target.value) }}
+            />
             <span className={styles.rangeArrow}>→</span>
-            <div className={styles.dateWrap}>
-              <input
-                type="date"
-                className={`${styles.dateInput} ${endVal ? styles.dateInputFilled : ''}`}
-                value={endVal}
-                onChange={e => { setEndVal(e.target.value); setErr('') }}
-              />
-              {!endVal && <div className={styles.datePlaceholder}>End date</div>}
-            </div>
-            {bothFilled && (
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={endVal}
+              onChange={e => { setEndVal(e.target.value) }}
+            />
+            {startVal && endVal && startVal <= endVal && (
               <button className={styles.applyBtn} onClick={handleApply}>Apply</button>
             )}
-            {err && <span className={styles.rangeErr}>{err}</span>}
           </>
         )}
       </div>
-      {/* ── Browse button ── */}
+
+      {/* Calendar browse */}
       <div className={styles.browseWrap} ref={calRef}>
         <button
-          className={`${styles.browseBtn} ${customDateSelected && !dateRange ? styles.browseBtnActive : ''}`}
+          className={`${styles.browseBtn} ${activePreset === 'custom' && !dateRange ? styles.browseBtnActive : ''}`}
           onClick={() => setShowCal(v => !v)}
-          title="Browse calendar"
+          title="Pick a specific date"
         >
           📅
-          {customDateSelected && !dateRange && <span className={styles.browseDateLabel}>{fmtRangeDate(selectedDay)}</span>}
+          {activePreset === 'custom' && !dateRange && <span className={styles.browseDateLabel}>{fmtShort(selectedDay)}</span>}
         </button>
         {showCal && (
           <div className={styles.calWrap}>
             <CalendarPopup
-              selectedDate={customDateSelected && !dateRange ? selectedDay : null}
+              selectedDate={activePreset === 'custom' && !dateRange ? selectedDay : null}
               allowPast={true}
               orderDates={new Set(orders.map(o => o.pickupDate))}
               onSelect={handleCalSelect}

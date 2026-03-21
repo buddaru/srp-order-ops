@@ -1,0 +1,6 @@
+.page { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 60vh; padding: 40px 24px; }
+.inner { text-align: center; max-width: 380px; }
+.icon { font-size: 48px; margin-bottom: 20px; }
+.title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.sub { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; }
+.pill { display: inline-block; background: var(--bg-2); color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border-2); }

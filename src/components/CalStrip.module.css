@@ -1,222 +1,96 @@
 .strip {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  padding: 10px 20px;
+  gap: 10px;
+  flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 150;
-  overflow: visible;
 }
 
-/* ── Tabs ── */
-.tabs {
-  display: flex;
-  align-items: stretch;
-  padding: 0 6px 0 14px;
-  flex: 1;
-  min-width: 0;
-  overflow: visible;
-  transition: opacity 0.2s;
-}
-.tabsDimmed { opacity: 0.4; pointer-events: none; }
+/* ── Presets ── */
+.presets { display: flex; gap: 4px; align-items: center; }
 
-.tab {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 14px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: background 0.12s;
-  min-width: 58px;
-  gap: 1px;
-  user-select: none;
-}
-.tab:hover { background: var(--bg); }
-.active {
-  border-bottom-color: var(--brand);
-  background: var(--brand-faint);
-}
-.active .tabLabel,
-.active .tabDate  { color: var(--brand); }
-.active .tabCount { color: var(--brand); opacity: 0.7; }
-
-.tabLabel {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+.preset {
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
   font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #f5f5f5;
+  color: #555;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
 }
-.tabDate  { font-size: 19px; font-weight: 400; color: var(--text); line-height: 1.15; }
-.tabCount { font-size: 9px; color: var(--text-muted); }
-.allTab .tabDate { font-size: 12px; font-weight: 600; padding: 2px 0; }
+.preset:hover { background: #ebebeb; color: #1a1a1a; }
+.presetActive { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.presetActive:hover { background: #333; }
 
-.divider { width: 1px; background: var(--border); margin: 10px 3px; flex-shrink: 0; }
+/* ── Divider ── */
+.divider { width: 1px; height: 20px; background: rgba(0,0,0,0.1); flex-shrink: 0; }
 
-/* ── Range section ── */
-.rangeSection {
+/* ── Range row ── */
+.rangeRow {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 14px;
-  border-left: 1px solid var(--border);
   flex-shrink: 0;
-  transition: background 0.15s;
 }
-.rangeSectionActive { background: var(--brand-faint); }
 
-.rangeLabel {
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  margin-right: 2px;
-  font-family: 'DM Sans', sans-serif;
-}
 .dateInput {
-  width: 116px !important;
-  border: none !important;
-  border-bottom: 1px solid var(--border-2) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  width: 120px !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  border-radius: 6px !important;
+  background: #f5f5f5 !important;
   font-size: 12px !important;
-  font-weight: 400 !important;
-  color: var(--text-muted) !important;
-  padding: 3px 2px !important;
+  color: #555 !important;
+  padding: 5px 8px !important;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
   outline: none !important;
   box-shadow: none !important;
+  font-family: 'DM Sans', sans-serif !important;
 }
-.dateInput:focus {
-  border-bottom-color: var(--accent) !important;
-  color: var(--text) !important;
-  box-shadow: none !important;
-}
-.dateInputFilled {
-  color: var(--brand) !important;
-  border-bottom-color: var(--brand) !important;
-  font-weight: 500 !important;
-}
-.rangeArrow { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+.dateInput:focus { border-color: #1a1a1a !important; color: #1a1a1a !important; box-shadow: none !important; }
+
+.rangeArrow { font-size: 11px; color: #aaa; flex-shrink: 0; }
+
 .applyBtn {
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 4px 11px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  transition: background 0.12s;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
+  background: #1a1a1a; color: #fff;
+  border: none; border-radius: 6px;
+  padding: 5px 12px; font-size: 11px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: background 0.1s; white-space: nowrap;
 }
-.applyBtn:hover { background: var(--brand-light); }
-.rangeErr { font-size: 10px; color: #DC2626; white-space: nowrap; }
+.applyBtn:hover { background: #333; }
 
-.activeRangeText {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--brand);
-  white-space: nowrap;
-}
-.clearBtn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 2px 5px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: all 0.12s;
-  flex-shrink: 0;
-}
-.clearBtn:hover { background: var(--bg); color: var(--text); }
+.activeRange { font-size: 12px; font-weight: 500; color: #1a1a1a; white-space: nowrap; }
+.clearBtn { background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.1s; }
+.clearBtn:hover { background: #f0f0f0; color: #1a1a1a; }
 
-/* ── Browse ── */
-.browseWrap {
-  display: flex;
-  align-items: center;
-  position: relative;
-  padding-left: 8px;
-  border-left: 1px solid var(--border);
-  flex-shrink: 0;
-  padding-right: 14px;
-}
+/* ── Calendar browse ── */
+.browseWrap { display: flex; align-items: center; position: relative; margin-left: auto; }
 .browseBtn {
-  background: none;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--text-muted);
+  background: none; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 6px; padding: 5px 10px;
+  cursor: pointer; font-size: 13px; color: #888;
   font-family: 'DM Sans', sans-serif;
-  font-weight: 400;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  transition: all 0.1s; display: flex; align-items: center; gap: 6px;
 }
-.browseBtn:hover { background: var(--bg); border-color: var(--border-2); color: var(--text-2); }
-.browseBtnActive { background: var(--brand-faint); border-color: rgba(196,120,74,0.2); color: var(--brand); }
+.browseBtn:hover { background: #f5f5f5; color: #1a1a1a; }
+.browseBtnActive { background: #f0f0f0; border-color: rgba(0,0,0,0.2); color: #1a1a1a; }
 .browseDateLabel { font-size: 11px; font-weight: 500; }
-.calWrap {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 9999;
-}
+.calWrap { position: absolute; top: calc(100% + 8px); right: 0; z-index: 9999; }
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .strip { flex-wrap: wrap; overflow: visible; }
-  .tabs {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    flex-shrink: 0;
-    width: 100%;
-    padding: 0 4px 0 10px;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { padding: 8px 11px; min-width: 50px; }
-  .tabDate { font-size: 16px; }
-  .rangeSection {
-    border-left: none;
-    border-top: 1px solid var(--border);
-    width: 100%;
-    padding: 7px 12px;
-    flex-shrink: 0;
-  }
-  .browseWrap { padding-left: 6px; margin-right: 6px; flex-shrink: 0; }
-  .browseBtn { padding: 5px 8px; font-size: 11px; }
+  .strip { padding: 8px 14px; gap: 8px; }
+  .preset { font-size: 11px; padding: 5px 9px; }
+  .dateInput { width: 100px !important; font-size: 11px !important; }
+  .browseWrap { margin-left: 0; }
   .calWrap { right: auto; left: 0; }
-}
-
-.dateWrap { position: relative; display: inline-block; }
-.datePlaceholder {
-  position: absolute;
-  inset: 0;
-  background: var(--card);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  font-size: 13px;
-  color: var(--text-muted);
-  pointer-events: none;
-  border: 1px solid var(--border-2);
 }
