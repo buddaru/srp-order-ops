@@ -72,11 +72,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
     <header className={styles.headerWrap}>
       {/* Top row */}
       <div className={styles.topRow}>
-        <div className={styles.logo}>
-          <img src="/srp-logo.png" alt="Sweet Red Peach" className={styles.logoImg} />
-          <div className={styles.logoSub}>Carson Operations</div>
-        </div>
-
         <div className={styles.searchWrap}>
           <div className={styles.searchRow}>
             <span className={styles.searchIcon}>🔍</span>

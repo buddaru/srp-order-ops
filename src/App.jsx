@@ -18,6 +18,20 @@ import Login    from './components/Login'
 import { useAuth } from './context/AuthContext'
 import styles from './App.module.css'
 
+// ── Sidebar icons ──
+const IconBoard    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="11"/><rect x="14" y="18" width="7" height="3"/></svg>
+const IconProd     = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+const IconWaste    = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+const IconSchedule = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+const IconChevron  = ({ open }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.25s' }}><polyline points="15 18 9 12 15 6"/></svg>
+
+const NAV_ITEMS = [
+  { to: '/',           label: 'Order Board',      Icon: IconBoard,    end: true },
+  { to: '/production', label: 'Daily Production', Icon: IconProd },
+  { to: '/waste',      label: 'Food Waste',       Icon: IconWaste },
+  { to: '/schedule',   label: 'Schedule',         Icon: IconSchedule },
+]
+
 let orderSeq = 0
 
 // ── DB helpers: map DB row ↔ app object ──
@@ -75,6 +89,7 @@ export default function App() {
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const { user, profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -252,15 +267,58 @@ export default function App() {
   if (!user) return <Login />
 
   return (
-    <div className={styles.app}>
-      <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
-      <nav className={styles.mainNav}>
-        <NavLink to="/" end className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Order Board</NavLink>
-        <NavLink to="/production" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Daily Production</NavLink>
-        <NavLink to="/waste" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Food Waste</NavLink>
-        <NavLink to="/schedule" className={({isActive}) => isActive ? styles.navActive : styles.navItem}>Schedule</NavLink>
-      </nav>
-      <Routes>
+    <div className={`${styles.app} ${sidebarOpen ? styles.sidebarExpanded : styles.sidebarCollapsed}`}>
+
+      {/* ── Left Sidebar ── */}
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarTop}>
+          <div className={styles.sidebarLogo}>
+            <img src="/srp-logo.png" alt="Sweet Red Peach" className={styles.sidebarLogoImg} />
+            {sidebarOpen && <div className={styles.sidebarLogoText}>Carson Ops</div>}
+          </div>
+          <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>
+            <IconChevron open={sidebarOpen} />
+          </button>
+        </div>
+
+        <nav className={styles.sidebarNav}>
+          {sidebarOpen && <div className={styles.sidebarSection}>Operations</div>}
+          {NAV_ITEMS.map(({ to, label, Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              title={!sidebarOpen ? label : undefined}
+              className={({ isActive }) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}
+            >
+              <span className={styles.sidebarIcon}><Icon /></span>
+              {sidebarOpen && <span className={styles.sidebarLabel}>{label}</span>}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className={styles.sidebarFooter}>
+          <div className={styles.sidebarUser} title={!sidebarOpen ? (profile?.full_name || profile?.email) : undefined}>
+            <div className={styles.sidebarAvatar}>
+              {(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}
+            </div>
+            {sidebarOpen && (
+              <div className={styles.sidebarUserInfo}>
+                <div className={styles.sidebarUserName}>{profile?.full_name || profile?.email}</div>
+                <div className={styles.sidebarUserRole}>{profile?.role || 'employee'}</div>
+              </div>
+            )}
+          </div>
+          {sidebarOpen && (
+            <button className={styles.sidebarSignOut} onClick={signOut}>Sign out</button>
+          )}
+        </div>
+      </aside>
+
+      {/* ── Main Content ── */}
+      <div className={styles.mainContent}>
+        <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
+        <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/production" element={<Production />} />
@@ -316,7 +374,8 @@ export default function App() {
       <Toast toast={toast} onClose={() => setToast(null)} />
         </>} />
       </Routes>
-      {showNew && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
+        {showNew && <OrderModal mode="new" onSave={handleCreateOrder} onClose={() => setShowNew(false)} />}
+      </div>
     </div>
   )
 }
