@@ -1,95 +1,73 @@
 .strip {
-  background: #fff;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  gap: 10px;
-  flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  z-index: 150;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 9px 18px; gap: 10px; flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 150;
 }
 
-/* ── Presets ── */
 .presets { display: flex; gap: 4px; align-items: center; }
 
 .preset {
-  padding: 5px 11px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
   font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.1);
-  background: #f5f5f5;
-  color: #555;
-  transition: background 0.1s, color 0.1s;
+  cursor: pointer; border: 1px solid var(--border-2);
+  background: var(--bg); color: var(--text-muted);
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
   white-space: nowrap;
 }
-.preset:hover { background: #ebebeb; color: #1a1a1a; }
+.preset:hover { background: var(--bg-2); color: var(--text); }
 .presetActive { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-.presetActive:hover { background: #333; }
+.presetActive:hover { background: #333; border-color: #333; }
 
-/* ── Divider ── */
-.divider { width: 1px; height: 20px; background: rgba(0,0,0,0.1); flex-shrink: 0; }
+.presetCount { font-size: 11px; opacity: 0.6; font-weight: 400; }
+.presetCountActive { opacity: 0.75; }
 
-/* ── Range row ── */
-.rangeRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+.rangeRow { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
 .dateInput {
-  width: 120px !important;
-  border: 1px solid rgba(0,0,0,0.1) !important;
-  border-radius: 6px !important;
-  background: #f5f5f5 !important;
-  font-size: 12px !important;
-  color: #555 !important;
-  padding: 5px 8px !important;
-  cursor: pointer;
-  outline: none !important;
-  box-shadow: none !important;
-  font-family: 'DM Sans', sans-serif !important;
+  width: 118px !important; border: 1px solid var(--border-2) !important;
+  border-radius: 6px !important; background: var(--bg) !important;
+  font-size: 12px !important; color: var(--text-muted) !important;
+  padding: 5px 8px !important; cursor: pointer; outline: none !important;
+  box-shadow: none !important; font-family: 'DM Sans', sans-serif !important;
+  transition: border-color 0.12s !important;
 }
-.dateInput:focus { border-color: #1a1a1a !important; color: #1a1a1a !important; box-shadow: none !important; }
+.dateInput:focus { border-color: var(--accent) !important; color: var(--text) !important; box-shadow: none !important; }
 
-.rangeArrow { font-size: 11px; color: #aaa; flex-shrink: 0; }
+.rangeArrow { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
 
 .applyBtn {
-  background: #1a1a1a; color: #fff;
-  border: none; border-radius: 6px;
+  background: #1a1a1a; color: #fff; border: none; border-radius: 6px;
   padding: 5px 12px; font-size: 11px; font-weight: 500;
   cursor: pointer; font-family: 'DM Sans', sans-serif;
-  transition: background 0.1s; white-space: nowrap;
+  transition: opacity 0.12s; white-space: nowrap;
 }
-.applyBtn:hover { background: #333; }
+.applyBtn:hover { opacity: 0.82; }
 
-.activeRange { font-size: 12px; font-weight: 500; color: #1a1a1a; white-space: nowrap; }
-.clearBtn { background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.1s; }
-.clearBtn:hover { background: #f0f0f0; color: #1a1a1a; }
+.activeRange { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.clearBtn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.1s; }
+.clearBtn:hover { background: var(--bg-2); color: var(--text); }
 
-/* ── Calendar browse ── */
 .browseWrap { display: flex; align-items: center; position: relative; margin-left: auto; }
 .browseBtn {
-  background: none; border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 6px; padding: 5px 10px;
-  cursor: pointer; font-size: 13px; color: #888;
-  font-family: 'DM Sans', sans-serif;
-  transition: all 0.1s; display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid var(--border-2); border-radius: 6px;
+  padding: 5px 10px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif; transition: all 0.1s;
+  display: flex; align-items: center; gap: 6px;
 }
-.browseBtn:hover { background: #f5f5f5; color: #1a1a1a; }
-.browseBtnActive { background: #f0f0f0; border-color: rgba(0,0,0,0.2); color: #1a1a1a; }
+.browseBtn:hover { background: var(--bg-2); color: var(--text); }
+.browseBtnActive { background: var(--bg-2); border-color: var(--border-2); color: var(--text); }
 .browseDateLabel { font-size: 11px; font-weight: 500; }
 .calWrap { position: absolute; top: calc(100% + 8px); right: 0; z-index: 9999; }
 
-/* ── Mobile ── */
 @media (max-width: 640px) {
-  .strip { padding: 8px 14px; gap: 8px; }
-  .preset { font-size: 11px; padding: 5px 9px; }
+  .strip { padding: 8px 12px; gap: 7px; }
+  .preset { font-size: 11px; padding: 4px 8px; }
   .dateInput { width: 100px !important; font-size: 11px !important; }
   .browseWrap { margin-left: 0; }
   .calWrap { right: auto; left: 0; }

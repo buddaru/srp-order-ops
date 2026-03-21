@@ -83,6 +83,7 @@ export default function App() {
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const { user, profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -260,70 +261,75 @@ export default function App() {
   if (!user) return <Login />
 
   return (
-    <div className={styles.app}>
+    <div className={`${styles.app} ${!sidebarOpen ? styles.sidebarCollapsed : ''}`}>
 
       {/* ── Left Sidebar ── */}
       <aside className={styles.sidebar}>
-        {/* Logo */}
         <div className={styles.sidebarTop}>
           <div className={styles.sidebarLogo}>
             <div className={styles.sidebarLogoMark}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#e8855a"><path d="M12 2C8 2 4 6 4 10c0 5 8 12 8 12s8-7 8-12c0-4-4-8-8-8z"/></svg>
             </div>
-            <div>
-              <div className={styles.sidebarLogoName}>Sweet Red Peach</div>
-              <div className={styles.sidebarLogoSub}>Carson, CA</div>
-            </div>
+            {sidebarOpen && (
+              <div>
+                <div className={styles.sidebarLogoName}>Sweet Red Peach</div>
+                <div className={styles.sidebarLogoSub}>Carson, CA</div>
+              </div>
+            )}
           </div>
+          <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.22s'}}>
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
         </div>
 
-        {/* Nav */}
         <nav className={styles.sidebarNav}>
-          {/* Production section */}
-          <div className={styles.sidebarSection}>Production</div>
-          <NavLink to="/" end className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}>
+          {sidebarOpen && <div className={styles.sidebarSection}>Production</div>}
+          <NavLink to="/" end className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Orders' : undefined}>
             <span className={styles.sidebarIcon}><IconOrders /></span>
-            <span>Orders</span>
+            {sidebarOpen && <span>Orders</span>}
           </NavLink>
-          <NavLink to="/production" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}>
+          <NavLink to="/production" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Daily Production' : undefined}>
             <span className={styles.sidebarIcon}><IconProd /></span>
-            <span>Daily Production</span>
+            {sidebarOpen && <span>Daily Production</span>}
           </NavLink>
-          <NavLink to="/waste" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}>
+          <NavLink to="/waste" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Food Waste' : undefined}>
             <span className={styles.sidebarIcon}><IconWaste /></span>
-            <span>Food Waste</span>
+            {sidebarOpen && <span>Food Waste</span>}
           </NavLink>
-          <NavLink to="/schedule" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}>
+          <NavLink to="/schedule" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Schedule' : undefined}>
             <span className={styles.sidebarIcon}><IconSchedule /></span>
-            <span>Schedule</span>
+            {sidebarOpen && <span>Schedule</span>}
           </NavLink>
 
-          {/* Menu section */}
-          <div className={styles.sidebarSection} style={{marginTop: 8}}>Menu</div>
-          <NavLink to="/recipes" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`}>
+          {sidebarOpen && <div className={styles.sidebarSection} style={{marginTop: 6}}>Menu</div>}
+          {!sidebarOpen && <div style={{height: 8}} />}
+          <NavLink to="/recipes" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Recipes' : undefined}>
             <span className={styles.sidebarIcon}><IconRecipes /></span>
-            <span>Recipes</span>
-            <span className={styles.sidebarSoon}>soon</span>
+            {sidebarOpen && <span>Recipes</span>}
+            {sidebarOpen && <span className={styles.sidebarSoon}>soon</span>}
           </NavLink>
         </nav>
 
-        {/* Footer — avatar only, no sign out */}
-        <div className={styles.sidebarFooter}>
-          <div className={styles.sidebarUser}>
-            <div className={styles.sidebarAvatar}>
-              {(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}
-            </div>
-            <div className={styles.sidebarUserInfo}>
-              <div className={styles.sidebarUserName}>{profile?.full_name || profile?.email}</div>
-              <div className={styles.sidebarUserRole}>{profile?.role || 'employee'}</div>
+        {sidebarOpen && (
+          <div className={styles.sidebarFooter}>
+            <div className={styles.sidebarUser}>
+              <div className={styles.sidebarAvatar}>
+                {(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}
+              </div>
+              <div className={styles.sidebarUserInfo}>
+                <div className={styles.sidebarUserName}>{profile?.full_name || profile?.email}</div>
+                <div className={styles.sidebarUserRole}>{profile?.role || 'employee'}</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* ── Main Content ── */}
       <div className={styles.mainContent}>
-        <Header orders={orders} onNewOrder={() => setShowNew(true)} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
+        <Header orders={orders} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
         <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
@@ -345,6 +351,7 @@ export default function App() {
           onDrawer={id => setDrawerOrderId(id)}
           onDelete={handleDelete}
           onSendSms={handleSendSms}
+          onNewOrder={() => setShowNew(true)}
         />
       </div>
 

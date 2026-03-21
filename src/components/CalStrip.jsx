@@ -36,18 +36,22 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const today = todayDS()
+  const today    = todayDS()
   const tomorrow = offsetDS(1)
+  const d7end    = offsetDS(7)
+  const d30end   = offsetDS(30)
 
-  // Determine active preset
+  // Order counts per preset
+  const countAll      = orders.filter(o => o.stage !== 'picked-up').length
+  const countToday    = orders.filter(o => o.pickupDate === today && o.stage !== 'picked-up').length
+  const countTomorrow = orders.filter(o => o.pickupDate === tomorrow && o.stage !== 'picked-up').length
+  const count7d       = orders.filter(o => o.pickupDate >= today && o.pickupDate <= d7end && o.stage !== 'picked-up').length
+  const count30d      = orders.filter(o => o.pickupDate >= today && o.pickupDate <= d30end && o.stage !== 'picked-up').length
+
   const getActivePreset = () => {
     if (dateRange) {
-      const d7end = offsetDS(7)
-      const d30end = offsetDS(30)
-      const mtdStart = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-01`
       if (dateRange.start === today && dateRange.end === d7end) return '7d'
       if (dateRange.start === today && dateRange.end === d30end) return '30d'
-      if (dateRange.start === mtdStart && dateRange.end === today) return 'mtd'
       return 'custom'
     }
     if (selectedDay === 'all' && !customDateSelected) return 'all'
@@ -62,12 +66,8 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     if (preset === 'all')      { onSelectDay('all', false) }
     if (preset === 'today')    { onSelectDay(today, false) }
     if (preset === 'tomorrow') { onSelectDay(tomorrow, false) }
-    if (preset === '7d')       { onRangeSelect({ start: today, end: offsetDS(7) }) }
-    if (preset === '30d')      { onRangeSelect({ start: today, end: offsetDS(30) }) }
-    if (preset === 'mtd') {
-      const mtdStart = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-01`
-      onRangeSelect({ start: mtdStart, end: today })
-    }
+    if (preset === '7d')       { onRangeSelect({ start: today, end: d7end }) }
+    if (preset === '30d')      { onRangeSelect({ start: today, end: d30end }) }
   }
 
   const handleApply = () => {
@@ -88,12 +88,11 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
   }
 
   const PRESETS = [
-    { id: 'all', label: 'All' },
-    { id: 'today', label: 'Today' },
-    { id: 'tomorrow', label: 'Tomorrow' },
-    { id: '7d', label: '7d' },
-    { id: '30d', label: '30d' },
-    { id: 'mtd', label: 'MTD' },
+    { id: 'all',      label: 'All',      count: countAll },
+    { id: 'today',    label: 'Today',    count: countToday },
+    { id: 'tomorrow', label: 'Tomorrow', count: countTomorrow },
+    { id: '7d',       label: '7 Days',   count: count7d },
+    { id: '30d',      label: '30 Days',  count: count30d },
   ]
 
   return (
@@ -105,13 +104,16 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
             key={p.id}
             className={`${styles.preset} ${activePreset === p.id ? styles.presetActive : ''}`}
             onClick={() => handlePreset(p.id)}
-          >{p.label}</button>
+          >
+            {p.label}
+            <span className={`${styles.presetCount} ${activePreset === p.id ? styles.presetCountActive : ''}`}>{p.count}</span>
+          </button>
         ))}
       </div>
 
       <div className={styles.divider} />
 
-      {/* Custom date range */}
+      {/* Custom range */}
       <div className={styles.rangeRow}>
         {activePreset === 'custom' && dateRange ? (
           <>
@@ -120,19 +122,9 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
           </>
         ) : (
           <>
-            <input
-              type="date"
-              className={styles.dateInput}
-              value={startVal}
-              onChange={e => { setStartVal(e.target.value) }}
-            />
+            <input type="date" className={styles.dateInput} value={startVal} onChange={e => setStartVal(e.target.value)} />
             <span className={styles.rangeArrow}>→</span>
-            <input
-              type="date"
-              className={styles.dateInput}
-              value={endVal}
-              onChange={e => { setEndVal(e.target.value) }}
-            />
+            <input type="date" className={styles.dateInput} value={endVal} onChange={e => setEndVal(e.target.value)} />
             {startVal && endVal && startVal <= endVal && (
               <button className={styles.applyBtn} onClick={handleApply}>Apply</button>
             )}

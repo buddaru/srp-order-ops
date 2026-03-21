@@ -20,26 +20,16 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const isOrdersPage = location.pathname === '/'
-
-  const handleNewOrder = () => {
-    if (isOrdersPage) {
-      onNewOrder()
-    } else {
-      navigate('/?neworder=1')
-    }
-  }
-  const [query, setQuery]   = useState('')
+  const [query, setQuery]     = useState('')
   const [showRes, setShowRes] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [datetime, setDatetime] = useState(fmtNow())
 
-  // Tick every minute
   useEffect(() => {
     const t = setInterval(() => setDatetime(fmtNow()), 30000)
     return () => clearInterval(t)
   }, [])
 
-  // Counts — use local date to avoid timezone issues
   const localDS = (offset = 0) => {
     const d = new Date()
     d.setDate(d.getDate() + offset)
@@ -70,15 +60,15 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
 
   return (
     <header className={styles.headerWrap}>
-      {/* Top row */}
       <div className={styles.topRow}>
+        {/* Search */}
         <div className={styles.searchWrap}>
           <div className={styles.searchRow}>
-            <span className={styles.searchIcon}>🔍</span>
+            <svg className={styles.searchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input
               className={styles.searchInput}
               type="text"
-              placeholder="Search by name, phone, email, item…"
+              placeholder="Search..."
               value={query}
               onChange={e => { setQuery(e.target.value); setShowRes(true) }}
               onFocus={() => setShowRes(true)}
@@ -110,30 +100,41 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
           )}
         </div>
 
+        {/* Right — counters + avatar */}
         <div className={styles.right}>
-          {isOrdersPage && (
-            <button className={styles.btnNew} onClick={handleNewOrder}>+ New Order</button>
-          )}
-        </div>
-      </div>
+          <div className={styles.counters}>
+            <div className={styles.counter}>
+              <span className={styles.counterNum}>{todayCount}</span>
+              <span className={styles.counterLabel}>Due Today</span>
+            </div>
+            <div className={styles.counterDivider} />
+            <div className={styles.counter}>
+              <span className={styles.counterNum}>{tomorrowCount}</span>
+              <span className={styles.counterLabel}>Tomorrow</span>
+            </div>
+            <div className={styles.counterDivider} />
+            <div className={styles.counter}>
+              <span className={styles.counterNum} style={{color:'#16a34a'}}>{readyCount}</span>
+              <span className={styles.counterLabel}>Ready</span>
+            </div>
+          </div>
 
-      {/* Sub row — date/time + counters */}
-      <div className={styles.subRow}>
-        <div className={styles.datetime}>{datetime}</div>
-        <div className={styles.counters}>
-          <div className={styles.counter}>
-            <span className={styles.counterNum}>{todayCount}</span>
-            <span className={styles.counterLabel}>Orders Due Today</span>
-          </div>
-          <div className={styles.counterDivider} />
-          <div className={styles.counter}>
-            <span className={styles.counterNum}>{tomorrowCount}</span>
-            <span className={styles.counterLabel}>Orders Due Tomorrow</span>
-          </div>
-          <div className={styles.counterDivider} />
-          <div className={styles.counter}>
-            <span className={styles.counterNum} style={{color:'#4ADE80'}}>{readyCount}</span>
-            <span className={styles.counterLabel}>Ready</span>
+          {/* Avatar + dropdown */}
+          <div className={styles.userMenu}>
+            <div className={styles.userAvatar} onClick={() => setMenuOpen(v => !v)}>
+              {(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}
+            </div>
+            {menuOpen && (
+              <>
+                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+                <div className={styles.userDropdown}>
+                  <div className={styles.userDropdownName}>{profile?.full_name || profile?.email}</div>
+                  <div className={styles.userDropdownRole}>{profile?.role || 'employee'}</div>
+                  <div className={styles.userDropdownDivider} />
+                  <button className={styles.signOutBtn} onClick={() => { setMenuOpen(false); onSignOut() }}>Sign out</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

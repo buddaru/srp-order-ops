@@ -8,8 +8,8 @@
 .sidebar {
   width: 210px;
   min-width: 210px;
-  background: #ffffff;
-  border-right: 1px solid rgba(0,0,0,0.07);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -18,79 +18,96 @@
   overflow: hidden;
   z-index: 100;
   flex-shrink: 0;
+  transition: width 0.22s ease, min-width 0.22s ease;
+}
+.sidebarCollapsed .sidebar {
+  width: 52px;
+  min-width: 52px;
 }
 
 .sidebarTop {
-  padding: 16px 16px 14px;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
+  padding: 13px 12px 11px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 50px;
+  flex-shrink: 0;
 }
-
-.sidebarLogo { display: flex; align-items: center; gap: 10px; }
+.sidebarLogo { display: flex; align-items: center; gap: 9px; overflow: hidden; flex: 1; min-width: 0; }
 .sidebarLogoMark {
-  width: 28px; height: 28px; border-radius: 7px;
+  width: 26px; height: 26px; border-radius: 6px;
   background: #1a1a1a;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.sidebarLogoName { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.2; font-family: 'DM Sans', sans-serif; }
-.sidebarLogoSub { font-size: 10px; color: #888; font-family: 'DM Sans', sans-serif; }
+.sidebarLogoName { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+.sidebarLogoSub { font-size: 10px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
 
-/* ── Nav ── */
-.sidebarNav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; }
+.sidebarToggle {
+  background: none; border: 1px solid var(--border-2); border-radius: 5px;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-muted); flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+  padding: 0;
+}
+.sidebarToggle:hover { background: var(--bg-2); color: var(--text); }
+
+/* Nav */
+.sidebarNav { flex: 1; padding: 8px 7px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; }
 
 .sidebarSection {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: #aaa;
-  padding: 8px 8px 4px;
-  font-family: 'DM Sans', sans-serif;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding: 7px 8px 3px; font-family: 'DM Sans', sans-serif;
+  white-space: nowrap; overflow: hidden;
 }
 
 .sidebarItem {
-  display: flex; align-items: center; gap: 9px;
-  padding: 7px 10px; border-radius: 6px;
-  text-decoration: none;
-  color: #555; font-size: 13px; font-weight: 400;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: 6px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 13px; font-weight: 400;
   font-family: 'DM Sans', sans-serif;
   transition: background 0.1s, color 0.1s;
-  white-space: nowrap;
+  white-space: nowrap; overflow: hidden;
 }
-.sidebarItem:hover { background: #f5f5f5; color: #1a1a1a; }
-.sidebarItemActive { background: #f0f0f0; color: #1a1a1a; font-weight: 500; }
-.sidebarItemActive:hover { background: #ebebeb; }
+.sidebarItem:hover { background: var(--bg-2); color: var(--text); }
+.sidebarItemActive { background: var(--card); color: var(--text); font-weight: 500; border: 1px solid var(--border); }
+.sidebarItemActive:hover { background: var(--card); }
 
-.sidebarIcon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 18px; }
+.sidebarIcon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 16px; }
 
 .sidebarSoon {
-  margin-left: auto;
-  font-size: 9px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #aaa; background: #f5f5f5;
-  padding: 2px 7px; border-radius: 20px;
-  border: 1px solid #e5e5e5;
+  margin-left: auto; flex-shrink: 0;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-muted); background: var(--bg-2);
+  padding: 2px 6px; border-radius: 20px; border: 1px solid var(--border);
   font-family: 'DM Sans', sans-serif;
 }
 
-/* ── Footer ── */
-.sidebarFooter { padding: 12px 14px; border-top: 1px solid rgba(0,0,0,0.07); }
-.sidebarUser { display: flex; align-items: center; gap: 9px; }
+/* Footer */
+.sidebarFooter { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.sidebarUser { display: flex; align-items: center; gap: 9px; overflow: hidden; }
 .sidebarAvatar {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 26px; height: 26px; border-radius: 50%;
   background: #1a1a1a; color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 600; flex-shrink: 0;
   font-family: 'DM Sans', sans-serif;
 }
 .sidebarUserInfo { overflow: hidden; flex: 1; min-width: 0; }
-.sidebarUserName { font-size: 12px; font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
-.sidebarUserRole { font-size: 10px; color: #888; text-transform: capitalize; font-family: 'DM Sans', sans-serif; }
+.sidebarUserName { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+.sidebarUserRole { font-size: 10px; color: var(--text-muted); text-transform: capitalize; font-family: 'DM Sans', sans-serif; }
 
-/* ── Loading ── */
+/* Loading */
 .loadingScreen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); }
 .loadingLogo { font-size: 48px; animation: pulse 1.2s ease-in-out infinite; }
 .loadingText { font-size: 15px; color: var(--text-muted); font-weight: 500; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-/* ── Confirm modal ── */
+/* Confirm modal */
 .confirmOverlay { position: fixed; inset: 0; background: rgba(20,12,8,0.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .confirmBox { background: var(--card); border-radius: 14px; padding: 28px 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.28); }
 .confirmTitle { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
@@ -101,7 +118,7 @@
 .confirmOk { background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-family: 'Proxima Nova','Nunito',sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
 .confirmOk:hover { opacity: 0.88; }
 
-/* ── Mobile ── */
+/* Mobile */
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .app { flex-direction: column; }

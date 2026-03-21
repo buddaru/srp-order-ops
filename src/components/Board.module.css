@@ -87,13 +87,17 @@
   padding: 10px 0 8px;
 }
 .toolbarCount {
-  font-size: 12px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 400;
+  font-size: 12px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px; font-weight: 400;
 }
+.toolbarRight { display: flex; align-items: center; gap: 8px; }
+.newOrderBtn {
+  background: #1a1a1a; color: #fff; border: none; border-radius: 7px;
+  padding: 6px 14px; font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: opacity 0.15s; white-space: nowrap;
+}
+.newOrderBtn:hover { opacity: 0.82; }
 .rangeTag {
   background: var(--brand-faint);
   color: var(--brand);
