@@ -42,7 +42,11 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.sidebarLogoName { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+.sidebarLogoText { overflow: hidden; }
+.sidebarCollapsed .sidebarLogoText { display: none; }
+@media (max-width: 768px) {
+  .sidebarLogoText { display: block !important; }
+}
 .sidebarLogoSub { font-size: 10px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
 
 .sidebarToggle {
@@ -120,10 +124,47 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
   .app { flex-direction: column; }
   .boardWrapper { padding: 14px 12px; }
+
+  /* Sidebar becomes an off-screen overlay drawer on mobile */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 220px !important;
+    min-width: 220px !important;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    z-index: 300;
+  }
+  .sidebarOpen .sidebar {
+    transform: translateX(0);
+  }
+  .sidebarOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 299;
+  }
+  .sidebarOpen .sidebarOverlay {
+    display: block;
+  }
+  /* Hide the collapse toggle on mobile — close is handled by overlay tap */
+  .sidebarToggle { display: none; }
 }
+
 @media (max-width: 640px) {
   .boardWrapper { padding: 12px; overflow-x: unset; }
+}
+.sidebarLogoName { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+
+/* Mobile sidebar — always show labels even when desktop is collapsed */
+@media (max-width: 768px) {
+  .sidebarSection { display: block !important; }
+  .sidebarItem span { display: inline !important; }
+  .sidebarSoon { display: inline !important; }
+  .sidebarFooter { display: block !important; }
+  .sidebarUserInfo { display: block !important; }
 }

@@ -16,7 +16,7 @@ function highlight(str, q) {
   )
 }
 
-export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut }) {
+export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -24,6 +24,18 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
   const [showRes, setShowRes] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [datetime, setDatetime] = useState(fmtNow())
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('srp-theme') === 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('srp-theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
+
+  // Apply saved theme on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('srp-theme')
+    if (saved) document.documentElement.setAttribute('data-theme', saved)
+  }, [])
 
   useEffect(() => {
     const t = setInterval(() => setDatetime(fmtNow()), 30000)
@@ -61,6 +73,11 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
   return (
     <header className={styles.headerWrap}>
       <div className={styles.topRow}>
+        {/* Hamburger — mobile only */}
+        <button className={styles.hamburger} onClick={onMenuOpen}>
+          <span/><span/><span/>
+        </button>
+
         {/* Search */}
         <div className={styles.searchWrap}>
           <div className={styles.searchRow}>
@@ -130,6 +147,16 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
                 <div className={styles.userDropdown}>
                   <div className={styles.userDropdownName}>{profile?.full_name || profile?.email}</div>
                   <div className={styles.userDropdownRole}>{profile?.role || 'employee'}</div>
+                  <div className={styles.userDropdownDivider} />
+                  <div className={styles.themeToggleRow}>
+                    <span className={styles.themeLabel}>{darkMode ? '🌙 Dark mode' : '☀️ Light mode'}</span>
+                    <button
+                      className={`${styles.themeToggle} ${darkMode ? styles.themeToggleOn : ''}`}
+                      onClick={() => setDarkMode(v => !v)}
+                    >
+                      <span className={styles.themeToggleThumb} />
+                    </button>
+                  </div>
                   <div className={styles.userDropdownDivider} />
                   <button className={styles.signOutBtn} onClick={() => { setMenuOpen(false); onSignOut() }}>Sign out</button>
                 </div>

@@ -84,6 +84,7 @@ export default function App() {
   const [editingId, setEditingId]     = useState(null)
   const [showNew, setShowNew]         = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -261,7 +262,10 @@ export default function App() {
   if (!user) return <Login />
 
   return (
-    <div className={`${styles.app} ${!sidebarOpen ? styles.sidebarCollapsed : ''}`}>
+    <div className={`${styles.app} ${!sidebarOpen ? styles.sidebarCollapsed : ''} ${mobileSidebarOpen ? styles.sidebarOpen : ''}`}>
+
+      {/* Mobile overlay — tap to close sidebar */}
+      <div className={styles.sidebarOverlay} onClick={() => setMobileSidebarOpen(false)} />
 
       {/* ── Left Sidebar ── */}
       <aside className={styles.sidebar}>
@@ -270,12 +274,10 @@ export default function App() {
             <div className={styles.sidebarLogoMark}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#e8855a"><path d="M12 2C8 2 4 6 4 10c0 5 8 12 8 12s8-7 8-12c0-4-4-8-8-8z"/></svg>
             </div>
-            {sidebarOpen && (
-              <div>
-                <div className={styles.sidebarLogoName}>Sweet Red Peach</div>
-                <div className={styles.sidebarLogoSub}>Carson, CA</div>
-              </div>
-            )}
+            <div className={styles.sidebarLogoText}>
+              <div className={styles.sidebarLogoName}>Sweet Red Peach</div>
+              <div className={styles.sidebarLogoSub}>Carson, CA</div>
+            </div>
           </div>
           <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.22s'}}>
@@ -286,26 +288,26 @@ export default function App() {
 
         <nav className={styles.sidebarNav}>
           {sidebarOpen && <div className={styles.sidebarSection}>Production</div>}
-          <NavLink to="/" end className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Orders' : undefined}>
+          <NavLink to="/" end onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Orders' : undefined}>
             <span className={styles.sidebarIcon}><IconOrders /></span>
             {sidebarOpen && <span>Orders</span>}
           </NavLink>
-          <NavLink to="/production" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Daily Production' : undefined}>
+          <NavLink to="/production" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Daily Production' : undefined}>
             <span className={styles.sidebarIcon}><IconProd /></span>
             {sidebarOpen && <span>Daily Production</span>}
           </NavLink>
-          <NavLink to="/waste" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Food Waste' : undefined}>
+          <NavLink to="/waste" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Food Waste' : undefined}>
             <span className={styles.sidebarIcon}><IconWaste /></span>
             {sidebarOpen && <span>Food Waste</span>}
           </NavLink>
-          <NavLink to="/schedule" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Schedule' : undefined}>
+          <NavLink to="/schedule" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Schedule' : undefined}>
             <span className={styles.sidebarIcon}><IconSchedule /></span>
             {sidebarOpen && <span>Schedule</span>}
           </NavLink>
 
           {sidebarOpen && <div className={styles.sidebarSection} style={{marginTop: 6}}>Menu</div>}
           {!sidebarOpen && <div style={{height: 8}} />}
-          <NavLink to="/recipes" className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Recipes' : undefined}>
+          <NavLink to="/recipes" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Recipes' : undefined}>
             <span className={styles.sidebarIcon}><IconRecipes /></span>
             {sidebarOpen && <span>Recipes</span>}
             {sidebarOpen && <span className={styles.sidebarSoon}>soon</span>}
@@ -329,7 +331,7 @@ export default function App() {
 
       {/* ── Main Content ── */}
       <div className={styles.mainContent}>
-        <Header orders={orders} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} />
+        <Header orders={orders} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} onMenuOpen={() => setMobileSidebarOpen(true)} />
         <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

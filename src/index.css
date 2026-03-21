@@ -10,7 +10,6 @@
   --brand-faint:  rgba(196,120,74,0.08);
   --accent:       #C4784A;
   --accent-light: #FCEEE4;
-  --header-bg:    #B5D8E6;
   --text:         #1C1612;
   --text-2:       #4A4039;
   --text-muted:   #8A7E74;
@@ -21,6 +20,38 @@
   --shadow-md:    0 2px 8px rgba(28,22,18,0.12), 0 8px 24px rgba(28,22,18,0.08);
   --radius:       10px;
   --radius-sm:    7px;
+}
+
+[data-theme="dark"] {
+  --bg:           #141414;
+  --bg-2:         #1e1e1e;
+  --brand:        #E8855A;
+  --brand-light:  #C4784A;
+  --brand-faint:  rgba(232,133,90,0.1);
+  --accent:       #E8855A;
+  --accent-light: rgba(232,133,90,0.12);
+  --text:         #F0EDE8;
+  --text-2:       #C4B9AE;
+  --text-muted:   #7A736C;
+  --card:         #1e1e1e;
+  --border:       rgba(255,255,255,0.07);
+  --border-2:     rgba(255,255,255,0.12);
+  --shadow:       0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+  --shadow-md:    0 2px 8px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] input[type=text],
+[data-theme="dark"] input[type=email],
+[data-theme="dark"] input[type=tel],
+[data-theme="dark"] input[type=number],
+[data-theme="dark"] input[type=date],
+[data-theme="dark"] input[type=time],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #2a2a2a;
+  color: var(--text);
+  border-color: var(--border-2);
+  color-scheme: dark;
 }
 
 body {

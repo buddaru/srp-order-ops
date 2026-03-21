@@ -6,12 +6,6 @@ import styles from './Production.module.css'
 
 const todayDS = () => toDS(new Date())
 
-const yesterdayDS = () => {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return toDS(d)
-}
-
 const fmtDisplayDate = (ds) => {
   const d = new Date(ds + 'T00:00:00')
   const today = todayDS()
@@ -38,7 +32,6 @@ export default function Production() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [date, setDate]       = useState(todayDS())
   const [items, setItems]         = useState([])
-  const [carryoverItems, setCarryoverItems] = useState([])
   const [note, setNote]           = useState('')
   const [noteId, setNoteId]   = useState(null)
   const [noteSaved, setNoteSaved] = useState(false)
@@ -70,17 +63,6 @@ export default function Production() {
           setItems(r1.data || [])
           setNote(r2.data?.content || '')
           setNoteId(r2.data?.id || null)
-          // Load carryovers only when viewing today
-          if (date === todayDS()) {
-            const { data: yData } = await supabase
-              .from('production')
-              .select('*')
-              .eq('date', yesterdayDS())
-              .eq('completed', false)
-            setCarryoverItems(yData || [])
-          } else {
-            setCarryoverItems([])
-          }
         }
       } finally {
         setLoading(false)
@@ -123,12 +105,6 @@ export default function Production() {
   // Toggle complete
   const handleToggle = async (id, completed) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !completed } : i))
-    await supabase.from('production').update({ completed: !completed }).eq('id', id)
-  }
-
-  // Toggle carryover item (updates yesterday's record)
-  const handleCarryoverToggle = async (id, completed) => {
-    setCarryoverItems(prev => prev.map(i => i.id === id ? { ...i, completed: !completed } : i))
     await supabase.from('production').update({ completed: !completed }).eq('id', id)
   }
 
@@ -270,29 +246,6 @@ export default function Production() {
           placeholder="Add notes for the team today — oven issues, low stock, special reminders…"
         />
       </div>
-
-      {/* Carryover section */}
-      {carryoverItems.length > 0 && (
-        <div className={styles.carryoverSection}>
-          <div className={styles.carryoverHeader}>
-            <span className={styles.carryoverBadge}>Carried Over from Yesterday</span>
-            <span className={styles.carryoverCount}>{carryoverItems.filter(i => !i.completed).length} remaining</span>
-          </div>
-          {carryoverItems.map(item => (
-            <div key={item.id} className={`${styles.itemCard} ${item.completed ? styles.done : ''} ${styles.carryoverCard}`}>
-              <button
-                className={`${styles.check} ${item.completed ? styles.checked : ''}`}
-                onClick={() => handleCarryoverToggle(item.id, item.completed)}
-              />
-              <div className={styles.itemBody}>
-                <div className={styles.itemName}>{item.item_name}</div>
-                {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
-              </div>
-              <div className={styles.itemQty}>{item.quantity}</div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Production Items */}
       {loading ? (
