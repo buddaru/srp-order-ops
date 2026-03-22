@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { fmt$ } from '../utils/helpers'
 import {
   MENU, CATEGORIES, CUPCAKE_FLAVORS,
-  CAKE_CATEGORIES, SIZES, CAKE_ADDONS, CHEESECAKE_ADDONS, LAYER_PRICE
+  CAKE_CATEGORIES, CUSTOM_ONLY_CATEGORIES,
+  SIZES, CAKE_ADDONS, LAYER_PRICE
 } from '../data/menuData'
 import styles from './MenuBuilder.module.css'
 
@@ -17,7 +18,6 @@ const blankAddonState = () => ({
   fruitJamFilling: false, fruitJamFillingPrice: 10,
   additionalLayer: false,
   printedImage: false,
-  writingOnCake: '',
   customLabel: '', customPrice: '',
 })
 
@@ -34,16 +34,12 @@ function calcItemPrice(item, size, addons) {
       if (a.type === 'toggle+price') total += addons[`${a.id}Price`] || a.priceOptions[0]
       if (a.type === 'toggle+layer') total += LAYER_PRICE[size] || 25
     })
-    if (addons.customLabel && addons.customPrice) total += parseFloat(addons.customPrice) || 0
   }
-  if (item.category === 'Cheesecakes') {
-    if (addons.printedImage) total += 25
-    if (addons.customLabel && addons.customPrice) total += parseFloat(addons.customPrice) || 0
-  }
+  if (addons.customLabel && addons.customPrice) total += parseFloat(addons.customPrice) || 0
   return total
 }
 
-function buildItemName(item, size, addons, flavor1, flavor2) {
+function buildItemName(item, size, flavor1, flavor2) {
   if (!item) return ''
   if (item.category === 'Cupcakes') {
     const f2 = flavor2 && flavor2 !== 'None' ? ` / ${flavor2}` : ''
@@ -54,46 +50,45 @@ function buildItemName(item, size, addons, flavor1, flavor2) {
   return `${item.name}${sizeStr}`
 }
 
-function buildAddonSummary(item, size, addons) {
+function buildAddonSummary(item, addons) {
   if (!item) return []
   const list = []
-  const addonsToCheck = item.category === 'Cheesecakes' ? CHEESECAKE_ADDONS : CAKE_ADDONS
-  addonsToCheck.forEach(a => {
-    if (a.type === 'text') {
-      if (addons.writingOnCake) list.push(`Writing: "${addons.writingOnCake}"`)
-      return
-    }
-    if (!addons[a.id]) return
-    if (a.type === 'toggle') list.push(a.label)
-    if (a.type === 'toggle+note') {
-      const note = addons[`${a.id}Note`]
-      list.push(note ? `${a.label}: ${note}` : a.label)
-    }
-    if (a.type === 'toggle+price') list.push(`${a.label} (+$${addons[`${a.id}Price`] || a.priceOptions[0]})`)
-    if (a.type === 'toggle+layer') list.push(`Extra Layer (+$${LAYER_PRICE[size] || 25})`)
-  })
+  if (CAKE_CATEGORIES.includes(item.category)) {
+    CAKE_ADDONS.forEach(a => {
+      if (!addons[a.id]) return
+      if (a.type === 'toggle') list.push(a.label)
+      if (a.type === 'toggle+note') {
+        const note = addons[`${a.id}Note`]
+        list.push(note ? `${a.label}: ${note}` : a.label)
+      }
+      if (a.type === 'toggle+price') list.push(`${a.label} (+$${addons[`${a.id}Price`] || a.priceOptions[0]})`)
+      if (a.type === 'toggle+layer') list.push(`Extra Layer`)
+    })
+  }
   if (addons.customLabel) list.push(`${addons.customLabel}${addons.customPrice ? ` (+$${addons.customPrice})` : ''}`)
   return list
 }
 
 export default function MenuBuilder({ cartItems, onChange }) {
-  const [activeCat, setActiveCat]   = useState('Cakes')
+  const [activeCat, setActiveCat]       = useState('Cakes')
   const [selectedItem, setSelectedItem] = useState(null)
-  const [size, setSize]             = useState('round')
-  const [addons, setAddons]         = useState(blankAddonState())
-  const [flavor1, setFlavor1]       = useState(CUPCAKE_FLAVORS[0])
-  const [flavor2, setFlavor2]       = useState('None')
-  const [editIdx, setEditIdx]       = useState(null)
+  const [size, setSize]                 = useState('round')
+  const [addons, setAddons]             = useState(blankAddonState())
+  const [flavor1, setFlavor1]           = useState(CUPCAKE_FLAVORS[0])
+  const [flavor2, setFlavor2]           = useState('None')
+  const [addonsOpen, setAddonsOpen]     = useState(false)
+  const [editIdx, setEditIdx]           = useState(null)
 
-  const catItems = MENU.filter(m => m.category === activeCat)
-  const isCake = selectedItem && CAKE_CATEGORIES.includes(selectedItem.category)
-  const isCheese = selectedItem?.category === 'Cheesecakes'
-  const isCupcake = selectedItem?.category === 'Cupcakes'
-  const hasAddons = isCake || isCheese
+  const catItems    = MENU.filter(m => m.category === activeCat)
+  const isCake      = selectedItem && CAKE_CATEGORIES.includes(selectedItem.category)
+  const isCupcake   = selectedItem?.category === 'Cupcakes'
+  const isCustomOnly = selectedItem && CUSTOM_ONLY_CATEGORIES.includes(selectedItem.category)
+  const showFullAddons = isCake
+  const showCustomOnly = isCustomOnly || isCupcake
 
-  const livePrice = selectedItem
-    ? calcItemPrice(selectedItem, size, addons)
-    : 0
+  const activeAddonCount = CAKE_ADDONS.filter(a => addons[a.id]).length
+
+  const livePrice = selectedItem ? calcItemPrice(selectedItem, size, addons) : 0
 
   const setAddon = (key, val) => setAddons(p => ({ ...p, [key]: val }))
 
@@ -103,34 +98,29 @@ export default function MenuBuilder({ cartItems, onChange }) {
     setAddons(blankAddonState())
     setFlavor1(CUPCAKE_FLAVORS[0])
     setFlavor2('None')
+    setAddonsOpen(false)
   }
 
   const handleAddToCart = () => {
     if (!selectedItem) return
     const price = calcItemPrice(selectedItem, size, addons)
-    const name  = buildItemName(selectedItem, size, addons, flavor1, flavor2)
-    const addonSummary = buildAddonSummary(selectedItem, size, addons)
+    const name  = buildItemName(selectedItem, size, flavor1, flavor2)
+    const addonSummary = buildAddonSummary(selectedItem, addons)
     const newItem = {
-      name,
-      price,
-      qty: 1,
+      name, price, qty: 1,
       category: selectedItem.category,
-      size,
-      addonSummary,
+      size, addonSummary,
       flavor1: isCupcake ? flavor1 : undefined,
       flavor2: isCupcake ? flavor2 : undefined,
-      writingText: addons.writingOnCake || undefined,
     }
     if (editIdx !== null) {
-      const next = [...cartItems]
-      next[editIdx] = newItem
-      onChange(next)
-      setEditIdx(null)
+      const next = [...cartItems]; next[editIdx] = newItem; onChange(next); setEditIdx(null)
     } else {
       onChange([...cartItems, newItem])
     }
     setSelectedItem(null)
     setAddons(blankAddonState())
+    setAddonsOpen(false)
   }
 
   const removeFromCart = (idx) => onChange(cartItems.filter((_, i) => i !== idx))
@@ -138,8 +128,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const startEdit = (idx) => {
     setEditIdx(idx)
     const ci = cartItems[idx]
-    const menuItem = MENU.find(m => m.name === ci.name.split(' — ')[0].split(' (')[0]) ||
-                     MENU.find(m => ci.name.includes(m.name))
+    const menuItem = MENU.find(m => ci.name.startsWith(m.name) || ci.name.includes(m.name))
     if (menuItem) {
       setActiveCat(menuItem.category)
       setSelectedItem(menuItem)
@@ -147,124 +136,123 @@ export default function MenuBuilder({ cartItems, onChange }) {
     }
   }
 
-  const cartTotal = cartItems.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.qty) || 1), 0)
-
-  const activeAddons = isCake ? CAKE_ADDONS : isCheese ? CHEESECAKE_ADDONS : []
+  const cartTotal = cartItems.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
 
   return (
     <div className={styles.wrap}>
 
-      {/* ── Split panel ── */}
-      <div className={styles.panel}>
+      {/* ── Builder ── */}
+      <div className={styles.builder}>
 
-        {/* LEFT — category + items */}
-        <div className={styles.left}>
-          <div className={styles.catList}>
-            {CATEGORIES.map(c => (
-              <button
-                key={c}
-                className={`${styles.catBtn} ${activeCat === c ? styles.catActive : ''}`}
-                onClick={() => { setActiveCat(c); setSelectedItem(null) }}
-              >{c}</button>
-            ))}
-          </div>
-          <div className={styles.itemList}>
-            {catItems.map(item => (
-              <div
-                key={item.name}
-                className={`${styles.itemRow} ${selectedItem?.name === item.name ? styles.itemSelected : ''}`}
-                onClick={() => selectItem(item)}
-              >
-                <div>
-                  <div className={styles.itemName}>{item.name}</div>
-                </div>
-                <div className={styles.itemPrice}>{fmt$(item.price)}</div>
-              </div>
-            ))}
-          </div>
+        {/* Category tabs */}
+        <div className={styles.catTabs}>
+          {CATEGORIES.map(c => (
+            <button
+              key={c}
+              className={`${styles.catTab} ${activeCat === c ? styles.catTabActive : ''}`}
+              onClick={() => { setActiveCat(c); setSelectedItem(null); setAddonsOpen(false) }}
+            >{c}</button>
+          ))}
         </div>
 
-        {/* RIGHT — customizations */}
-        <div className={styles.right}>
-          {!selectedItem ? (
-            <div className={styles.rightEmpty}>
-              <div className={styles.rightEmptyIcon}>←</div>
-              <div className={styles.rightEmptyText}>Select an item to customize</div>
+        {/* Item chips */}
+        <div className={styles.itemGrid}>
+          {catItems.map(item => (
+            <div
+              key={item.name}
+              className={`${styles.itemChip} ${selectedItem?.name === item.name ? styles.itemChipSelected : ''}`}
+              onClick={() => selectItem(item)}
+            >
+              <div className={styles.itemChipName}>{item.name}</div>
+              <div className={styles.itemChipPrice}>{fmt$(item.price)}</div>
             </div>
-          ) : (
-            <>
-              <div className={styles.rightHeader}>
-                <div className={styles.rightItemName}>{selectedItem.name}</div>
-                <div className={styles.rightBasePrice}>Base: {fmt$(selectedItem.price)}</div>
+          ))}
+        </div>
+
+        {/* Customization zone */}
+        {selectedItem && (
+          <div className={styles.customZone}>
+
+            {/* Header with live price */}
+            <div className={styles.selectedHeader}>
+              <div className={styles.selectedName}>{selectedItem.name}</div>
+              <div className={styles.livePrice}>{fmt$(livePrice)}</div>
+            </div>
+
+            {/* Size — cake categories only */}
+            {isCake && (
+              <div className={styles.sizeSection}>
+                <div className={styles.zoneSectionLabel}>Size</div>
+                <div className={styles.sizeRow}>
+                  {SIZES.map(s => (
+                    <div
+                      key={s.id}
+                      className={`${styles.sizeBtn} ${size === s.id ? styles.sizeBtnActive : ''}`}
+                      onClick={() => setSize(s.id)}
+                    >
+                      <div className={styles.sizeBtnLabel}>{s.label}</div>
+                      <div className={styles.sizeBtnPrice}>{fmt$(s.mod(selectedItem.price))}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <div className={styles.addonScroll}>
-
-                {/* SIZE — cakes only */}
-                {isCake && (
-                  <div className={styles.addonSection}>
-                    <div className={styles.addonSectionLabel}>Size</div>
-                    <div className={styles.sizeRow}>
-                      {SIZES.map(s => (
-                        <button
-                          key={s.id}
-                          className={`${styles.sizeBtn} ${size === s.id ? styles.sizeBtnActive : ''}`}
-                          onClick={() => setSize(s.id)}
-                        >
-                          <div className={styles.sizeBtnLabel}>{s.label}</div>
-                          <div className={styles.sizeBtnPrice}>{fmt$(s.mod(selectedItem.price))}</div>
-                        </button>
-                      ))}
-                    </div>
+            {/* Cupcake flavors */}
+            {isCupcake && (
+              <div className={styles.sizeSection}>
+                <div className={styles.zoneSectionLabel}>Flavors</div>
+                <div className={styles.flavorRow}>
+                  <div>
+                    <div className={styles.flavorLabel}>Flavor 1 <span className={styles.req}>*</span></div>
+                    <select value={flavor1} onChange={e => setFlavor1(e.target.value)} className={styles.flavorSelect}>
+                      {CUPCAKE_FLAVORS.map(f => <option key={f}>{f}</option>)}
+                    </select>
                   </div>
-                )}
-
-                {/* CUPCAKE FLAVORS */}
-                {isCupcake && (
-                  <div className={styles.addonSection}>
-                    <div className={styles.addonSectionLabel}>Flavors</div>
-                    <div className={styles.flavorRow}>
-                      <div>
-                        <div className={styles.flavorLabel}>Flavor 1 <span className={styles.req}>*</span></div>
-                        <select value={flavor1} onChange={e => setFlavor1(e.target.value)} className={styles.flavorSelect}>
-                          {CUPCAKE_FLAVORS.map(f => <option key={f}>{f}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <div className={styles.flavorLabel}>Flavor 2 (optional)</div>
-                        <select value={flavor2} onChange={e => setFlavor2(e.target.value)} className={styles.flavorSelect}>
-                          <option>None</option>
-                          {CUPCAKE_FLAVORS.map(f => <option key={f}>{f}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                  <div>
+                    <div className={styles.flavorLabel}>Flavor 2 (optional)</div>
+                    <select value={flavor2} onChange={e => setFlavor2(e.target.value)} className={styles.flavorSelect}>
+                      <option>None</option>
+                      {CUPCAKE_FLAVORS.map(f => <option key={f}>{f}</option>)}
+                    </select>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
-                {/* ADD-ONS */}
-                {hasAddons && (
-                  <div className={styles.addonSection}>
-                    <div className={styles.addonSectionLabel}>Add-ons</div>
-                    {activeAddons.map(a => {
+            {/* Full add-ons accordion — cake categories */}
+            {showFullAddons && (
+              <div className={styles.accordionWrap}>
+                <div
+                  className={`${styles.accordionToggle} ${addonsOpen ? styles.accordionToggleOpen : ''}`}
+                  onClick={() => setAddonsOpen(v => !v)}
+                >
+                  <div className={styles.accordionLeft}>
+                    <span className={styles.accordionLabel}>Add-ons</span>
+                    {activeAddonCount > 0 && (
+                      <span className={styles.addonBadge}>{activeAddonCount} selected</span>
+                    )}
+                  </div>
+                  <div className={styles.accordionRight}>
+                    <span className={styles.accordionHint}>{addonsOpen ? 'Collapse' : 'Expand'}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{transform: addonsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0}}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {addonsOpen && (
+                  <div className={styles.accordionPanel}>
+                    {CAKE_ADDONS.map(a => {
                       const isOn = !!addons[a.id]
-                      if (a.type === 'text') {
-                        return (
-                          <div key={a.id} className={styles.addonTextRow}>
-                            <div className={styles.addonTextLabel}>{a.label} <span className={styles.free}>Free</span></div>
-                            <input
-                              type="text"
-                              className={styles.addonTextInput}
-                              placeholder={a.placeholder}
-                              value={addons.writingOnCake}
-                              onChange={e => setAddon('writingOnCake', e.target.value)}
-                            />
-                          </div>
-                        )
-                      }
                       return (
-                        <div key={a.id} className={`${styles.addonRow} ${isOn ? styles.addonRowOn : ''}`}>
+                        <div
+                          key={a.id}
+                          className={`${styles.addonRow} ${isOn ? styles.addonRowOn : ''}`}
+                          onClick={() => setAddon(a.id, !isOn)}
+                        >
                           <div className={styles.addonInfo}>
-                            <div className={styles.addonLabel}>{a.label}</div>
+                            <div className={styles.addonName}>{a.label}</div>
                             {a.type === 'toggle+layer'
                               ? <div className={styles.addonPrice}>+{fmt$(LAYER_PRICE[size] || 25)}</div>
                               : a.type === 'toggle+price'
@@ -275,29 +263,25 @@ export default function MenuBuilder({ cartItems, onChange }) {
                             }
                             {a.note && <div className={styles.addonNote}>{a.note}</div>}
                           </div>
-                          <button
-                            className={`${styles.toggle} ${isOn ? styles.toggleOn : ''}`}
-                            onClick={() => setAddon(a.id, !isOn)}
-                          >
+                          <button className={`${styles.toggle} ${isOn ? styles.toggleOn : ''}`} onClick={e => { e.stopPropagation(); setAddon(a.id, !isOn) }}>
                             <span className={styles.toggleThumb} />
                           </button>
 
-                          {/* Expanded fields when toggled on */}
                           {isOn && a.type === 'toggle+note' && (
                             <input
-                              type="text"
-                              className={styles.addonNoteInput}
+                              className={styles.addonSubInput}
                               placeholder={a.notePlaceholder}
                               value={addons[`${a.id}Note`] || ''}
+                              onClick={e => e.stopPropagation()}
                               onChange={e => setAddon(`${a.id}Note`, e.target.value)}
                             />
                           )}
                           {isOn && a.type === 'toggle+price' && (
-                            <div className={styles.priceOptions}>
+                            <div className={styles.priceOptions} onClick={e => e.stopPropagation()}>
                               {a.priceOptions.map(p => (
                                 <button
                                   key={p}
-                                  className={`${styles.priceOptionBtn} ${(addons[`${a.id}Price`] || a.priceOptions[0]) === p ? styles.priceOptionActive : ''}`}
+                                  className={`${styles.priceOpt} ${(addons[`${a.id}Price`] || a.priceOptions[0]) === p ? styles.priceOptActive : ''}`}
                                   onClick={() => setAddon(`${a.id}Price`, p)}
                                 >${p}</button>
                               ))}
@@ -306,28 +290,21 @@ export default function MenuBuilder({ cartItems, onChange }) {
                         </div>
                       )
                     })}
-                  </div>
-                )}
 
-                {/* CUSTOM ADD-ON — all except cookies/pound/delectables */}
-                {(hasAddons || isCupcake) && (
-                  <div className={styles.addonSection}>
-                    <div className={styles.addonSectionLabel}>Custom add-on</div>
-                    <div className={styles.customRow}>
+                    {/* Custom add-on inside panel */}
+                    <div className={styles.customAddonRow} onClick={e => e.stopPropagation()}>
                       <input
-                        type="text"
                         className={styles.customLabelInput}
-                        placeholder="Description"
+                        placeholder="Custom add-on description"
                         value={addons.customLabel}
                         onChange={e => setAddon('customLabel', e.target.value)}
                       />
                       <div className={styles.customPriceWrap}>
-                        <span className={styles.dollarSign}>$</span>
+                        <span>$</span>
                         <input
-                          type="number"
+                          type="number" min="0"
                           className={styles.customPriceInput}
                           placeholder="0"
-                          min="0"
                           value={addons.customPrice}
                           onChange={e => setAddon('customPrice', e.target.value)}
                         />
@@ -335,19 +312,43 @@ export default function MenuBuilder({ cartItems, onChange }) {
                     </div>
                   </div>
                 )}
-
               </div>
+            )}
 
-              {/* Add to cart footer */}
-              <div className={styles.rightFooter}>
-                <div className={styles.liveTotal}>{fmt$(livePrice)}</div>
-                <button className={styles.addToCartBtn} onClick={handleAddToCart}>
-                  {editIdx !== null ? 'Update item' : '+ Add to order'}
-                </button>
+            {/* Custom-only add-on for non-cake categories */}
+            {showCustomOnly && (
+              <div className={styles.customOnlyRow}>
+                <div className={styles.customOnlyLabel}>Custom add-on (optional)</div>
+                <div className={styles.customOnlyFields}>
+                  <input
+                    className={styles.customLabelInput}
+                    placeholder="Description"
+                    value={addons.customLabel}
+                    onChange={e => setAddon('customLabel', e.target.value)}
+                  />
+                  <div className={styles.customPriceWrap}>
+                    <span>$</span>
+                    <input
+                      type="number" min="0"
+                      className={styles.customPriceInput}
+                      placeholder="0"
+                      value={addons.customPrice}
+                      onChange={e => setAddon('customPrice', e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
-            </>
-          )}
-        </div>
+            )}
+
+            {/* Save item button */}
+            <div className={styles.saveItemRow}>
+              <button className={styles.saveItemBtn} onClick={handleAddToCart}>
+                {editIdx !== null ? '✓ Update item' : '✓ Save item to order'}
+              </button>
+            </div>
+
+          </div>
+        )}
       </div>
 
       {/* ── Cart ── */}
@@ -364,10 +365,8 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
               <div className={styles.cartRight}>
                 <div className={styles.cartPrice}>{fmt$(ci.price)}</div>
-                <div className={styles.cartActions}>
-                  <button className={styles.cartEdit} onClick={() => startEdit(idx)}>Edit</button>
-                  <button className={styles.cartRemove} onClick={() => removeFromCart(idx)}>×</button>
-                </div>
+                <button className={styles.cartEdit} onClick={() => startEdit(idx)}>Edit</button>
+                <button className={styles.cartRemove} onClick={() => removeFromCart(idx)}>×</button>
               </div>
             </div>
           ))}
@@ -379,7 +378,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
       )}
 
       {cartItems.length === 0 && !selectedItem && (
-        <div className={styles.emptyCart}>No items added yet</div>
+        <div className={styles.emptyCart}>Select a category and item above to begin</div>
       )}
     </div>
   )

@@ -59,39 +59,36 @@ export const CUPCAKE_FLAVORS = [
 ]
 
 export const CATEGORIES = [
-  'Cakes', 'Specialty Cakes', 'Cheesecakes', 'Cupcakes',
-  'Vegan Cakes', 'Pound Cakes', 'Delectables', 'Cookies',
+  'Cakes', 'Cupcakes', 'Cookies', 'Delectables',
+  'Specialty Cakes', 'Cheesecakes', 'Vegan Cakes', 'Pound Cakes',
 ]
 
 // Categories that support size + full add-ons
 export const CAKE_CATEGORIES = ['Cakes', 'Specialty Cakes', 'Vegan Cakes']
 
+// Categories with NO add-ons except custom field
+export const CUSTOM_ONLY_CATEGORIES = ['Cookies', 'Delectables', 'Cheesecakes', 'Pound Cakes']
+
 // Size options — price modifiers applied to base price
 export const SIZES = [
   { id: 'round',  label: '9" Round',   mod: (base) => base },
   { id: 'heart',  label: '9" Heart',   mod: (base) => base + 30 },
-  { id: 'square', label: '12" Square', mod: (base) => Math.round(base * 2.5) },
+  { id: 'square', label: '12" Square', mod: (base) => Math.round(base * 2.2) },
 ]
 
 // Add-ons with variable pricing noted
 // priceOptions: if present, employee picks between values
 export const CAKE_ADDONS = [
-  { id: 'frostingColor',   label: 'Frosting Color',      price: 10,      type: 'toggle+note', notePlaceholder: 'e.g. Blush pink, White' },
-  { id: 'cakeColor',       label: 'Cake Color',          price: 10,      type: 'toggle+note', notePlaceholder: 'e.g. Red, Blue velvet' },
-  { id: 'coveredRosettes', label: 'Covered Rosettes',    price: 60,      type: 'toggle' },
-  { id: 'buttercreamRoses',label: 'Buttercream Roses',   price: 20,      type: 'toggle' },
-  { id: 'fancyPiping',     label: 'Fancy Piping',        price: 20,      type: 'toggle' },
-  { id: 'fancySprinkles',  label: 'Fancy Sprinkles',     price: null,    type: 'toggle+price', priceOptions: [10, 20], pricePlaceholder: '$10 or $20' },
-  { id: 'fruitOnTop',      label: 'Fruit on Top',        price: null,    type: 'toggle+price', priceOptions: [10, 20], pricePlaceholder: '$10 or $20' },
-  { id: 'fruitJamFilling', label: 'Fruit/Jam Filling',   price: null,    type: 'toggle+price', priceOptions: [10, 20], pricePlaceholder: '$10 or $20' },
-  { id: 'additionalLayer', label: 'Additional Layer',    price: null,    type: 'toggle+layer' },
-  { id: 'printedImage',    label: 'Printed Image',       price: 25,      type: 'toggle', note: 'Customer provides image separately. +$25 per sheet.' },
-  { id: 'writingOnCake',   label: 'Writing on Cake',     price: 0,       type: 'text', placeholder: 'e.g. Happy Birthday Sarah!' },
-]
-
-export const CHEESECAKE_ADDONS = [
-  { id: 'printedImage',  label: 'Printed Image',   price: 25, type: 'toggle', note: 'Customer provides image separately. +$25 per sheet.' },
-  { id: 'writingOnCake', label: 'Writing on Cake', price: 0,  type: 'text',   placeholder: 'e.g. Happy Birthday Sarah!' },
+  { id: 'frostingColor',   label: 'Frosting Color',      price: 10,   type: 'toggle+note', notePlaceholder: 'e.g. Blush pink, White' },
+  { id: 'cakeColor',       label: 'Cake Color',          price: 10,   type: 'toggle+note', notePlaceholder: 'e.g. Red, Blue velvet' },
+  { id: 'coveredRosettes', label: 'Covered Rosettes',    price: 60,   type: 'toggle' },
+  { id: 'buttercreamRoses',label: 'Buttercream Roses',   price: 20,   type: 'toggle' },
+  { id: 'fancyPiping',     label: 'Fancy Piping',        price: 20,   type: 'toggle' },
+  { id: 'fancySprinkles',  label: 'Fancy Sprinkles',     price: null, type: 'toggle+price', priceOptions: [10, 20] },
+  { id: 'fruitOnTop',      label: 'Fruit on Top',        price: null, type: 'toggle+price', priceOptions: [10, 20] },
+  { id: 'fruitJamFilling', label: 'Fruit/Jam Filling',   price: null, type: 'toggle+price', priceOptions: [10, 20] },
+  { id: 'additionalLayer', label: 'Additional Layer',    price: null, type: 'toggle+layer' },
+  { id: 'printedImage',    label: 'Printed Image',       price: 25,   type: 'toggle', note: 'Customer provides image separately.' },
 ]
 
 // Layer price by size
