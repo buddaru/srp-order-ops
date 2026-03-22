@@ -23,26 +23,43 @@
   gap: 12px;
 }
 
-/* ── Search — icon inside input ── */
+/* ── Search — icon pinned inside left edge ── */
 .searchWrap { flex: 1; max-width: 300px; position: relative; }
-.searchRow {
-  display: flex; align-items: center;
+
+.searchInner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.searchInput {
+  width: 100%;
   background: var(--bg);
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  padding: 0 10px;
+  padding: 0 12px 0 32px;
   height: 34px;
-  gap: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
   transition: border-color 0.15s;
+  box-shadow: none;
+  -webkit-appearance: none;
 }
-.searchRow:focus-within { border-color: var(--accent); }
-.searchIcon { flex-shrink: 0; color: var(--text-muted); display: flex; align-items: center; pointer-events: none; }
-.searchInput {
-  flex: 1; background: transparent; border: none;
-  font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: var(--text); outline: none; min-width: 0; padding: 0;
-}
-.searchInput::placeholder { color: var(--text-muted); font-size: 13px; }
+.searchInput::placeholder { color: var(--text-muted); }
+.searchInput:focus { border-color: var(--accent); }
 
 /* ── Results dropdown ── */
 .results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 400; overflow: hidden; }
@@ -68,9 +85,9 @@
   .hamburger { display: flex; }
   .topRow { padding: 0 14px; gap: 10px; }
   .searchWrap { max-width: unset; flex: 1; }
-  /* Counters always visible on mobile — compact labels */
-  .counterLabel { display: none; }
+  /* Counters — full labels visible on mobile, compact gap */
   .counters { gap: 10px; }
-  .counterDivider { height: 14px; }
   .counterNum { font-size: 13px; }
+  .counterLabel { font-size: 10px; }
+  .counterDivider { height: 14px; }
 }

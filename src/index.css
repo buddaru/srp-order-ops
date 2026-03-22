@@ -90,6 +90,12 @@ textarea { resize: none; height: 68px; line-height: 1.6; }
     font-size: 16px !important;
   }
 }
+/* But keep search input at its designed size */
+@media (max-width: 768px) {
+  input[type=text].searchOverride {
+    font-size: 13px !important;
+  }
+}
 
 /* ── Global print: hide chrome, show only content ── */
 @media print {
