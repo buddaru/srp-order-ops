@@ -18,29 +18,8 @@ function highlight(str, q) {
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen }) {
   const { user } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
   const [query, setQuery]     = useState('')
   const [showRes, setShowRes] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [datetime, setDatetime] = useState(fmtNow())
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('srp-theme') === 'dark')
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
-    localStorage.setItem('srp-theme', darkMode ? 'dark' : 'light')
-  }, [darkMode])
-
-  // Apply saved theme on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('srp-theme')
-    if (saved) document.documentElement.setAttribute('data-theme', saved)
-  }, [])
-
-  useEffect(() => {
-    const t = setInterval(() => setDatetime(fmtNow()), 30000)
-    return () => clearInterval(t)
-  }, [])
 
   const localDS = (offset = 0) => {
     const d = new Date()
@@ -81,7 +60,9 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
         {/* Search */}
         <div className={styles.searchWrap}>
           <div className={styles.searchRow}>
-            <svg className={styles.searchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg className={styles.searchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
             <input
               className={styles.searchInput}
               type="text"
@@ -117,7 +98,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
           )}
         </div>
 
-        {/* Right — counters + avatar */}
+        {/* Right — counters only, no avatar */}
         <div className={styles.right}>
           <div className={styles.counters}>
             <div className={styles.counter}>
@@ -134,34 +115,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
               <span className={styles.counterNum} style={{color:'#16a34a'}}>{readyCount}</span>
               <span className={styles.counterLabel}>Ready</span>
             </div>
-          </div>
-
-          {/* Avatar + dropdown */}
-          <div className={styles.userMenu}>
-            <div className={styles.userAvatar} onClick={() => setMenuOpen(v => !v)}>
-              {(profile?.full_name || profile?.email || user?.email || '?').slice(0,2).toUpperCase()}
-            </div>
-            {menuOpen && (
-              <>
-                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-                <div className={styles.userDropdown}>
-                  <div className={styles.userDropdownName}>{profile?.full_name || profile?.email}</div>
-                  <div className={styles.userDropdownRole}>{profile?.role || 'employee'}</div>
-                  <div className={styles.userDropdownDivider} />
-                  <div className={styles.themeToggleRow}>
-                    <span className={styles.themeLabel}>{darkMode ? '🌙 Dark mode' : '☀️ Light mode'}</span>
-                    <button
-                      className={`${styles.themeToggle} ${darkMode ? styles.themeToggleOn : ''}`}
-                      onClick={() => setDarkMode(v => !v)}
-                    >
-                      <span className={styles.themeToggleThumb} />
-                    </button>
-                  </div>
-                  <div className={styles.userDropdownDivider} />
-                  <button className={styles.signOutBtn} onClick={() => { setMenuOpen(false); onSignOut() }}>Sign out</button>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>

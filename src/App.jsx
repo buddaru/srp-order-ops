@@ -314,7 +314,7 @@ export default function App() {
           </NavLink>
         </nav>
 
-        {sidebarOpen && (
+        {(sidebarOpen || true) && (
           <div className={styles.sidebarFooter}>
             <div className={styles.sidebarUser}>
               <div className={styles.sidebarAvatar}>
@@ -325,6 +325,7 @@ export default function App() {
                 <div className={styles.sidebarUserRole}>{profile?.role || 'employee'}</div>
               </div>
             </div>
+            <button className={styles.sidebarSignOut} onClick={signOut}>Sign out</button>
           </div>
         )}
       </aside>

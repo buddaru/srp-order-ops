@@ -5,7 +5,7 @@ import ListView from './ListView'
 import styles from './Board.module.css'
 
 export default function Board({ orders, selectedDay, customDateSelected, dateRange, isAdmin, onMove, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
-  const [viewMode, setViewMode] = useState('cards')
+  const [viewMode, setViewMode] = useState('list')
 
   const visible = orders.filter(o => {
     if (dateRange) {
@@ -32,14 +32,14 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
         </div>
         <div className={styles.toolbarRight}>
           <div className={styles.viewToggle}>
-            <button className={`${styles.vtBtn} ${viewMode === 'cards' ? styles.vtActive : ''}`} onClick={() => setViewMode('cards')}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="0" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/></svg>
-              Cards
-            </button>
-            <div className={styles.vtDivider} />
             <button className={`${styles.vtBtn} ${viewMode === 'list' ? styles.vtActive : ''}`} onClick={() => setViewMode('list')}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0" y="1" width="13" height="2" rx="1" fill="currentColor"/><rect x="0" y="5.5" width="13" height="2" rx="1" fill="currentColor"/><rect x="0" y="10" width="13" height="2" rx="1" fill="currentColor"/></svg>
               List
+            </button>
+            <div className={styles.vtDivider} />
+            <button className={`${styles.vtBtn} ${viewMode === 'cards' ? styles.vtActive : ''}`} onClick={() => setViewMode('cards')}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="0" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/></svg>
+              Cards
             </button>
           </div>
           {onNewOrder && (

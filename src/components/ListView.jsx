@@ -2,10 +2,10 @@ import { fmtDate, fmtTime, orderTotal, fmt$, STAGES } from '../utils/helpers'
 import styles from './ListView.module.css'
 
 const STAGE_META = {
-  'received':      { label: 'Received',        cls: 'received' },
-  'in-production': { label: 'In Production',   cls: 'production' },
-  'ready':         { label: 'Ready for Pickup', cls: 'ready' },
-  'picked-up':     { label: 'Picked Up',        cls: 'pickedup' },
+  'received':      { label: 'Received',         cls: 'received' },
+  'in-production': { label: 'In Production',    cls: 'production' },
+  'ready':         { label: 'Ready for Pickup',  cls: 'ready' },
+  'picked-up':     { label: 'Picked Up',         cls: 'pickedup' },
 }
 
 const AVATAR_COLORS = ['amber','pink','teal','blue','coral','purple']
@@ -22,11 +22,12 @@ export default function ListView({ orders, onDrawer }) {
 
   const sorted = [...orders].sort((a, b) => {
     if (a.pickupDate !== b.pickupDate) return a.pickupDate.localeCompare(b.pickupDate)
-    return a.pickupTime.localeCompare(b.pickupTime)
+    return (a.pickupTime || '').localeCompare(b.pickupTime || '')
   })
 
   return (
     <div className={styles.wrap}>
+      {/* ── Desktop table ── */}
       <div className={styles.table}>
         <div className={styles.thead}>
           <div className={styles.tr}>
@@ -71,6 +72,39 @@ export default function ListView({ orders, onDrawer }) {
             )
           })}
         </div>
+      </div>
+
+      {/* ── Mobile cards ── */}
+      <div className={styles.mobileList}>
+        {sorted.map(o => {
+          const total = orderTotal(o)
+          const meta  = STAGE_META[o.stage] || STAGE_META['received']
+          const av    = avatarColor(o.id)
+          const itemSummary = o.items.length === 0 ? '—'
+            : o.items.map(i => `${i.qty}× ${i.name}`).join(', ')
+          return (
+            <div key={o.id} className={styles.mobileRow} onClick={() => onDrawer(o.id)}>
+              <div className={styles.mobileTop}>
+                <div className={`${styles.avatar} ${styles['av_'+av]}`}>
+                  {o.initials || o.customer.slice(0,2).toUpperCase()}
+                </div>
+                <div className={styles.mobileCustomer}>
+                  <div className={styles.name}>{o.customer}</div>
+                  <div className={styles.id}>{o.id}</div>
+                </div>
+                <span className={`${styles.pill} ${styles['pill_'+meta.cls]}`}>{meta.label}</span>
+              </div>
+              <div className={styles.mobileItems}>{itemSummary}</div>
+              <div className={styles.mobileBottom}>
+                <div className={styles.mobilePickup}>
+                  <span className={styles.date}>{fmtDate(o.pickupDate)}</span>
+                  <span className={styles.time}> · {fmtTime(o.pickupTime)}</span>
+                </div>
+                <span className={styles.total}>{fmt$(total)}</span>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
