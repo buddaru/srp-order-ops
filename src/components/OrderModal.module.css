@@ -10,8 +10,8 @@
 .modal {
   background: var(--card);
   border-radius: 16px;
-  width: 560px;
-  max-width: 95vw;
+  width: 780px;
+  max-width: 96vw;
   max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.28);
@@ -62,6 +62,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 16px;
+}
+.sectionTitle {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px;
 }
 .fieldGroup { margin-bottom: 16px; }
 .label {
