@@ -34,6 +34,16 @@
 
 .topbarRight { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
+.btnSave {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; background: var(--brand); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btnSave:hover { opacity: 0.88; }
+.btnSave:disabled { opacity: 0.55; cursor: not-allowed; }
+
 .btnDone {
   display: flex; align-items: center; gap: 5px;
   padding: 6px 14px; background: #16a34a; color: #fff;
@@ -42,6 +52,7 @@
   transition: opacity 0.15s;
 }
 .btnDone:hover { opacity: 0.88; }
+.btnDone:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btnOutline {
   display: flex; align-items: center; gap: 5px;
@@ -52,6 +63,9 @@
 }
 .btnOutline:hover { background: var(--bg); }
 
+.savedLabel { font-size: 12px; color: #16a34a; font-family: 'DM Sans', sans-serif; }
+.errorLabel { font-size: 12px; color: #DC2626; font-family: 'DM Sans', sans-serif; }
+
 /* ── Content ── */
 .content {
   padding: 24px 28px;
@@ -59,16 +73,25 @@
   flex: 1;
 }
 
+/* ── Recipe title — override global input styles ── */
 .recipeTitle {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 26px; font-weight: 600; color: var(--text);
-  border: none; background: transparent; outline: none;
-  width: 100%; margin-bottom: 8px; padding: 2px 0;
-  border-bottom: 1.5px solid transparent;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 26px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  border: none !important;
+  border-bottom: 1.5px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 2px 0 !important;
   transition: border-color 0.15s;
 }
-.recipeTitle:hover { border-bottom-color: var(--border-2); }
-.recipeTitle:focus { border-bottom-color: var(--brand); }
+.recipeTitle:hover { border-bottom-color: var(--border-2) !important; }
+.recipeTitle:focus { border-bottom-color: var(--brand) !important; box-shadow: none !important; }
 .recipeTitle::placeholder { color: var(--border-2); }
 
 .groupTag {
@@ -103,26 +126,36 @@
   text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;
 }
 
-/* ── Yield ── */
+/* ── Yield — keep bordered style ── */
 .yieldSublabel { font-size: 11.5px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
 .yieldRow { display: flex; gap: 8px; }
 .yieldGroup { display: flex; flex-direction: column; gap: 3px; }
 .yieldFieldLabel { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+
 .yieldInput {
-  border: 1px solid var(--border-2); border-radius: var(--radius-sm);
-  padding: 7px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: var(--text); background: #fff; outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s; width: 80px;
+  width: 80px !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 7px 10px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  background: #fff !important;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.yieldInputWide { width: 130px; }
-.yieldInput:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(196,120,74,0.1); }
+.yieldInputWide { width: 130px !important; }
+.yieldInput:focus {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(196,120,74,0.1) !important;
+}
 
 /* ── Ingredient list ── */
 .ingList { padding: 4px 0; }
 
-/* ── Shared row base ── */
 .ingRow {
-  display: flex; align-items: flex-start;
+  display: flex;
+  align-items: flex-start;
   padding: 0 12px 0 4px;
   border-bottom: 1px solid var(--border);
   transition: background 0.1s;
@@ -138,7 +171,7 @@
 .headerRow:hover .ingActions { opacity: 1; }
 .headerRow:hover .dragHandle { opacity: 1; }
 
-/* ── Drag ── */
+/* ── Drag handle ── */
 .dragHandle {
   width: 20px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -151,12 +184,10 @@
 .dragOverTop    { border-top: 2px solid var(--brand) !important; }
 .dragOverBottom { border-bottom: 2px solid var(--brand) !important; }
 
-/* ── Header row inner ── */
+/* ── Header row ── */
 .headerRowInner {
   flex: 1; display: flex; align-items: center; gap: 10px;
-  padding-left: 0;
 }
-
 .headerBadge {
   font-size: 9px; font-weight: 700; letter-spacing: 0.09em;
   color: var(--brand); background: var(--accent-light);
@@ -164,40 +195,82 @@
   padding: 2px 6px; flex-shrink: 0; white-space: nowrap;
 }
 
+/* ── Inline inputs — override global styles ── */
 .headerLabelInput {
-  flex: 1; border: none; background: transparent; outline: none;
-  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
-  letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand);
-  padding: 10px 0;
+  flex: 1;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand) !important;
+  padding: 10px 0 !important;
+  width: 100%;
 }
 .headerLabelInput::placeholder { color: rgba(196,120,74,0.3); }
+.headerLabelInput:focus { box-shadow: none !important; border-color: transparent !important; }
 
-/* ── Ingredient fields ── */
 .ingAmount {
-  font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: var(--brand); font-weight: 500;
-  border: none; background: transparent; outline: none;
-  padding: 10px 10px 10px 0; width: 105px; flex-shrink: 0;
-  border-right: 1px solid var(--border);
+  width: 105px !important;
+  flex-shrink: 0;
+  border: none !important;
+  border-right: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  color: var(--brand) !important;
+  font-weight: 500 !important;
+  padding: 10px 10px 10px 0 !important;
 }
 .ingAmount::placeholder { color: var(--border-2); font-weight: 400; }
-.ingAmount:focus { color: var(--text); }
+.ingAmount:focus {
+  color: var(--text) !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  border-right-color: var(--brand) !important;
+}
 
 .ingRight { flex: 1; min-width: 0; padding-left: 12px; }
 
 .ingName {
-  font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
-  border: none; background: transparent; outline: none;
-  width: 100%; padding: 10px 0 3px; font-weight: 400;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  font-weight: 400 !important;
+  padding: 10px 0 3px !important;
 }
 .ingName::placeholder { color: var(--border-2); }
+.ingName:focus { box-shadow: none !important; border-color: transparent !important; }
 
 .ingNote {
-  font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--text-muted);
-  border: none; background: transparent; outline: none;
-  width: 100%; padding: 0 0 8px; font-style: italic;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 11.5px !important;
+  color: var(--text-muted) !important;
+  font-style: italic;
+  padding: 0 0 8px !important;
 }
 .ingNote::placeholder { color: var(--border-2); font-style: italic; }
+.ingNote:focus { box-shadow: none !important; border-color: transparent !important; }
 
 .ingActions {
   display: flex; align-items: center; gap: 2px;
@@ -211,7 +284,7 @@
   transition: color 0.1s, background 0.1s;
 }
 .iconBtn:hover { color: var(--brand); background: var(--brand-faint); }
-.iconBtn.del:hover { color: #DC2626; background: #FEF2F2; }
+.del:hover { color: #DC2626 !important; background: #FEF2F2 !important; }
 
 /* ── Ghost / new row ── */
 .ingGhost {
@@ -221,7 +294,11 @@
   border-top: 1px solid var(--border);
 }
 .ingGhost:hover { opacity: 0.65; background: var(--bg); }
-.ghostAmount { font-size: 13px; color: var(--text-muted); width: 105px; border-right: 1px solid var(--border); padding-right: 10px; flex-shrink: 0; }
+.ghostAmount {
+  font-size: 13px; color: var(--text-muted);
+  width: 105px; border-right: 1px solid var(--border);
+  padding-right: 10px; flex-shrink: 0;
+}
 .ghostName { font-size: 13px; color: var(--text-muted); padding-left: 12px; flex: 1; }
 
 .newRow { background: rgba(196,120,74,0.03); }
@@ -237,8 +314,10 @@
   padding: 10px 18px; border-top: 1px solid var(--border); display: flex; gap: 16px;
 }
 .linkBtn {
-  background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px;
+  background: none; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
   padding: 4px 0; transition: color 0.12s;
 }
 .linkBtn:hover { color: var(--brand); }
@@ -250,11 +329,12 @@
 .dirTab {
   padding: 10px 12px; font-size: 13px; color: var(--text-muted);
   border-bottom: 2px solid transparent; margin-bottom: -1px;
-  cursor: pointer; background: none; border-top: none; border-left: none; border-right: none;
+  cursor: pointer; background: none;
+  border-top: none; border-left: none; border-right: none;
   font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 5px;
   transition: color 0.12s, border-color 0.12s;
 }
-.dirTab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 500; }
+.active { color: var(--brand) !important; border-bottom-color: var(--brand) !important; font-weight: 500; }
 
 .coverArea {
   margin: 14px 18px; border: 1.5px dashed var(--border-2); border-radius: var(--radius-sm);
@@ -281,7 +361,7 @@
   display: flex; align-items: flex-start; gap: 8px;
   padding: 10px 12px 10px 4px;
   border-bottom: 1px solid var(--border);
-  transition: background 0.1s; position: relative;
+  transition: background 0.1s;
 }
 .dirRow:last-child { border-bottom: none; }
 .dirRow:hover { background: var(--bg); }
@@ -298,29 +378,56 @@
   flex-shrink: 0; margin-top: 2px;
 }
 .headerPill {
-  background: var(--bg-2); border-color: var(--border-2);
-  color: var(--text-muted); font-size: 10px;
+  background: var(--bg-2) !important;
+  border-color: var(--border-2) !important;
+  color: var(--text-muted) !important;
+  font-size: 10px !important;
 }
 
 .stepBody { flex: 1; min-width: 0; }
 
 .stepTextarea {
-  width: 100%; border: none; background: transparent; outline: none;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
-  line-height: 1.6; resize: none; overflow: hidden; min-height: 22px;
-  padding: 2px 4px; border-radius: 4px;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  line-height: 1.6;
+  resize: none;
+  overflow: hidden;
+  min-height: 22px;
+  height: auto;
+  padding: 2px 4px !important;
   transition: background 0.12s, box-shadow 0.12s;
 }
-.stepTextarea:focus { background: rgba(196,120,74,0.04); box-shadow: 0 0 0 2px rgba(196,120,74,0.1); }
+.stepTextarea:focus {
+  background: rgba(196,120,74,0.04) !important;
+  box-shadow: 0 0 0 2px rgba(196,120,74,0.1) !important;
+  border-color: transparent !important;
+}
 .stepTextarea::placeholder { color: var(--border-2); }
 
 .dirHeaderInput {
-  width: 100%; border: none; background: transparent; outline: none;
-  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
-  letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand);
-  padding: 3px 4px;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand) !important;
+  padding: 3px 4px !important;
 }
 .dirHeaderInput::placeholder { color: rgba(196,120,74,0.3); }
+.dirHeaderInput:focus { box-shadow: none !important; border-color: transparent !important; }
 
 .mediaSlot {
   width: 72px; height: 52px; border: 1.5px dashed var(--border-2);
@@ -356,23 +463,4 @@
 @media (max-width: 768px) {
   .panels { grid-template-columns: 1fr; }
   .content { padding: 16px; }
-}
-
-/* ── Save button + status ── */
-.btnSave {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 14px; background: var(--brand); color: #fff;
-  border: none; border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer;
-  transition: opacity 0.15s;
-}
-.btnSave:hover { opacity: 0.88; }
-.btnSave:disabled { opacity: 0.55; cursor: not-allowed; }
-
-.savedLabel {
-  font-size: 12px; color: #16a34a; font-family: 'DM Sans', sans-serif;
-  display: flex; align-items: center; gap: 4px;
-}
-.errorLabel {
-  font-size: 12px; color: #DC2626; font-family: 'DM Sans', sans-serif;
 }
