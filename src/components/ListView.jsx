@@ -109,7 +109,17 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage }) {
                   <div className={styles.name}>{o.customer}</div>
                   <div className={styles.id}>{o.id}</div>
                 </div>
-                <span className={`${styles.pill} ${styles['pill_'+meta.cls]}`}>{meta.label}</span>
+                <div onClick={e => e.stopPropagation()}>
+                  <select
+                    className={`${styles.stagePill} ${styles['pill_'+meta.cls]}`}
+                    value={o.stage}
+                    onChange={e => onSetStage(o.id, e.target.value)}
+                  >
+                    {STAGES.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className={styles.mobileItems}>{itemSummary}</div>
               <div className={styles.mobileBottom}>

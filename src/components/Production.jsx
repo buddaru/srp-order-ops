@@ -190,26 +190,26 @@ export default function Production() {
         <div className={styles.printDate}>{fmtDisplayDate(date)}</div>
       </div>
 
-      {/* Menu — top right */}
-      <div className={`${styles.menuWrap} ${styles.noPrint}`}>
-        <button className={styles.hamburger} onClick={() => setMenuOpen(v => !v)}>
-          <span/><span/><span/>
-        </button>
-        {menuOpen && (
-          <>
-            <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-            <div className={styles.menuDropdown}>
-              <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
-              <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
-              <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
-            </div>
-          </>
-        )}
+      {/* Title bar */}
+      <div className={`${styles.titlebar} ${styles.noPrint}`}>
+        <span className={styles.titleLabel}>Daily Production</span>
+        <div className={styles.menuWrap}>
+          <button className={styles.menuBtn} onClick={() => setMenuOpen(v => !v)}>≡ Menu</button>
+          {menuOpen && (
+            <>
+              <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+              <div className={styles.menuDropdown}>
+                <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
+                <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
+                <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Hero date */}
+      {/* Date hero */}
       <div className={`${styles.hero} ${styles.noPrint}`}>
-        <div className={styles.heroLabel}>Daily Production</div>
         <div className={styles.heroDate}>
           <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
           <span>{fmtDisplayDate(date)}</span>
@@ -219,6 +219,8 @@ export default function Production() {
           <button className={styles.todayBtn} onClick={() => setDate(todayDS())}>Jump to today</button>
         )}
       </div>
+
+      <div className={`${styles.divider} ${styles.noPrint}`} />
 
       {/* Stats */}
       <div className={`${styles.stats} ${styles.noPrint}`}>
@@ -260,47 +262,53 @@ export default function Production() {
           <button className={styles.addFirstBtn} onClick={() => setShowForm(true)}>+ Add first item</button>
         </div>
       ) : (
-        Object.entries(grouped).map(([cat, catItems]) => (
-          <div key={cat}>
-            <div className={styles.catLabel}>{cat}</div>
-            {catItems.map(item => (
-              <div key={item.id}>
-                {editingItem?.id === item.id ? (
-                  <div className={`${styles.editForm} ${styles.noPrint}`}>
-                    <div className={styles.formRow}>
-                      <input className={styles.input} value={editingItem.item_name} onChange={e => setEditingItem(p => ({...p, item_name: e.target.value}))} placeholder="Item name" />
-                      <input className={styles.inputSm} value={editingItem.quantity} onChange={e => setEditingItem(p => ({...p, quantity: e.target.value}))} placeholder="Qty" />
-                    </div>
-                    <div className={styles.formRow}>
-                      <input className={styles.input} value={editingItem.category} onChange={e => setEditingItem(p => ({...p, category: e.target.value}))} placeholder="Category" />
-                      <input className={styles.input} value={editingItem.notes} onChange={e => setEditingItem(p => ({...p, notes: e.target.value}))} placeholder="Notes" />
-                    </div>
-                    <div className={styles.formActions}>
-                      <button className={styles.cancelBtn} onClick={() => setEditingItem(null)}>Cancel</button>
-                      <button className={styles.saveBtn} onClick={handleSaveEdit}>Save</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`${styles.itemRow} ${item.completed ? styles.done : ''}`}>
-                    <button
-                      className={`${styles.check} ${item.completed ? styles.checked : ''}`}
-                      onClick={() => handleToggle(item.id, item.completed)}
-                    />
-                    <div className={styles.itemBody}>
-                      <div className={styles.itemName}>{item.item_name}</div>
-                      {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
-                    </div>
-                    <div className={styles.itemQty}>{item.quantity}</div>
-                    <div className={`${styles.itemActions} ${styles.noPrint}`}>
-                      <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
-                      <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
-                    </div>
-                  </div>
-                )}
+        Object.entries(grouped).map(([cat, catItems]) => {
+          const catDone = catItems.filter(i => i.completed).length
+          return (
+            <div key={cat}>
+              <div className={styles.catLabel}>
+                <span className={styles.catName}>{cat}</span>
+                <span className={styles.catCount}>· {catItems.length} item{catItems.length !== 1 ? 's' : ''}{catDone > 0 ? `, ${catDone} done` : ''}</span>
               </div>
-            ))}
-          </div>
-        ))
+              {catItems.map(item => (
+                <div key={item.id}>
+                  {editingItem?.id === item.id ? (
+                    <div className={`${styles.editForm} ${styles.noPrint}`}>
+                      <div className={styles.formRow}>
+                        <input className={styles.input} value={editingItem.item_name} onChange={e => setEditingItem(p => ({...p, item_name: e.target.value}))} placeholder="Item name" />
+                        <input className={styles.inputSm} value={editingItem.quantity} onChange={e => setEditingItem(p => ({...p, quantity: e.target.value}))} placeholder="Qty" />
+                      </div>
+                      <div className={styles.formRow}>
+                        <input className={styles.input} value={editingItem.category} onChange={e => setEditingItem(p => ({...p, category: e.target.value}))} placeholder="Category" />
+                        <input className={styles.input} value={editingItem.notes} onChange={e => setEditingItem(p => ({...p, notes: e.target.value}))} placeholder="Notes" />
+                      </div>
+                      <div className={styles.formActions}>
+                        <button className={styles.cancelBtn} onClick={() => setEditingItem(null)}>Cancel</button>
+                        <button className={styles.saveBtn} onClick={handleSaveEdit}>Save</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`${styles.itemRow} ${item.completed ? styles.done : ''}`}>
+                      <button
+                        className={`${styles.check} ${item.completed ? styles.checked : ''}`}
+                        onClick={() => handleToggle(item.id, item.completed)}
+                      />
+                      <div className={styles.itemBody}>
+                        <div className={styles.itemName}>{item.item_name}</div>
+                        {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+                      </div>
+                      <div className={styles.itemQty}>{item.quantity}</div>
+                      <div className={`${styles.itemActions} ${styles.noPrint}`}>
+                        <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
+                        <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        })
       )}
 
       {/* Add form */}
