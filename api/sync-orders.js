@@ -320,9 +320,24 @@ export default async function handler(req, res) {
       try {
         const full  = await gmailGetMessage(accessToken, msg.id)
         const html  = getBody(full)
+
+        if (!html) {
+          return res.status(200).json({
+            imported, skipped, errors: errors + 1,
+            totalFound: messages.length,
+            message: `No HTML body found in message ${msg.id}. Payload keys: ${Object.keys(full.payload || {}).join(', ')}`,
+          })
+        }
+
         const order = parseOrder(html, msg.id)
 
-        if (!order) { errors++; continue }
+        if (!order) {
+          return res.status(200).json({
+            imported, skipped, errors: errors + 1,
+            totalFound: messages.length,
+            message: `Parse failed for message ${msg.id} — check email format`,
+          })
+        }
         if (existingIds.has(order.bento_order_id)) { skipped++; continue }
 
         const id = await nextOrderId()
