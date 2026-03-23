@@ -18,10 +18,15 @@
 /* ── Top ── */
 .top {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.topRow {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
 }
 .customerInfo { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .avatar {

@@ -14,17 +14,19 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
   return (
     <div className={`${styles.card} ${badge.cls === 'overdue' ? styles.overdueCard : ''} ${done ? styles.done : ''}`} onClick={() => onDrawer(order.id)} style={{cursor:'pointer'}}>
       <div className={styles.top}>
-        <div className={styles.customerInfo}>
-          <div className={styles.avatar}>{order.initials}</div>
-          <div>
-            <div className={styles.customerName}>{order.customer}</div>
-            <div className={styles.orderId}>
-              {order.id}
-              {order.bentoOrderId && <span className={styles.bentoId}> · #{order.bentoOrderId}</span>}
+        <div className={styles.topRow}>
+          <div className={styles.customerInfo}>
+            <div className={styles.avatar}>{order.initials}</div>
+            <div>
+              <div className={styles.customerName}>{order.customer}</div>
+              <div className={styles.orderId}>
+                {order.id}
+                {order.bentoOrderId && <span className={styles.bentoId}> · #{order.bentoOrderId}</span>}
+              </div>
             </div>
           </div>
+          <div className={`${styles.dueBadge} ${styles[badge.cls]}`}>{badge.label}</div>
         </div>
-        <div className={`${styles.dueBadge} ${styles[badge.cls]}`}>{badge.label}</div>
       </div>
 
       <div className={styles.items}>

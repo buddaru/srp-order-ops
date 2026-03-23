@@ -65,3 +65,14 @@
   .table { display: none; }
   .mobileList { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 }
+
+/* ── Stage move buttons ── */
+.stageBtns { display: flex; gap: 4px; }
+.stageBtn {
+  padding: 3px 8px; font-size: 11px; border-radius: 6px;
+  border: 1px solid var(--border-2); background: var(--bg);
+  color: var(--text-2); cursor: pointer; transition: all 0.1s;
+}
+.stageBtn:hover { background: var(--border); }
+.stageBtnNext { background: var(--brand); color: #fff; border-color: var(--brand); }
+.stageBtnNext:hover { opacity: 0.85; }

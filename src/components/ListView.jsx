@@ -11,7 +11,7 @@ const STAGE_META = {
 const AVATAR_COLORS = ['amber','pink','teal','blue','coral','purple']
 const avatarColor = (id) => AVATAR_COLORS[parseInt(id.replace('SRP-','')) % AVATAR_COLORS.length]
 
-export default function ListView({ orders, onDrawer }) {
+export default function ListView({ orders, onDrawer, onMove }) {
   if (orders.length === 0) return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>🧁</div>
@@ -49,6 +49,9 @@ export default function ListView({ orders, onDrawer }) {
                   const flavor = [i.flavor1, i.flavor2].filter(Boolean).join(', ')
                   return `${i.qty}× ${i.name}${flavor ? ` (${flavor})` : ''}`
                 }).join(', ')
+            const si   = STAGES.findIndex(s => s.id === o.stage)
+            const prev = STAGES[si - 1]
+            const next = STAGES[si + 1]
             return (
               <div key={o.id} className={styles.tr} onClick={() => onDrawer(o.id)}>
                 <div className={styles.td}>
@@ -70,6 +73,12 @@ export default function ListView({ orders, onDrawer }) {
                 </div>
                 <div className={styles.td} style={{width:130}}>
                   <span className={`${styles.pill} ${styles['pill_'+meta.cls]}`}>{meta.label}</span>
+                </div>
+                <div className={styles.td} style={{width:100}} onClick={e => e.stopPropagation()}>
+                  <div className={styles.stageBtns}>
+                    {prev && <button className={styles.stageBtn} onClick={() => onMove(o.id, -1)} title={`← ${prev.label}`}>←</button>}
+                    {next && <button className={`${styles.stageBtn} ${styles.stageBtnNext}`} onClick={() => onMove(o.id, 1)} title={`→ ${next.label}`}>→</button>}
+                  </div>
                 </div>
               </div>
             )
