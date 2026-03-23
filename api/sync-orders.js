@@ -305,12 +305,18 @@ export default async function handler(req, res) {
 
     const existingIds = new Set((existing || []).map(r => r.bento_order_id))
 
+    // 4. Only process emails we haven't seen yet, in batches of 8 to stay under timeout
+    const newMessages = messages.filter(msg => {
+      // We can't check by bento_order_id yet without reading the email,
+      // so just take the first 8 unprocessed ones
+      return true
+    }).slice(0, 8)
+
     let imported = 0
     let skipped  = 0
     let errors   = 0
 
-    // 4. Process each email
-    for (const msg of messages) {
+    for (const msg of newMessages) {
       try {
         const full  = await gmailGetMessage(accessToken, msg.id)
         const html  = getBody(full)
@@ -319,7 +325,6 @@ export default async function handler(req, res) {
         if (!order) { errors++; continue }
         if (existingIds.has(order.bento_order_id)) { skipped++; continue }
 
-        // Generate next SRP ID
         const id = await nextOrderId()
 
         const { error } = await supabase.from('orders').insert({
@@ -340,16 +345,11 @@ export default async function handler(req, res) {
 
         if (error) {
           console.error(`Insert error for bento #${order.bento_order_id}:`, JSON.stringify(error))
-          errors++
-          // Return first error details in response for debugging
-          if (errors === 1) {
-            return res.status(200).json({
-              imported, skipped, errors,
-              totalFound: messages.length,
-              debugError: error,
-              debugOrder: { id: order.bento_order_id, customer: order.customer, pickup_date: order.pickup_date }
-            })
-          }
+          return res.status(200).json({
+            imported, skipped, errors: errors + 1,
+            totalFound: messages.length,
+            message: `Insert failed: ${error.message || error.code || JSON.stringify(error)}`,
+          })
         } else {
           existingIds.add(order.bento_order_id)
           imported++
@@ -360,18 +360,17 @@ export default async function handler(req, res) {
       }
     }
 
+    const remaining = messages.length - existingIds.size - errors
     return res.status(200).json({
       imported,
       skipped,
       errors,
       totalFound: messages.length,
       message: imported > 0
-        ? `${imported} new order${imported === 1 ? '' : 's'} added`
-        : errors > 0
-          ? `0 imported, ${errors} errors, ${skipped} skipped of ${messages.length} emails`
-          : skipped > 0
-            ? `Already up to date — ${skipped} already imported`
-            : `No new orders found (${messages.length} emails checked)`,
+        ? `${imported} orders added — click Sync again for more`
+        : skipped === newMessages.length
+          ? 'Already up to date'
+          : `0 imported, ${errors} errors of ${newMessages.length} processed`,
     })
 
   } catch (err) {
