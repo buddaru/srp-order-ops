@@ -4,8 +4,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY  // use service key for server-side inserts
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
 )
 
 // ── Gmail OAuth helpers ──
