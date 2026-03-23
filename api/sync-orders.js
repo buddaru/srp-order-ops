@@ -87,9 +87,10 @@ function parseOrder(html, messageId) {
     if (!orderNumMatch) return null
     const bentoOrderId = orderNumMatch[1]
 
-    // Pickup date + time: "Thu Apr 02 1:00pm" or "Dec 11 1:00pm"
-    const dateMatch = text.match(/Order for:.*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
-      || text.match(/Order for:.*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
+    // Pickup date + time — handle multiline: "Order for:\n  Thu\n  Apr 02 1:00pm"
+    const dateMatch =
+      text.match(/Order for:[^]*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i) ||
+      text.match(/Order for:[^]*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
     if (!dateMatch) return null
 
     const pickupDate = parseBentoDate(dateMatch[1])
