@@ -290,7 +290,7 @@ export default async function handler(req, res) {
     // 2. Fetch all Bento order emails
     const messages = await gmailSearch(
       accessToken,
-      'from:noreply@notifications.getbento.com subject:"New Pickup Order" after:2026/03/22'
+      'from:noreply@notifications.getbento.com subject:"New Pickup Order" after:2025/10/01'
     )
 
     if (messages.length === 0) {
