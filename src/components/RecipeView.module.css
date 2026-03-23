@@ -1,38 +1,37 @@
-.page {
-  display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--bg);
-}
+.page { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--bg); }
 
 /* ── Topbar ── */
 .topbar {
   height: 48px; background: var(--card); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 24px; gap: 12px;
+  display: flex; align-items: center; padding: 0 24px; gap: 8px;
   position: sticky; top: 0; z-index: 50; flex-shrink: 0;
 }
 .backBtn {
   display: flex; align-items: center; gap: 5px; background: none; border: none;
   font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--brand);
-  cursor: pointer; padding: 4px 2px; transition: opacity 0.12s;
+  cursor: pointer; padding: 4px 2px; transition: opacity 0.12s; flex-shrink: 0;
 }
 .backBtn:hover { opacity: 0.75; }
-.topbarRight { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.breadcrumbSep { color: var(--border-2); font-size: 14px; flex-shrink: 0; }
+.breadcrumbName {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600;
+  color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.topbarRight { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .btnOutline {
-  display: flex; align-items: center; gap: 5px; padding: 6px 14px;
-  background: none; color: var(--text-2); border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
-  font-size: 12px; cursor: pointer; transition: background 0.12s;
+  display: flex; align-items: center; gap: 5px; padding: 6px 14px; background: none;
+  color: var(--text-2); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: background 0.12s;
 }
 .btnOutline:hover { background: var(--bg); }
 
 /* ── Content ── */
-.content { padding: 28px 32px; overflow-y: auto; flex: 1; padding-bottom: 80px; }
+.content { padding: 20px 32px; overflow-y: auto; flex: 1; padding-bottom: 80px; }
 
-/* ── Recipe header ── */
-.recipeHeader { margin-bottom: 24px; }
-.recipeName {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 32px; font-weight: 600; color: var(--text); line-height: 1.1; margin-bottom: 10px;
+/* ── Meta row ── */
+.metaRow {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
 }
-.recipeMeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tag {
   display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
   color: var(--text-muted); background: var(--bg-2); border: 1px solid var(--border);
@@ -44,129 +43,140 @@
   border: 1px solid rgba(196,120,74,0.2); border-radius: 20px; padding: 3px 10px;
 }
 
+/* ── Scale control ── */
+.scaleWrap { position: relative; margin-left: auto; }
+
+.scaleBtn {
+  display: flex; align-items: center; gap: 6px; padding: 5px 12px;
+  background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; color: var(--text);
+  cursor: pointer; transition: border-color 0.12s;
+}
+.scaleBtn:hover { border-color: var(--brand); }
+.scaleBtnActive { border-color: var(--brand); background: var(--accent-light); color: var(--brand); }
+
+.scaleBadge {
+  background: var(--brand); color: #fff; border-radius: 4px;
+  padding: 1px 6px; font-size: 11px; font-weight: 600;
+}
+.scaleBtnActive .scaleBadge { background: var(--brand); }
+
+.scaleDropdown {
+  position: absolute; top: calc(100% + 5px); right: 0;
+  background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md); min-width: 180px; overflow: hidden; z-index: 100;
+  animation: dropIn 0.1s ease;
+}
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.scaleHeader {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text-muted); padding: 10px 14px 6px;
+}
+.scaleOption {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; font-size: 13px; color: var(--text-2); cursor: pointer;
+  transition: background 0.1s; border: none; background: none;
+  font-family: 'DM Sans', sans-serif; width: 100%;
+}
+.scaleOption:hover { background: var(--bg); }
+.scaleSelected { color: var(--brand) !important; font-weight: 500; background: var(--accent-light) !important; }
+.scaleYield { font-size: 11.5px; color: var(--text-muted); }
+.scaleSelected .scaleYield { color: var(--brand); opacity: 0.7; }
+
+.scaleDivider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.customRow { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+.customLabel { font-size: 12px; color: var(--text-muted); }
+.customInput {
+  width: 58px !important; border: 1px solid var(--border-2) !important;
+  border-radius: var(--radius-sm) !important; padding: 5px 8px !important;
+  font-family: 'DM Sans', sans-serif !important; font-size: 12px !important;
+  color: var(--text) !important; outline: none; background: #fff !important;
+}
+.customInput:focus { border-color: var(--brand) !important; box-shadow: 0 0 0 2px rgba(196,120,74,0.1) !important; }
+
 /* ── Panels ── */
 .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-
-/* ── Panel label — shared by both panels ── */
 .panelLabel {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--text-muted);
-  padding: 14px 20px 12px; border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); padding: 14px 20px 12px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 7px;
 }
 .stepBadge {
-  font-size: 11px; font-weight: 500; color: var(--text-muted);
-  background: var(--bg-2); border-radius: 20px; padding: 1px 8px;
-  text-transform: none; letter-spacing: 0;
+  font-size: 11px; font-weight: 500; color: var(--text-muted); background: var(--bg-2);
+  border-radius: 20px; padding: 1px 8px; text-transform: none; letter-spacing: 0;
 }
 
 /* ── Ingredient list ── */
 .ingList { padding: 4px 0; }
-
-.ingHeaderRow {
-  padding: 8px 20px 6px; background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
-.ingHeaderLabel {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
-  text-transform: uppercase; color: var(--brand);
-}
-
+.ingHeaderRow { padding: 8px 20px 6px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.ingHeaderLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--brand); }
 .ingRow {
-  display: flex; align-items: baseline; gap: 0;
-  padding: 9px 20px; border-bottom: 1px solid var(--border);
-  transition: background 0.1s;
+  display: flex; align-items: baseline; padding: 9px 20px;
+  border-bottom: 1px solid var(--border); transition: background 0.1s;
 }
 .ingRow:hover { background: var(--bg); }
 .ingRow:last-child { border-bottom: none; }
-
-.ingAmount {
-  font-size: 13px; font-weight: 500; color: var(--brand);
-  width: 110px; flex-shrink: 0; padding-right: 12px;
-}
+.ingAmount { font-size: 13px; font-weight: 500; color: var(--brand); width: 110px; flex-shrink: 0; padding-right: 12px; }
 .ingName { font-size: 13px; color: var(--text); flex: 1; line-height: 1.5; }
-.ingNote {
-  font-size: 11.5px; color: var(--text-muted); font-style: italic; margin-left: 7px;
-}
+.ingNote { font-size: 11.5px; color: var(--text-muted); font-style: italic; margin-left: 7px; }
 
-/* ── Cover image ── */
-.coverImg {
-  width: 100%; height: 160px; object-fit: cover;
-  border-bottom: 1px solid var(--border); display: block;
-}
+/* ── Cover ── */
+.coverImg { width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid var(--border); display: block; }
 .coverEmpty {
-  height: 80px; background: var(--bg); border-bottom: 1px solid var(--border);
+  height: 64px; background: var(--bg); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   gap: 7px; font-size: 12.5px; color: var(--text-muted);
 }
 
 /* ── Direction list ── */
 .dirList { padding: 4px 0; }
-
-.dirHeaderRow {
-  padding: 8px 20px 6px; background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
-.dirHeaderLabel {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
-  text-transform: uppercase; color: var(--brand);
-}
-
+.dirHeaderRow { padding: 8px 20px 6px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.dirHeaderLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--brand); }
 .dirRow {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 20px; border-bottom: 1px solid var(--border);
-  transition: background 0.1s;
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px;
+  border-bottom: 1px solid var(--border); transition: background 0.1s;
 }
 .dirRow:hover { background: var(--bg); }
 .dirRow:last-child { border-bottom: none; }
-
 .stepPill {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--brand-faint); border: 1px solid var(--brand);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 600; color: var(--brand);
-  flex-shrink: 0; margin-top: 1px;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--brand-faint);
+  border: 1px solid var(--brand); display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--brand); flex-shrink: 0; margin-top: 1px;
 }
 .stepText { flex: 1; font-size: 13px; color: var(--text); line-height: 1.65; }
-
-.stepImg {
-  width: 72px; height: 52px; object-fit: cover;
-  border-radius: var(--radius-sm); flex-shrink: 0;
-}
+.stepImg { width: 72px; height: 52px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; }
 .mediaSlot {
-  width: 72px; height: 52px; border: 1.5px dashed var(--border-2);
-  border-radius: var(--radius-sm); display: flex; flex-direction: column;
-  align-items: center; justify-content: center; flex-shrink: 0;
-  font-size: 10px; color: var(--text-muted); background: var(--bg);
-  gap: 3px; padding: 4px; text-align: center; cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  width: 72px; height: 52px; border: 1.5px dashed var(--border-2); border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 10px; color: var(--text-muted); background: var(--bg);
+  gap: 3px; padding: 4px; text-align: center; cursor: pointer; transition: border-color 0.12s, background 0.12s;
 }
 .mediaSlot:hover { border-color: var(--brand); background: var(--brand-faint); }
 
-/* ── Empty state ── */
-.emptyPanel {
-  padding: 24px 20px; font-size: 13px; color: var(--text-muted); font-style: italic;
-}
+/* ── Empty / loading ── */
+.emptyPanel { padding: 24px 20px; font-size: 13px; color: var(--text-muted); font-style: italic; }
 .loadingState {
-  display: flex; align-items: center; justify-content: center;
-  flex: 1; font-size: 14px; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; justify-content: center; flex: 1;
+  font-size: 14px; color: var(--text-muted); font-family: 'DM Sans', sans-serif;
 }
 
 /* ── Edit FAB ── */
 .editFab {
-  position: fixed; bottom: 28px; right: 28px;
-  background: var(--brand); color: #fff; border: none;
-  border-radius: 24px; padding: 12px 22px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-  cursor: pointer; display: flex; align-items: center; gap: 7px;
-  box-shadow: 0 4px 16px rgba(196,120,74,0.35);
-  transition: opacity 0.15s, transform 0.15s;
-  z-index: 40;
+  position: fixed; bottom: 28px; right: 28px; background: var(--brand); color: #fff;
+  border: none; border-radius: 24px; padding: 12px 22px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  box-shadow: 0 4px 16px rgba(196,120,74,0.35); transition: opacity 0.15s, transform 0.15s; z-index: 40;
 }
 .editFab:hover { opacity: 0.9; transform: translateY(-1px); }
 
 @media (max-width: 768px) {
   .panels { grid-template-columns: 1fr; }
   .content { padding: 16px 16px 80px; }
+  .scaleWrap { margin-left: 0; }
 }
