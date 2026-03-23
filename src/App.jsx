@@ -165,6 +165,17 @@ export default function App() {
     await supabase.from('orders').update({ stage: newStage, notifications: notifs }).eq('id', id)
   }
 
+  const handleSetStage = async (id, newStageId) => {
+    const o = orders.find(x => x.id === id)
+    if (!o || o.stage === newStageId) return
+    if (newStageId === 'picked-up') { setConfirmPickup(id); return }
+    const stage = STAGES.find(s => s.id === newStageId)
+    const notifs = [...o.notifications, { text: `→ Moved to ${stage.label}`, ts: new Date().toISOString() }]
+    const updated = { ...o, stage: newStageId, notifications: notifs }
+    setOrders(prev => prev.map(x => x.id === id ? updated : x))
+    await supabase.from('orders').update({ stage: newStageId, notifications: notifs }).eq('id', id)
+  }
+
   // ── Manual SMS ──
   const handleSendSms = async (id) => {
     const o = orders.find(x => x.id === id)
@@ -351,6 +362,7 @@ export default function App() {
           dateRange={dateRange}
           isAdmin={isAdmin}
           onMove={handleMove}
+          onSetStage={handleSetStage}
           onEdit={id => setEditingId(id)}
           onDrawer={id => setDrawerOrderId(id)}
           onDelete={handleDelete}

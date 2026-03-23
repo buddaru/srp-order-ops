@@ -11,7 +11,7 @@ const STAGE_META = {
 const AVATAR_COLORS = ['amber','pink','teal','blue','coral','purple']
 const avatarColor = (id) => AVATAR_COLORS[parseInt(id.replace('SRP-','')) % AVATAR_COLORS.length]
 
-export default function ListView({ orders, onDrawer, onMove }) {
+export default function ListView({ orders, onDrawer, onMove, onSetStage }) {
   if (orders.length === 0) return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>🧁</div>
@@ -71,14 +71,16 @@ export default function ListView({ orders, onDrawer, onMove }) {
                   <div className={styles.date}>{fmtDate(o.pickupDate)}</div>
                   <div className={styles.time}>{fmtTime(o.pickupTime)}</div>
                 </div>
-                <div className={styles.td} style={{width:130}}>
-                  <span className={`${styles.pill} ${styles['pill_'+meta.cls]}`}>{meta.label}</span>
-                </div>
-                <div className={styles.td} style={{width:100}} onClick={e => e.stopPropagation()}>
-                  <div className={styles.stageBtns}>
-                    {prev && <button className={styles.stageBtn} onClick={() => onMove(o.id, -1)} title={`← ${prev.label}`}>←</button>}
-                    {next && <button className={`${styles.stageBtn} ${styles.stageBtnNext}`} onClick={() => onMove(o.id, 1)} title={`→ ${next.label}`}>→</button>}
-                  </div>
+                <div className={styles.td} style={{width:150}} onClick={e => e.stopPropagation()}>
+                  <select
+                    className={`${styles.stagePill} ${styles['pill_'+meta.cls]}`}
+                    value={o.stage}
+                    onChange={e => onSetStage(o.id, e.target.value)}
+                  >
+                    {STAGES.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )

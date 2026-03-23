@@ -26,11 +26,21 @@
 .date  { font-size: 11px; font-weight: 500; color: var(--text); }
 .time  { font-size: 10px; color: var(--text-muted); }
 
-.pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
-.pill_received   { background: #F1EFE8; color: #5F5E5A; }
-.pill_production { background: #FAEEDA; color: #854F0B; }
-.pill_ready      { background: #EAF3DE; color: #3B6D11; }
-.pill_pickedup   { background: #E6F1FB; color: #185FA5; }
+.stagePill {
+  appearance: none; -webkit-appearance: none;
+  font-size: 11px; font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 22px 3px 10px;
+  white-space: nowrap;
+  cursor: pointer; outline: none;
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  border-width: 0.5px; border-style: solid;
+}
+.pill_received   { background-color: #F1EFE8; border-color: #D3D1C7; color: #5F5E5A; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235F5E5A'/%3E%3C/svg%3E"); }
+.pill_production { background-color: #FAEEDA; border-color: #FAC775; color: #854F0B; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23854F0B'/%3E%3C/svg%3E"); }
+.pill_ready      { background-color: #EAF3DE; border-color: #C0DD97; color: #3B6D11; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233B6D11'/%3E%3C/svg%3E"); }
+.pill_pickedup   { background-color: #E6F1FB; border-color: #B5D4F4; color: #185FA5; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23185FA5'/%3E%3C/svg%3E"); }
 
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; width: 100%; }
 .emptyIcon { font-size: 48px; margin-bottom: 16px; }
@@ -66,13 +76,3 @@
   .mobileList { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 }
 
-/* ── Stage move buttons ── */
-.stageBtns { display: flex; gap: 4px; }
-.stageBtn {
-  padding: 3px 8px; font-size: 11px; border-radius: 6px;
-  border: 1px solid var(--border-2); background: var(--bg);
-  color: var(--text-2); cursor: pointer; transition: all 0.1s;
-}
-.stageBtn:hover { background: var(--border); }
-.stageBtnNext { background: var(--brand); color: #fff; border-color: var(--brand); }
-.stageBtnNext:hover { opacity: 0.85; }
