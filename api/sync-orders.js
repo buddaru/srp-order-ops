@@ -356,7 +356,11 @@ export default async function handler(req, res) {
         }
       } catch (err) {
         console.error('Error processing message:', err.message)
-        errors++
+        return res.status(200).json({
+          imported, skipped, errors: errors + 1,
+          totalFound: messages.length,
+          message: `Processing error: ${err.message}`,
+        })
       }
     }
 
