@@ -184,47 +184,47 @@ export default function Production() {
 
   return (
     <div className={styles.page}>
-      {/* Print header — only visible when printing */}
+      {/* Print header */}
       <div className={styles.printHeader}>
         <div className={styles.printTitle}>Sweet Red Peach — Daily Production</div>
         <div className={styles.printDate}>{fmtDisplayDate(date)}</div>
       </div>
 
-      {/* Header */}
-      <div className={`${styles.header} ${styles.noPrint}`}>
-        <div className={styles.title}>Daily Production</div>
-        <div className={styles.headerRight}>
-          <div className={styles.menuWrap}>
-            <button className={styles.hamburger} onClick={() => setMenuOpen(v => !v)}>
-              <span/><span/><span/>
-            </button>
-            {menuOpen && (
-              <>
-                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-                <div className={styles.menuDropdown}>
-                  <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
-                  <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
-                  <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
-                </div>
-              </>
-            )}
-          </div>
-          <div className={styles.dateNav}>
-            <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
-            <span className={styles.dateLabel}>{fmtDisplayDate(date)}</span>
-            <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, 1))}>→</button>
-          </div>
-          {date !== todayDS() && (
-            <button className={styles.todayBtn} onClick={() => setDate(todayDS())}>Today</button>
-          )}
+      {/* Menu — top right */}
+      <div className={`${styles.menuWrap} ${styles.noPrint}`}>
+        <button className={styles.hamburger} onClick={() => setMenuOpen(v => !v)}>
+          <span/><span/><span/>
+        </button>
+        {menuOpen && (
+          <>
+            <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+            <div className={styles.menuDropdown}>
+              <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
+              <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
+              <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Hero date */}
+      <div className={`${styles.hero} ${styles.noPrint}`}>
+        <div className={styles.heroLabel}>Daily Production</div>
+        <div className={styles.heroDate}>
+          <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
+          <span>{fmtDisplayDate(date)}</span>
+          <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, 1))}>→</button>
         </div>
+        {date !== todayDS() && (
+          <button className={styles.todayBtn} onClick={() => setDate(todayDS())}>Jump to today</button>
+        )}
       </div>
 
       {/* Stats */}
       <div className={`${styles.stats} ${styles.noPrint}`}>
-        <div className={styles.stat}><div className={styles.statNum}>{total}</div><div className={styles.statLabel}>Total</div></div>
-        <div className={styles.stat}><div className={styles.statNum} style={{color:'#15803D'}}>{completed}</div><div className={styles.statLabel}>Done</div></div>
-        <div className={styles.stat}><div className={styles.statNum} style={{color:'#B45309'}}>{remaining}</div><div className={styles.statLabel}>Left</div></div>
+        <div className={styles.stat}><strong>{total}</strong> total</div>
+        <div className={styles.stat} style={{color:'#639922'}}><strong>{completed}</strong> done</div>
+        <div className={styles.stat} style={{color:'#B45309'}}><strong>{remaining}</strong> left</div>
       </div>
 
       {total > 0 && (
@@ -233,26 +233,24 @@ export default function Production() {
         </div>
       )}
 
-      {/* Shift Notes */}
-      <div className={`${styles.noteSection} ${styles.noPrint}`}>
-        <div className={styles.noteLabelRow}>
-          <div className={styles.sectionLabel}>📋 Shift Notes</div>
-          {noteSaved && <span className={styles.savedBadge}>Saved</span>}
-        </div>
-        <textarea
-          className={styles.noteArea}
+      {/* Shift notes */}
+      <div className={`${styles.notesRow} ${styles.noPrint}`}>
+        <span className={styles.notesLabel}>Shift notes</span>
+        <input
+          className={styles.notesInput}
           value={note}
           onChange={e => handleNoteChange(e.target.value)}
-          placeholder="Add notes for the team today — oven issues, low stock, special reminders…"
+          placeholder="Add notes for the team today..."
         />
+        {noteSaved && <span className={styles.savedBadge}>Saved</span>}
       </div>
 
-      {/* Production Items */}
+      {/* Items */}
       {loading ? (
-        <div className={styles.empty}>Loading…</div>
+        <div className={styles.empty}>Loading...</div>
       ) : loadError ? (
         <div className={styles.empty}>
-          <div style={{marginBottom:12,color:'var(--text-muted)'}}>Couldn't load — connection timed out.</div>
+          <div style={{marginBottom:12}}>Couldn't load — connection timed out.</div>
           <button onClick={() => loadRef.current && loadRef.current()} style={{background:'var(--brand)',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',cursor:'pointer',fontFamily:'DM Sans, sans-serif',fontSize:13}}>Retry</button>
         </div>
       ) : total === 0 && !showForm ? (
@@ -261,10 +259,10 @@ export default function Production() {
           <div>No items yet for this day.</div>
           <button className={styles.addFirstBtn} onClick={() => setShowForm(true)}>+ Add first item</button>
         </div>
-      ) : total === 0 ? null : (
+      ) : (
         Object.entries(grouped).map(([cat, catItems]) => (
-          <div key={cat} className={styles.group}>
-            <div className={styles.sectionLabel}>{cat}</div>
+          <div key={cat}>
+            <div className={styles.catLabel}>{cat}</div>
             {catItems.map(item => (
               <div key={item.id}>
                 {editingItem?.id === item.id ? (
@@ -283,7 +281,7 @@ export default function Production() {
                     </div>
                   </div>
                 ) : (
-                  <div className={`${styles.itemCard} ${item.completed ? styles.done : ''}`}>
+                  <div className={`${styles.itemRow} ${item.completed ? styles.done : ''}`}>
                     <button
                       className={`${styles.check} ${item.completed ? styles.checked : ''}`}
                       onClick={() => handleToggle(item.id, item.completed)}
@@ -305,7 +303,7 @@ export default function Production() {
         ))
       )}
 
-      {/* Add item form */}
+      {/* Add form */}
       <div className={styles.noPrint}>
         {showForm ? (
           <div className={styles.addForm}>
@@ -322,9 +320,9 @@ export default function Production() {
               <button className={styles.saveBtn} onClick={handleAdd}>Add item</button>
             </div>
           </div>
-        ) : (
+        ) : total > 0 ? (
           <button className={styles.addBtn} onClick={() => setShowForm(true)}>+ Add item</button>
-        )}
+        ) : null}
       </div>
     </div>
   )
