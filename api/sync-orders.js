@@ -339,8 +339,17 @@ export default async function handler(req, res) {
         })
 
         if (error) {
-          console.error(`Insert error for bento #${order.bento_order_id}:`, error)
+          console.error(`Insert error for bento #${order.bento_order_id}:`, JSON.stringify(error))
           errors++
+          // Return first error details in response for debugging
+          if (errors === 1) {
+            return res.status(200).json({
+              imported, skipped, errors,
+              totalFound: messages.length,
+              debugError: error,
+              debugOrder: { id: order.bento_order_id, customer: order.customer, pickup_date: order.pickup_date }
+            })
+          }
         } else {
           existingIds.add(order.bento_order_id)
           imported++
