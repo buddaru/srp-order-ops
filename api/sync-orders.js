@@ -126,6 +126,9 @@ function parseOrder(html, messageId) {
 
     if (!customer || items.length === 0) return null
 
+    // Build notes from item details + any special request
+    const combinedNotes = buildNotes(items, notes)
+
     return {
       bento_order_id: bentoOrderId,
       customer:       titleCase(customer),
@@ -134,7 +137,7 @@ function parseOrder(html, messageId) {
       email:          email.toLowerCase(),
       pickup_date:    pickupDate,
       pickup_time:    pickupTime,
-      notes,
+      notes:          combinedNotes,
       stage:          'received',
       notifications:  [],
       image:          null,
@@ -148,78 +151,83 @@ function parseOrder(html, messageId) {
 
 function parseItems(html) {
   const items = []
-  // Match each lineItem table row
-  const lineItemRegex = /<tr class="lineItem"[\s\S]*?<\/tr>/gi
-  const lineItems = html.match(lineItemRegex) || []
 
-  for (const block of lineItems) {
-    const lines = stripHtml(block)
-    const text  = lines.join('\n')
+  // Split on each lineItem row start — avoids nested </tr> problem
+  const chunks = html.split(/<tr class="lineItem"/i)
+  chunks.shift() // drop content before first lineItem
 
-    // Qty: "1x"
-    const qtyMatch = text.match(/^(\d+)x/)
+  for (const chunk of chunks) {
+    // Qty
+    const qtyMatch = chunk.match(/(\d+)x<\/p>/)
     const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1
 
-    // Product name (first bold-ish line after qty)
-    const nameMatch = block.match(/font-weight:700[^>]*>\s*\n?\s*([^<\n]+?)\s*\n?\s*</)
+    // Product name
+    const nameMatch = chunk.match(/font-weight:700[^>]*>\s*\n?\s*([^<\n]+?)\s*\n?\s*</)
     const name = nameMatch ? nameMatch[1].trim() : ''
+    if (!name) continue
 
-    // Price — extract from itemTotal cell specifically, not from flavor text
-    const itemTotalMatch = block.match(/<td class="itemTotal"[^>]*>[\s\S]*?\$(\d+\.\d{2})/)
-    const price = itemTotalMatch ? parseFloat(itemTotalMatch[1]) : 0
+    // Price — from itemTotal cell (appears after productName cell)
+    const priceMatch = chunk.match(/class="itemTotal"[\s\S]*?\$(\d+\.\d{2})/)
+    const price = priceMatch ? parseFloat(priceMatch[1]) : 0
 
-    // Field rows (Flavor, Flavors, Cake Inscription, Gender, Made for)
+    // Field key-value pairs
     const fields = {}
-    const fieldRegex = /(<td class="fieldName"[\s\S]*?<\/td>)\s*(<td class="fieldDescription"[\s\S]*?<\/td>)/gi
-    let fieldMatch
-    while ((fieldMatch = fieldRegex.exec(block)) !== null) {
-      const fieldName = stripHtml(fieldMatch[1]).join('').replace(':', '').trim()
-      const fieldVal  = stripHtml(fieldMatch[2]).join(', ').replace(/\$[\d.]+/g, '').trim()
-      fields[fieldName] = fieldVal
+    const fieldRegex = /class="fieldName"[^>]*>([\s\S]*?)<\/td>[\s\S]*?class="fieldDescription"[^>]*>([\s\S]*?)<\/td>/gi
+    let fm
+    while ((fm = fieldRegex.exec(chunk)) !== null) {
+      const key = fm[1].replace(/<[^>]+>/g, '').replace(':', '').trim()
+      const val = fm[2]
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\$[\d.]+/g, '')   // strip addon upcharges like "$15.00"
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(', ')
+      if (key && val) fields[key] = val
     }
 
-    // Build item object
-    const isCake    = /cake/i.test(name)
-    const isWriting = fields['Cake Inscription'] || fields['Inscription']
-    const flavors   = fields['Flavor'] || fields['Flavors'] ||
-                      fields['Mini Cupcake Flavors'] || fields['Cupcake Flavors'] ||
-                      fields['Pound Cake Flavors'] || fields['Cake Flavors'] || ''
+    const isCake = /cake/i.test(name)
+    const flavors = fields['Flavor'] || fields['Flavors'] ||
+                    fields['Mini Cupcake Flavors'] || fields['Cupcake Flavors'] ||
+                    fields['Pound Cake Flavors'] || fields['Cake Flavors'] || ''
 
-    let flavor1 = '', flavor2 = '', addonSummary = ''
+    let flavor1 = '', flavor2 = '', addonSummary = '', writingText = ''
 
     if (isCake) {
-      // Cakes: flavor1 = base, flavor2 = filling/frosting if present
-      const flavorParts = flavors.split(',').map(f => f.trim()).filter(Boolean)
-      flavor1 = flavorParts[0] || ''
-      flavor2 = flavorParts[1] || ''
-
-      // addonSummary: Gender + Made for
+      const parts = flavors.split(',').map(s => s.trim()).filter(Boolean)
+      flavor1 = parts[0] || ''
+      flavor2 = parts[1] || ''
       const extras = []
       if (fields['Gender'])   extras.push(`Gender: ${fields['Gender']}`)
       if (fields['Made for']) extras.push(`Made for: ${fields['Made for']}`)
       addonSummary = extras.join(' · ')
+      writingText  = fields['Cake Inscription'] || fields['Inscription'] || ''
     } else {
-      // Cupcakes/Pound Cakes/Other: all flavors go into addonSummary
-      addonSummary = flavors
-
-      // Made for
-      if (fields['Made for']) {
-        addonSummary = addonSummary
-          ? `${addonSummary} · Made for: ${fields['Made for']}`
-          : `Made for: ${fields['Made for']}`
-      }
+      const extras = []
+      if (fields['Made for']) extras.push(`Made for: ${fields['Made for']}`)
+      addonSummary = [flavors, ...extras].filter(Boolean).join(' · ')
     }
 
-    const writingText = isWriting
-      ? (fields['Cake Inscription'] || fields['Inscription'] || '')
-      : ''
-
-    if (name) {
-      items.push({ name, qty, price, flavor1, flavor2, writingText, addonSummary })
-    }
+    items.push({ name, qty, price, flavor1, flavor2, writingText, addonSummary })
   }
 
   return items
+}
+
+// ── Build notes from item details + special request ──
+function buildNotes(items, specialRequest) {
+  const lines = []
+  items.forEach(item => {
+    const details = []
+    if (item.flavor1)      details.push(item.flavor1)
+    if (item.flavor2)      details.push(item.flavor2)
+    if (item.addonSummary) details.push(item.addonSummary)
+    if (item.writingText)  details.push(`Inscription: "${item.writingText}"`)
+    if (details.length > 0) lines.push(`${item.name}: ${details.join(', ')}`)
+  })
+  if (specialRequest) lines.push(`Special request: ${specialRequest}`)
+  return lines.join('\n')
 }
 
 // ── Date/time helpers ──
