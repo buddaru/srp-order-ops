@@ -310,7 +310,7 @@ export default async function handler(req, res) {
       // We can't check by bento_order_id yet without reading the email,
       // so just take the first 8 unprocessed ones
       return true
-    }).slice(0, 8)
+    }).slice(0, 3)
 
     let imported = 0
     let skipped  = 0
