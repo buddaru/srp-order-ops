@@ -15,7 +15,14 @@ export const toTS = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart
 export const parseDate = (s) => { const d=new Date(s+'T00:00:00'); d.setHours(0,0,0,0); return d }
 export const diffDays = (ds) => Math.round((parseDate(ds)-today)/86400000)
 export const fmtTime = (t) => { const [h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}` }
-export const fmtDate = (ds) => { const d=diffDays(ds); if(d===0)return'Today'; if(d===1)return'Tomorrow'; if(d===-1)return'Yesterday'; return parseDate(ds).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) }
+export const fmtDate = (ds) => {
+  const d = diffDays(ds)
+  const short = parseDate(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (d === 0)  return `Today, ${short}`
+  if (d === 1)  return `Tomorrow, ${short}`
+  if (d === -1) return `Yesterday, ${short}`
+  return parseDate(ds).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
 export const fmtDateShort = (ds) => parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' })
 export const fmt$ = (n) => `$${Number(n).toFixed(2)}`
 export const mkInitials = (name) => name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)
