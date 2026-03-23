@@ -16,6 +16,7 @@ export const parseDate = (s) => { const d=new Date(s+'T00:00:00'); d.setHours(0,
 export const diffDays = (ds) => Math.round((parseDate(ds)-today)/86400000)
 export const fmtTime = (t) => { const [h,m]=t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}` }
 export const fmtDate = (ds) => { const d=diffDays(ds); if(d===0)return'Today'; if(d===1)return'Tomorrow'; if(d===-1)return'Yesterday'; return parseDate(ds).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) }
+export const fmtDateShort = (ds) => parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' })
 export const fmt$ = (n) => `$${Number(n).toFixed(2)}`
 export const mkInitials = (name) => name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)
 export const firstName = (name) => name.split(' ')[0]
@@ -23,9 +24,10 @@ export const orderTotal = (order) => order.items.reduce((s,i)=>s+(parseFloat(i.p
 
 export const dueBadge = (order) => {
   const d = diffDays(order.pickupDate)
-  if (d < 0)   return { cls: 'overdue',  label: `Overdue · ${fmtTime(order.pickupTime)}` }
-  if (d === 0) return { cls: 'today',    label: `Today · ${fmtTime(order.pickupTime)}` }
-  if (d === 1) return { cls: 'tomorrow', label: `Tomorrow · ${fmtTime(order.pickupTime)}` }
+  const short = fmtDateShort(order.pickupDate)
+  if (d < 0)   return { cls: 'overdue',  label: `Overdue · ${short} · ${fmtTime(order.pickupTime)}` }
+  if (d === 0) return { cls: 'today',    label: `Today, ${short} · ${fmtTime(order.pickupTime)}` }
+  if (d === 1) return { cls: 'tomorrow', label: `Tomorrow, ${short} · ${fmtTime(order.pickupTime)}` }
   return { cls: 'future', label: `${fmtDate(order.pickupDate)} · ${fmtTime(order.pickupTime)}` }
 }
 

@@ -12,8 +12,7 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
       return o.pickupDate >= dateRange.start && o.pickupDate <= dateRange.end
     }
     if (selectedDay === 'all') {
-      const d = diffDays(o.pickupDate)
-      return d >= 0 && d <= STRIP_DAYS - 1
+      return o.stage !== 'picked-up'
     }
     return o.pickupDate === selectedDay
   })

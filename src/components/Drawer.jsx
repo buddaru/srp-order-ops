@@ -6,6 +6,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   const isMobile = window.innerWidth <= 768
   const [msg, setMsg] = useState('')
   const [sent, setSent] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
 
   if (!order) return null
 
@@ -85,25 +86,30 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
           <span className={styles.createdVal}>{createdLabel}</span>
         </div>
 
-        <span className={styles.sectionLabel}>Notification log</span>
-        <div className={styles.notifLog}>
-          {order.notifications.length === 0
-            ? <div className={styles.emptyNotif}>No updates sent yet.</div>
-            : order.notifications.map((n, i) => {
-                const text = typeof n === 'object' ? n.text : n
-                const ts   = typeof n === 'object' ? n.ts : null
-                return (
-                  <div key={i} className={styles.notifItem}>
-                    <div className={styles.notifDot} />
-                    <div>
-                      <div className={styles.notifText}>{text}</div>
-                      {ts && <div className={styles.notifTime}>{fmtNotifTime(ts)}</div>}
+        <button className={styles.notifToggle} onClick={() => setNotifOpen(o => !o)}>
+          <span className={styles.sectionLabel}>Notification log</span>
+          <span className={styles.notifChevron}>{notifOpen ? '▲' : '▼'}</span>
+        </button>
+        {notifOpen && (
+          <div className={styles.notifLog}>
+            {order.notifications.length === 0
+              ? <div className={styles.emptyNotif}>No updates sent yet.</div>
+              : order.notifications.map((n, i) => {
+                  const text = typeof n === 'object' ? n.text : n
+                  const ts   = typeof n === 'object' ? n.ts : null
+                  return (
+                    <div key={i} className={styles.notifItem}>
+                      <div className={styles.notifDot} />
+                      <div>
+                        <div className={styles.notifText}>{text}</div>
+                        {ts && <div className={styles.notifTime}>{fmtNotifTime(ts)}</div>}
+                      </div>
                     </div>
-                  </div>
-                )
-              })
-          }
-        </div>
+                  )
+                })
+            }
+          </div>
+        )}
 
         <div className={styles.contactSection}>
           <span className={styles.sectionLabel}>Contact customer (SMS)</span>
