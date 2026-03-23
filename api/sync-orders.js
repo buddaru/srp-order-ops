@@ -355,9 +355,14 @@ export default async function handler(req, res) {
       imported,
       skipped,
       errors,
+      totalFound: messages.length,
       message: imported > 0
         ? `${imported} new order${imported === 1 ? '' : 's'} added`
-        : 'Already up to date',
+        : errors > 0
+          ? `0 imported, ${errors} errors, ${skipped} skipped of ${messages.length} emails`
+          : skipped > 0
+            ? `Already up to date — ${skipped} already imported`
+            : `No new orders found (${messages.length} emails checked)`,
     })
 
   } catch (err) {
