@@ -164,8 +164,8 @@ function parseItems(html) {
     const nameMatch = block.match(/font-weight:700[^>]*>\s*\n?\s*([^<\n]+?)\s*\n?\s*</)
     const name = nameMatch ? nameMatch[1].trim() : ''
 
-    // Price
-    const priceMatch = text.match(/\$(\d+\.\d{2})$/)
+    // Price — match $ amount anywhere in the block
+    const priceMatch = text.match(/\$(\d+\.\d{2})/)
     const price = priceMatch ? parseFloat(priceMatch[1]) : 0
 
     // Field rows (Flavor, Flavors, Cake Inscription, Gender, Made for)
@@ -306,18 +306,14 @@ export default async function handler(req, res) {
 
     const existingIds = new Set((existing || []).map(r => r.bento_order_id))
 
-    // 4. Only process emails we haven't seen yet, in batches of 8 to stay under timeout
-    const newMessages = messages.filter(msg => {
-      // We can't check by bento_order_id yet without reading the email,
-      // so just take the first 8 unprocessed ones
-      return true
-    }).slice(0, 3)
+    // 4. Process up to 20 emails per click — skips already-imported ones, imports new ones
+    const batch = messages.slice(0, 20)
 
     let imported = 0
     let skipped  = 0
     let errors   = 0
 
-    for (const msg of newMessages) {
+    for (const msg of batch) {
       try {
         const full  = await gmailGetMessage(accessToken, msg.id)
         const html  = getBody(full)
@@ -388,9 +384,9 @@ export default async function handler(req, res) {
       totalFound: messages.length,
       message: imported > 0
         ? `${imported} orders added — click Sync again for more`
-        : skipped === newMessages.length
+        : skipped === batch.length
           ? 'Already up to date'
-          : `0 imported, ${errors} errors of ${newMessages.length} processed`,
+          : `0 imported, ${errors} errors of ${batch.length} processed`,
     })
 
   } catch (err) {

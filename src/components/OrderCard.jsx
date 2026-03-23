@@ -18,19 +18,33 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
           <div className={styles.avatar}>{order.initials}</div>
           <div>
             <div className={styles.customerName}>{order.customer}</div>
-            <div className={styles.orderId}>{order.id}</div>
+            <div className={styles.orderId}>
+              {order.id}
+              {order.bentoOrderId && <span className={styles.bentoId}> · #{order.bentoOrderId}</span>}
+            </div>
           </div>
         </div>
         <div className={`${styles.dueBadge} ${styles[badge.cls]}`}>{badge.label}</div>
       </div>
 
       <div className={styles.items}>
-        {order.items.map((item, i) => (
-          <div key={i} className={styles.itemRow}>
-            <div className={styles.itemDot} />
-            <div className={styles.itemText}>{item.qty}× {item.name}</div>
-          </div>
-        ))}
+        {order.items.map((item, i) => {
+          const details = [
+            item.flavor1,
+            item.flavor2,
+            item.addonSummary,
+            item.writingText ? `"${item.writingText}"` : null,
+          ].filter(Boolean).join(' · ')
+          return (
+            <div key={i} className={styles.itemRow}>
+              <div className={styles.itemDot} />
+              <div className={styles.itemText}>
+                {item.qty}× {item.name}
+                {details && <div className={styles.itemDetails}>{details}</div>}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {total > 0 && <div className={styles.total}>Order total: {fmt$(total)}</div>}

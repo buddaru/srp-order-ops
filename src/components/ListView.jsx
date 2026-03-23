@@ -45,7 +45,10 @@ export default function ListView({ orders, onDrawer }) {
             const meta  = STAGE_META[o.stage] || STAGE_META['received']
             const av    = avatarColor(o.id)
             const itemSummary = o.items.length === 0 ? '—'
-              : o.items.map(i => `${i.qty}× ${i.name}`).join(', ')
+              : o.items.map(i => {
+                  const flavor = [i.flavor1, i.flavor2].filter(Boolean).join(', ')
+                  return `${i.qty}× ${i.name}${flavor ? ` (${flavor})` : ''}`
+                }).join(', ')
             return (
               <div key={o.id} className={styles.tr} onClick={() => onDrawer(o.id)}>
                 <div className={styles.td}>
@@ -81,7 +84,10 @@ export default function ListView({ orders, onDrawer }) {
           const meta  = STAGE_META[o.stage] || STAGE_META['received']
           const av    = avatarColor(o.id)
           const itemSummary = o.items.length === 0 ? '—'
-            : o.items.map(i => `${i.qty}× ${i.name}`).join(', ')
+            : o.items.map(i => {
+                const flavor = [i.flavor1, i.flavor2].filter(Boolean).join(', ')
+                return `${i.qty}× ${i.name}${flavor ? ` (${flavor})` : ''}`
+              }).join(', ')
           return (
             <div key={o.id} className={styles.mobileRow} onClick={() => onDrawer(o.id)}>
               <div className={styles.mobileTop}>

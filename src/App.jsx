@@ -45,6 +45,7 @@ const fromDB = (row) => ({
   stage:         row.stage,
   image:         row.image || null,
   createdAt:     row.created_at,
+  bentoOrderId:  row.bento_order_id || null,
 })
 
 const toDB = (o) => ({
