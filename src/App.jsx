@@ -107,34 +107,31 @@ export default function App() {
   const editOrder   = orders.find(o => o.id === editingId)     || null
   const showToast   = useCallback(t => setToast(t), [])
 
-  // ── Load orders from Supabase on mount ──
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: true })
+  // ── Load orders from Supabase ──
+  const loadOrders = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: true })
 
-        if (error) {
-          console.error('Load orders error:', error)
-          return
-        }
-        if (data && data.length > 0) {
-          const mapped = data.map(fromDB)
-          setOrders(mapped)
-          orderSeq = mapped.reduce((max, o) => {
-            const n = parseInt(o.id.replace('SRP-', '')) || 0
-            return Math.max(max, n)
-          }, 0)
-        }
-      } catch(e) {
-        console.error('Orders load exception:', e)
+      if (error) { console.error('Load orders error:', error); return }
+      if (data && data.length > 0) {
+        const mapped = data.map(fromDB)
+        setOrders(mapped)
+        orderSeq = mapped.reduce((max, o) => {
+          const n = parseInt(o.id.replace('SRP-', '')) || 0
+          return Math.max(max, n)
+        }, 0)
       }
+    } catch(e) {
+      console.error('Orders load exception:', e)
     }
-    load()
-    return () => {}
   }, [])
+
+  useEffect(() => {
+    loadOrders()
+  }, [loadOrders])
 
   // ── Stage movement ──
   const handleMove = (id, dir) => {
@@ -333,7 +330,7 @@ export default function App() {
 
       {/* ── Main Content ── */}
       <div className={styles.mainContent}>
-        <Header orders={orders} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} onMenuOpen={() => setMobileSidebarOpen(true)} />
+        <Header orders={orders} onJumpToOrder={handleJumpToOrder} profile={profile} onSignOut={signOut} onMenuOpen={() => setMobileSidebarOpen(true)} onOrdersSynced={loadOrders} />
         <Routes>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />

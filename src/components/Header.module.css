@@ -91,3 +91,17 @@
   .counterLabel { font-size: 10px; }
   .counterDivider { height: 14px; }
 }
+
+/* ── Sync button ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.syncBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; margin-right: 14px;
+  background: var(--bg); border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 500; color: var(--text-2);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.syncBtn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--brand); color: var(--brand); }
+.syncBtn:disabled { opacity: 0.65; cursor: not-allowed; }
