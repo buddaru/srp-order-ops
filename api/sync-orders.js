@@ -164,9 +164,9 @@ function parseItems(html) {
     const nameMatch = block.match(/font-weight:700[^>]*>\s*\n?\s*([^<\n]+?)\s*\n?\s*</)
     const name = nameMatch ? nameMatch[1].trim() : ''
 
-    // Price — match $ amount anywhere in the block
-    const priceMatch = text.match(/\$(\d+\.\d{2})/)
-    const price = priceMatch ? parseFloat(priceMatch[1]) : 0
+    // Price — extract from itemTotal cell specifically, not from flavor text
+    const itemTotalMatch = block.match(/<td class="itemTotal"[^>]*>[\s\S]*?\$(\d+\.\d{2})/)
+    const price = itemTotalMatch ? parseFloat(itemTotalMatch[1]) : 0
 
     // Field rows (Flavor, Flavors, Cake Inscription, Gender, Made for)
     const fields = {}
@@ -174,7 +174,7 @@ function parseItems(html) {
     let fieldMatch
     while ((fieldMatch = fieldRegex.exec(block)) !== null) {
       const fieldName = stripHtml(fieldMatch[1]).join('').replace(':', '').trim()
-      const fieldVal  = stripHtml(fieldMatch[2]).join(', ').trim()
+      const fieldVal  = stripHtml(fieldMatch[2]).join(', ').replace(/\$[\d.]+/g, '').trim()
       fields[fieldName] = fieldVal
     }
 
