@@ -13,6 +13,7 @@ import Production from './components/Production'
 import Waste      from './components/Waste'
 import Schedule   from './components/Schedule'
 import Recipes    from './components/Recipes'
+import RecipeEdit from './components/RecipeEdit'
 import Privacy    from './components/Privacy'
 import Terms      from './components/Terms'
 import Login      from './components/Login'
@@ -310,7 +311,6 @@ export default function App() {
           <NavLink to="/recipes" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Recipes' : undefined}>
             <span className={styles.sidebarIcon}><IconRecipes /></span>
             {sidebarOpen && <span>Recipes</span>}
-            {sidebarOpen && <span className={styles.sidebarSoon}>soon</span>}
           </NavLink>
         </nav>
 
@@ -340,6 +340,7 @@ export default function App() {
         <Route path="/waste" element={<Waste />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route path="/recipes/:id" element={<RecipeEdit />} />
         <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>

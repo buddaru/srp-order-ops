@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase, safeQuery } from '../lib/supabase'
 import styles from './Recipes.module.css'
 
 const SAMPLE_GROUPS = ['Cupcakes', 'Cakes', 'Breads', 'Cookies', 'Frostings & Fillings']
@@ -202,13 +204,36 @@ function NewRecipeStep2({ recipeData, onClose, onBack, onSave }) {
 }
 
 export default function Recipes() {
+  const navigate                = useNavigate()
   const [tab, setTab]           = useState('recipes')
   const [query, setQuery]       = useState('')
   const [dropOpen, setDropOpen] = useState(false)
   const [step, setStep]         = useState(null)
   const [recipeData, setRecipeData] = useState(null)
-  const [recipes, setRecipes]   = useState(SAMPLE_RECIPES)
+  const [recipes, setRecipes]   = useState([])
+  const [loadingRecipes, setLoadingRecipes] = useState(true)
   const dropRef                 = useRef(null)
+
+  // Load recipes from Supabase
+  useEffect(() => {
+    const load = async () => {
+      const { data, error } = await safeQuery(() =>
+        supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('created_at', { ascending: false })
+      )
+      if (data) {
+        setRecipes(data.map(r => ({
+          id:              r.id,
+          name:            r.name,
+          group:           r.group_name || 'Uncategorized',
+          ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+          yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+          emoji:           '🧁',
+        })))
+      }
+      setLoadingRecipes(false)
+    }
+    load()
+  }, [])
 
   useEffect(() => {
     const handler = e => {
@@ -225,16 +250,17 @@ export default function Recipes() {
   })
 
   const handleSaveRecipe = (data) => {
-    setRecipes(prev => [{
-      id: Date.now(),
-      name: data.name,
-      group: data.group || 'Uncategorized',
-      ingredientCount: data.ingredients ? data.ingredients.split('\n').filter(Boolean).length : 0,
-      yield: '—',
-      emoji: '🧁',
-    }, ...prev])
+    const newId = `recipe-${Date.now()}`
     setStep(null)
     setRecipeData(null)
+    navigate(`/recipes/${newId}`, {
+      state: {
+        name:        data.name,
+        group:       data.group || '',
+        ingredients: data.ingredients || '',
+        prep:        data.prep || '',
+      }
+    })
   }
 
   const closeModal = () => { setStep(null); setRecipeData(null) }
@@ -283,16 +309,20 @@ export default function Recipes() {
       </div>
 
       {tab === 'recipes' && (
-        filteredRecipes.length === 0 ? (
+        loadingRecipes ? (
+          <div className={styles.empty}>
+            <div className={styles.emptySub}>Loading recipes…</div>
+          </div>
+        ) : filteredRecipes.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🧁</div>
-            <div className={styles.emptyTitle}>No recipes found</div>
-            <div className={styles.emptySub}>Try a different search or add a new recipe.</div>
+            <div className={styles.emptyTitle}>{query ? 'No recipes found' : 'No recipes yet'}</div>
+            <div className={styles.emptySub}>{query ? 'Try a different search.' : 'Click + New to add your first recipe.'}</div>
           </div>
         ) : (
           <div className={styles.recipeGrid}>
             {filteredRecipes.map(r => (
-              <div key={r.id} className={styles.recipeCard}>
+              <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/recipes/${r.id}`)}>
                 <div className={styles.cardThumb}>{r.emoji}</div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardName}>{r.name}</div>
