@@ -464,3 +464,5 @@
   .panels { grid-template-columns: 1fr; }
   .content { padding: 16px; }
 }
+
+.savingLabel { font-size: 12px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }

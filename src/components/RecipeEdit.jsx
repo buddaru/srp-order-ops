@@ -164,9 +164,9 @@ export default function RecipeEdit() {
   const isNew     = id?.startsWith('recipe-') // temp id from Recipes.jsx
 
   const [loading,     setLoading]     = useState(!isNew)
-  const [saving,      setSaving]      = useState(false)
-  const [saveStatus,  setSaveStatus]  = useState(null) // null | 'saved' | 'error'
+  const [saveStatus,  setSaveStatus]  = useState(null) // null | 'saving' | 'saved' | 'error'
   const [dbId,        setDbId]        = useState(isNew ? null : id)
+  const autosaveTimer = useRef(null)
 
   const [recipeName,  setRecipeName]  = useState(seed.name  || '')
   const [recipeGroup, setRecipeGroup] = useState(seed.group || '')
@@ -224,8 +224,7 @@ export default function RecipeEdit() {
 
   // ── Save to Supabase ──
   const save = useCallback(async (opts = {}) => {
-    setSaving(true)
-    setSaveStatus(null)
+    setSaveStatus('saving')
 
     const payload = {
       name:        recipeName.trim() || 'Untitled Recipe',
@@ -237,36 +236,46 @@ export default function RecipeEdit() {
       updated_at:  new Date().toISOString(),
     }
 
-    let error, data
+    let error, data, savedId
 
     if (dbId) {
-      // Update existing row
       ;({ data, error } = await safeQuery(() =>
         supabase.from('recipes').update(payload).eq('id', dbId).select().single()
       ))
+      savedId = dbId
     } else {
-      // Insert new row
       ;({ data, error } = await safeQuery(() =>
         supabase.from('recipes').insert(payload).select().single()
       ))
       if (data?.id) {
         setDbId(data.id)
-        // Replace the temp URL with the real UUID without re-mounting
-        window.history.replaceState({}, '', `/recipes/${data.id}`)
+        savedId = data.id
+        window.history.replaceState({}, '', `/recipes/${data.id}/edit`)
       }
     }
 
-    setSaving(false)
     if (error) {
       console.error('Save recipe error:', error)
       setSaveStatus('error')
+      setTimeout(() => setSaveStatus(null), 3000)
     } else {
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus(null), 2000)
     }
 
-    if (opts.thenNavigate) navigate('/recipes')
+    if (opts.thenNavigate && savedId) navigate(`/recipes/${savedId}`)
+    else if (opts.thenNavigate) navigate('/recipes')
   }, [recipeName, recipeGroup, yieldQty, yieldUnit, ings, steps, dbId, navigate])
+
+  // ── Autosave — debounced 2s after any change ──
+  const scheduleAutosave = useCallback(() => {
+    clearTimeout(autosaveTimer.current)
+    autosaveTimer.current = setTimeout(() => save(), 2000)
+  }, [save])
+
+  useEffect(() => { scheduleAutosave() }, [recipeName, recipeGroup, yieldQty, yieldUnit, ings, steps])
+
+  useEffect(() => () => clearTimeout(autosaveTimer.current), [])
 
   // ── Ingredient actions ──
   const updateIng   = (i, field, val) => setIngs(prev => prev.map((ing, idx) => idx === i ? { ...ing, [field]: val } : ing))
@@ -343,12 +352,10 @@ export default function RecipeEdit() {
           <BackIcon /> Recipes
         </button>
         <div className={styles.topbarRight}>
-          {saveStatus === 'saved' && <span className={styles.savedLabel}>Saved</span>}
-          {saveStatus === 'error' && <span className={styles.errorLabel}>Save failed</span>}
-          <button className={styles.btnSave} onClick={() => save()} disabled={saving}>
-            <SaveIcon /> {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button className={styles.btnDone} onClick={() => save({ thenNavigate: true })} disabled={saving}>
+          {saveStatus === 'saving' && <span className={styles.savingLabel}>Saving…</span>}
+          {saveStatus === 'saved'  && <span className={styles.savedLabel}>Saved</span>}
+          {saveStatus === 'error'  && <span className={styles.errorLabel}>Save failed</span>}
+          <button className={styles.btnDone} onClick={() => save({ thenNavigate: true })}>
             <CheckIcon /> Done
           </button>
           <button className={styles.btnOutline}>

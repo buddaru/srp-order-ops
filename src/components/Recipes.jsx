@@ -253,7 +253,7 @@ export default function Recipes() {
     const newId = `recipe-${Date.now()}`
     setStep(null)
     setRecipeData(null)
-    navigate(`/recipes/${newId}`, {
+    navigate(`/recipes/${newId}/edit`, {
       state: {
         name:        data.name,
         group:       data.group || '',
