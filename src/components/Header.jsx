@@ -146,7 +146,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
               <span className={styles.counterLabel}>Ready</span>
             </div>
           </div>
-          </div>
         </div>
       </div>
     </header>
