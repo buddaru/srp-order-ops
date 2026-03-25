@@ -1,5 +1,6 @@
 // api/sync-meez.js
 // Vercel serverless function — syncs recipes from Meez into Supabase
+// Auto-creates recipe_groups and recipe_group_members from Meez recipe books
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -67,6 +68,45 @@ function parseIngredients(detail) {
   }))
 }
 
+// ── Ensure a recipe_group row exists for a given name, return its id ──
+async function ensureGroup(name, groupCache) {
+  if (groupCache.has(name)) return groupCache.get(name)
+
+  // Check if already in DB
+  const { data: existing } = await supabase
+    .from('recipe_groups')
+    .select('id')
+    .eq('name', name)
+    .maybeSingle()
+
+  if (existing?.id) {
+    groupCache.set(name, existing.id)
+    return existing.id
+  }
+
+  // Create it
+  const { data: created } = await supabase
+    .from('recipe_groups')
+    .insert({ name })
+    .select('id')
+    .single()
+
+  if (created?.id) {
+    groupCache.set(name, created.id)
+    return created.id
+  }
+
+  return null
+}
+
+// ── Link a recipe to a group, skipping if already linked ──
+async function linkRecipeToGroup(recipeId, groupId) {
+  await supabase
+    .from('recipe_group_members')
+    .upsert({ group_id: groupId, recipe_id: recipeId }, { onConflict: 'group_id,recipe_id' })
+}
+
+// ── Main handler ──
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -84,6 +124,7 @@ export default async function handler(req, res) {
 
     let synced = 0
     let errors = 0
+    const groupCache = new Map() // name → id, avoids duplicate DB lookups
 
     for (const item of list) {
       try {
@@ -96,18 +137,11 @@ export default async function handler(req, res) {
         if (!detail) { errors++; continue }
 
         const ingredients = parseIngredients(detail)
-
-        // Recipe books — array e.g. ["Cakes", "Cupcakes"]
         const recipeBooks = (data?.recipe_books_on || []).map(b => b.name)
-
-        // Allergens — array e.g. ["Milk", "Eggs", "Wheat", "Soy"]
-        const allergens = (data?.allergies || []).map(a => a.name)
-
-        // Keep group_name as primary book for backwards compat
-        const groupName = recipeBooks[0] || 'Uncategorized'
-
-        const yieldQty  = detail.yield_qty || null
-        const yieldUnit = detail.yield_unit?.name || detail.yield_unit || null
+        const allergens   = (data?.allergies || []).map(a => a.name)
+        const groupName   = recipeBooks[0] || 'Uncategorized'
+        const yieldQty    = detail.yield_qty || null
+        const yieldUnit   = detail.yield_unit?.name || detail.yield_unit || null
 
         const record = {
           meez_id:      String(item.id),
@@ -124,27 +158,46 @@ export default async function handler(req, res) {
           synced_at:    new Date().toISOString(),
         }
 
-        const { error } = await supabase
+        // Upsert recipe
+        const { data: upserted, error } = await supabase
           .from('recipes')
           .upsert(record, { onConflict: 'meez_id' })
+          .select('id')
+          .single()
 
-        if (error) {
-          console.error(`Upsert error for ${item.id}:`, error.message)
+        if (error || !upserted) {
+          console.error(`Upsert error for ${item.id}:`, error?.message)
           errors++
-        } else {
-          synced++
+          continue
         }
+
+        // Auto-create groups and link recipe to each one
+        for (const bookName of recipeBooks) {
+          const groupId = await ensureGroup(bookName, groupCache)
+          if (groupId) await linkRecipeToGroup(upserted.id, groupId)
+        }
+
+        // If no recipe books, still ensure an Uncategorized group exists
+        if (recipeBooks.length === 0) {
+          const groupId = await ensureGroup('Uncategorized', groupCache)
+          if (groupId) await linkRecipeToGroup(upserted.id, groupId)
+        }
+
+        synced++
       } catch (err) {
         console.error(`Error processing recipe ${item.id}:`, err.message)
         errors++
       }
     }
 
+    const groupsCreated = groupCache.size
+
     return res.status(200).json({
       synced,
       errors,
       total: list.length,
-      message: `${synced} recipes synced from Meez${errors > 0 ? `, ${errors} errors` : ''}`,
+      groupsCreated,
+      message: `${synced} recipes synced, ${groupsCreated} group${groupsCreated !== 1 ? 's' : ''} created/updated${errors > 0 ? `, ${errors} errors` : ''}`,
     })
 
   } catch (err) {
