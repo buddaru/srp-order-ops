@@ -233,28 +233,38 @@ export default function Recipes() {
 
   const handleMeezSync = async () => {
     setSyncing(true)
-    setSyncMsg(null)
+    setSyncMsg('Starting sync…')
+    let totalSynced = 0
     try {
-      const res  = await fetch('/api/sync-meez', { method: 'POST' })
-      const data = await res.json()
-      setSyncMsg(data.message || (res.ok ? 'Sync complete' : data.error))
-      if (res.ok) {
-        const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
-        if (rows) {
-          setRecipes(rows.map(r => ({
-            id:              r.id,
-            name:            r.name,
-            group:           r.group_name || 'Uncategorized',
-            ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
-            yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
-          })))
+      while (true) {
+        const res  = await fetch('/api/sync-meez', { method: 'POST' })
+        const data = await res.json()
+        if (!res.ok) { setSyncMsg(data.error || 'Sync failed'); break }
+        totalSynced += data.synced || 0
+        setSyncMsg(data.message)
+        if (!data.hasMore) {
+          // Reload recipes after full sync
+          const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
+          if (rows) {
+            setRecipes(rows.map(r => ({
+              id:              r.id,
+              name:            r.name,
+              group:           r.group_name || 'Uncategorized',
+              ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+              yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+            })))
+          }
+          // Reload groups too
+          const { data: grps } = await supabase.from('recipe_groups').select('id, name, cover_image').order('name')
+          if (grps) setGroups(grps)
+          break
         }
       }
     } catch {
       setSyncMsg('Sync failed — check your connection.')
     } finally {
       setSyncing(false)
-      setTimeout(() => setSyncMsg(null), 5000)
+      setTimeout(() => setSyncMsg(null), 6000)
     }
   }
 
