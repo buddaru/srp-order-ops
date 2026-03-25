@@ -188,7 +188,8 @@ function NewGroupModal({ onClose, onCreate }) {
 export default function Recipes() {
   const navigate                = useNavigate()
   const [tab, setTab]           = useState('recipes')
-  const [viewMode, setViewMode] = useState('grid')
+  const [viewMode, setViewMode] = useState('list')
+  const [sortBy, setSortBy]     = useState('last_viewed')
   const [query, setQuery]       = useState('')
   const [dropOpen, setDropOpen] = useState(false)
   const [step, setStep]         = useState(null)
@@ -205,7 +206,7 @@ export default function Recipes() {
   useEffect(() => {
     const load = async () => {
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')),
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       if (recs) {
@@ -215,6 +216,7 @@ export default function Recipes() {
           group:           r.group_name || 'Uncategorized',
           ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
           yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+          lastViewed:      r.last_viewed || null,
         })))
       }
       if (grps) setGroups(grps)
@@ -254,7 +256,7 @@ export default function Recipes() {
         } else {
           // Done — reload recipes and groups
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name'),
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed').order('name'),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
@@ -264,6 +266,7 @@ export default function Recipes() {
               group:           r.group_name || 'Uncategorized',
               ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
               yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+              lastViewed:      r.last_viewed || null,
             })))
           }
           if (grps) setGroups(grps)
@@ -279,11 +282,24 @@ export default function Recipes() {
     runChunk()
   }
 
-  const filteredRecipes = recipes.filter(r => {
-    if (!query.trim()) return true
-    const q = query.toLowerCase()
-    return r.name.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)
-  })
+  const filteredRecipes = recipes
+    .filter(r => {
+      if (!query.trim()) return true
+      const q = query.toLowerCase()
+      return r.name.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)
+    })
+    .sort((a, b) => {
+      if (sortBy === 'az') return a.name.localeCompare(b.name)
+      if (sortBy === 'za') return b.name.localeCompare(a.name)
+      // last_viewed — most recent first, nulls last
+      if (sortBy === 'last_viewed') {
+        if (!a.lastViewed && !b.lastViewed) return 0
+        if (!a.lastViewed) return 1
+        if (!b.lastViewed) return -1
+        return new Date(b.lastViewed) - new Date(a.lastViewed)
+      }
+      return 0
+    })
 
   const filteredGroups = groups.filter(g => {
     if (!query.trim()) return true
@@ -354,7 +370,20 @@ export default function Recipes() {
             <button key={t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
         </div>
-        <ViewToggle />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {tab === 'recipes' && (
+            <select
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+            >
+              <option value="last_viewed">Last Viewed</option>
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
+          )}
+          <ViewToggle />
+        </div>
       </div>
 
       {/* ── Recipes tab ── */}

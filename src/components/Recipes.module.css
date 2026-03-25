@@ -553,3 +553,18 @@
 
 /* ── Group card cover image ── */
 .groupCover { height: 80px; border-radius: 6px 6px 0 0; background-size: cover; background-position: center; margin: -18px -16px 10px; }
+
+/* ── Sort select ── */
+.sortSelect {
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-2);
+  background: var(--card);
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  padding: 4px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.sortSelect:hover { border-color: var(--brand); }

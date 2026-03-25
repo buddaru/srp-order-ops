@@ -201,8 +201,25 @@ export default function RecipeEdit() {
       setRecipeGroup(data.group_name || '')
       setYieldQty(data.yield_qty     || '')
       setYieldUnit(data.yield_unit   || '')
-      setIngs(data.ingredients       || [])
-      setSteps(data.directions       || [])
+      // Normalize ingredients: Meez uses {qty, unit} but editor uses {amount}
+      const rawIngs = data.ingredients || []
+      setIngs(rawIngs.map(ing => {
+        if (ing.type === 'header') return ing
+        if (ing.amount !== undefined) return ing  // already in editor format
+        return {
+          type:   ing.type || 'item',
+          amount: [ing.qty, ing.unit].filter(Boolean).join(' '),
+          name:   ing.name || '',
+          note:   ing.note || '',
+        }
+      }))
+      // Support both 'steps' (Meez) and 'directions' (manual)
+      const rawSteps = data.steps || data.directions || []
+      setSteps(rawSteps.map(s => {
+        if (s.type) return s  // already in editor format
+        if (s.is_header) return { type: 'header', label: s.text || '' }
+        return { type: 'step', text: s.text || '' }
+      }))
       setDbId(data.id)
       setLoading(false)
     }

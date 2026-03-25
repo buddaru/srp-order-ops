@@ -205,6 +205,7 @@ export default async function handler(req, res) {
           steps,
           image_url:    imageUrl,
           notes:        detail.notes || null,
+          last_viewed:  item.last_viewed || null,
           synced_at:    new Date().toISOString(),
         }
 
