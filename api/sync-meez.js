@@ -15,9 +15,17 @@ const MEEZ_BASE  = 'https://api.getmeez.com/api/v1'
 
 const meezHeaders = {
   'Authorization': `Token ${MEEZ_TOKEN}`,
-  'Accept': 'application/json',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
   'Origin': 'https://app.getmeez.com',
   'Referer': 'https://app.getmeez.com/',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+  'sec-ch-ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"macOS"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-site',
 }
 
 async function fetchRecipeList() {
