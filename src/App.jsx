@@ -396,7 +396,16 @@ export default function App() {
           message={`Confirm that ${orders.find(o=>o.id===confirmPickup)?.customer}'s order has been picked up.`}
           confirmLabel="Yes, picked up"
           confirmStyle={{ background: 'var(--brand)', borderColor: 'var(--brand)' }}
-          onConfirm={() => { applyMove(confirmPickup, 1); setConfirmPickup(null) }}
+          onConfirm={() => {
+            const o = orders.find(x => x.id === confirmPickup)
+            if (o) {
+              const notifs = [...o.notifications, { text: '→ Moved to Picked Up', ts: new Date().toISOString() }, { text: '✅ Order picked up', ts: new Date().toISOString() }]
+              const updated = { ...o, stage: 'picked-up', notifications: notifs }
+              setOrders(prev => prev.map(x => x.id === confirmPickup ? updated : x))
+              supabase.from('orders').update({ stage: 'picked-up', notifications: notifs }).eq('id', confirmPickup)
+            }
+            setConfirmPickup(null)
+          }}
           onCancel={() => setConfirmPickup(null)}
         />
       )}
