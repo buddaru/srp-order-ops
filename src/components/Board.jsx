@@ -63,7 +63,12 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
             </div>
           )}
           {hasAny && STAGES.map(stage => {
-            const stageOrders = visible.filter(o => o.stage === stage.id)
+            const stageOrders = visible
+              .filter(o => o.stage === stage.id)
+              .sort((a, b) => {
+                if (a.pickupDate !== b.pickupDate) return a.pickupDate.localeCompare(b.pickupDate)
+                return (a.pickupTime || '').localeCompare(b.pickupTime || '')
+              })
             return (
               <div key={stage.id} className={`${styles.column} ${styles['col_' + stage.id.replace(/-/g,'_')]}`}>
                 <div className={styles.colHeader}>
