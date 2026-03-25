@@ -234,17 +234,29 @@ export default function Recipes() {
   const handleMeezSync = async () => {
     setSyncing(true)
     setSyncMsg('Starting sync…')
-    let totalSynced = 0
-    try {
-      while (true) {
+
+    const runChunk = async () => {
+      try {
         const res  = await fetch('/api/sync-meez', { method: 'POST' })
         const data = await res.json()
-        if (!res.ok) { setSyncMsg(data.error || 'Sync failed'); break }
-        totalSynced += data.synced || 0
+
+        if (!res.ok) {
+          setSyncMsg(data.error || 'Sync failed')
+          setSyncing(false)
+          return
+        }
+
         setSyncMsg(data.message)
-        if (!data.hasMore) {
-          // Reload recipes after full sync
-          const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
+
+        if (data.hasMore) {
+          // Small pause so React can re-render the progress message, then continue
+          setTimeout(runChunk, 200)
+        } else {
+          // Done — reload recipes and groups
+          const [{ data: rows }, { data: grps }] = await Promise.all([
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name'),
+            supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
+          ])
           if (rows) {
             setRecipes(rows.map(r => ({
               id:              r.id,
@@ -254,18 +266,17 @@ export default function Recipes() {
               yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
             })))
           }
-          // Reload groups too
-          const { data: grps } = await supabase.from('recipe_groups').select('id, name, cover_image').order('name')
           if (grps) setGroups(grps)
-          break
+          setSyncing(false)
+          setTimeout(() => setSyncMsg(null), 6000)
         }
+      } catch {
+        setSyncMsg('Sync failed — check your connection.')
+        setSyncing(false)
       }
-    } catch {
-      setSyncMsg('Sync failed — check your connection.')
-    } finally {
-      setSyncing(false)
-      setTimeout(() => setSyncMsg(null), 6000)
     }
+
+    runChunk()
   }
 
   const filteredRecipes = recipes.filter(r => {

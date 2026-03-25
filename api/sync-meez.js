@@ -76,11 +76,13 @@ function parseIngredients(detail) {
     if (item.is_note) {
       return { type: 'note', text: item.description || item.name || '' }
     }
-    // Resolve name: ingredient > badingredient > subrecipe > description > name
+    // Resolve name from all possible locations Meez uses
     const name =
       item.ingredient?.name ||
+      item.ingredient_name ||
       item.badingredient?.name ||
       item.subrecipe?.name ||
+      item.invalid_subrecipe_name ||
       item.description ||
       item.name ||
       ''
