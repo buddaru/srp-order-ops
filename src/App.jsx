@@ -12,9 +12,10 @@ import Toast      from './components/Toast'
 import Production from './components/Production'
 import Waste      from './components/Waste'
 import Schedule   from './components/Schedule'
-import Recipes    from './components/Recipes'
-import RecipeView from './components/RecipeView'
-import RecipeEdit from './components/RecipeEdit'
+import Recipes         from './components/Recipes'
+import RecipeView      from './components/RecipeView'
+import RecipeEdit      from './components/RecipeEdit'
+import RecipeGroupPage from './components/RecipeGroupPage'
 import Privacy    from './components/Privacy'
 import Terms      from './components/Terms'
 import Login      from './components/Login'
@@ -365,6 +366,7 @@ export default function App() {
         <Route path="/recipes" element={<Recipes />} />
         <Route path="/recipes/:id" element={<RecipeView />} />
         <Route path="/recipes/:id/edit" element={<RecipeEdit />} />
+        <Route path="/recipe-groups/:id" element={<RecipeGroupPage />} />
         <Route path="/" element={<>
       <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} />
       <div className={styles.boardWrapper}>

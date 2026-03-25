@@ -5,32 +5,6 @@ import styles from './Recipes.module.css'
 
 const SAMPLE_GROUPS = ['Cupcakes', 'Cakes', 'Breads', 'Cookies', 'Frostings & Fillings']
 
-const SAMPLE_RECIPES = [
-  { id: 1, name: 'Red Velvet Cupcake',      group: 'Cupcakes',             ingredientCount: 12, yield: '24 cupcakes', emoji: '🎂' },
-  { id: 2, name: 'Peach Cobbler Cupcake',   group: 'Cupcakes',             ingredientCount: 9,  yield: '24 cupcakes', emoji: '🍑' },
-  { id: 3, name: 'Banana Pudding Cupcake',  group: 'Cupcakes',             ingredientCount: 11, yield: '24 cupcakes', emoji: '🍌' },
-  { id: 4, name: 'Chocolate Cupcake',       group: 'Cupcakes',             ingredientCount: 10, yield: '24 cupcakes', emoji: '🍫' },
-  { id: 5, name: 'Carrot Cupcake',          group: 'Cupcakes',             ingredientCount: 14, yield: '24 cupcakes', emoji: '🥕' },
-  { id: 6, name: 'Vanilla Cupcake',         group: 'Cupcakes',             ingredientCount: 8,  yield: '24 cupcakes', emoji: '🍰' },
-  { id: 7, name: 'Blue Velvet Cupcake',     group: 'Cupcakes',             ingredientCount: 12, yield: '24 cupcakes', emoji: '🫐' },
-  { id: 8, name: 'Classic Pound Cake',      group: 'Cakes',                ingredientCount: 7,  yield: '1 loaf',      emoji: '🎂' },
-  { id: 9, name: 'Cream Cheese Frosting',   group: 'Frostings & Fillings', ingredientCount: 5,  yield: '3 cups',      emoji: '🍮' },
-]
-
-const SAMPLE_GROUPS_DETAIL = [
-  { name: 'Cupcakes',             count: 7, emoji: '🧁' },
-  { name: 'Cakes',                count: 3, emoji: '🎂' },
-  { name: 'Breads',               count: 2, emoji: '🍞' },
-  { name: 'Cookies',              count: 5, emoji: '🍪' },
-  { name: 'Frostings & Fillings', count: 4, emoji: '🍮' },
-]
-
-const SAMPLE_DOCS = [
-  { name: 'SRP Wholesale Pricing Sheet', updated: 'Mar 10, 2026', type: 'PDF',  emoji: '📄' },
-  { name: 'Allergen Reference Guide',    updated: 'Feb 22, 2026', type: 'PDF',  emoji: '📋' },
-  { name: 'Cupcake Order Form',          updated: 'Jan 15, 2026', type: 'XLSX', emoji: '📊' },
-]
-
 const SearchIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -61,6 +35,19 @@ const FolderIcon = () => (
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
   </svg>
 )
+const GridIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+    <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+  </svg>
+)
+const ListIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+    <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+    <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+  </svg>
+)
 
 function NewRecipeStep1({ onClose, onNext }) {
   const [name, setName]         = useState('')
@@ -68,20 +55,13 @@ function NewRecipeStep1({ onClose, onNext }) {
   const [nameErr, setNameErr]   = useState(false)
   const [selected, setSelected] = useState('')
   const inputRef                = useRef(null)
-
   useEffect(() => { inputRef.current?.focus() }, [])
-
-  const filtered = SAMPLE_GROUPS.filter(g =>
-    !group.trim() || g.toLowerCase().includes(group.toLowerCase())
-  )
-
+  const filtered = SAMPLE_GROUPS.filter(g => !group.trim() || g.toLowerCase().includes(group.toLowerCase()))
   const handleNext = () => {
     if (!name.trim()) { setNameErr(true); inputRef.current?.focus(); return }
     onNext({ name: name.trim(), group: selected || group.trim() })
   }
-
   const selectGroup = (g) => { setSelected(g); setGroup(g) }
-
   return (
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
@@ -99,37 +79,15 @@ function NewRecipeStep1({ onClose, onNext }) {
         <div className={styles.modalBody}>
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Recipe Name <span className={styles.req}>*</span></label>
-            <input
-              ref={inputRef}
-              type="text"
-              value={name}
-              onChange={e => { setName(e.target.value); setNameErr(false) }}
-              placeholder="e.g. Blue Velvet Cupcake"
-              className={nameErr ? 'invalid' : ''}
-              onKeyDown={e => e.key === 'Enter' && handleNext()}
-            />
+            <input ref={inputRef} type="text" value={name} onChange={e => { setName(e.target.value); setNameErr(false) }} placeholder="e.g. Blue Velvet Cupcake" className={nameErr ? 'invalid' : ''} onKeyDown={e => e.key === 'Enter' && handleNext()} />
             {nameErr && <div className={styles.errMsg}>Recipe name is required.</div>}
           </div>
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>
-              Recipe Group <span className={styles.optional}>(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={group}
-              onChange={e => { setGroup(e.target.value); setSelected('') }}
-              placeholder="Search or create a group…"
-            />
+            <label className={styles.label}>Recipe Group <span className={styles.optional}>(optional)</span></label>
+            <input type="text" value={group} onChange={e => { setGroup(e.target.value); setSelected('') }} placeholder="Search or create a group…" />
             <div className={styles.pills}>
               {filtered.map(g => (
-                <button
-                  key={g}
-                  type="button"
-                  className={`${styles.pill} ${selected === g ? styles.pillSelected : ''}`}
-                  onClick={() => selectGroup(g)}
-                >
-                  {g}
-                </button>
+                <button key={g} type="button" className={`${styles.pill} ${selected === g ? styles.pillSelected : ''}`} onClick={() => selectGroup(g)}>{g}</button>
               ))}
             </div>
           </div>
@@ -146,7 +104,6 @@ function NewRecipeStep1({ onClose, onNext }) {
 function NewRecipeStep2({ recipeData, onClose, onBack, onSave }) {
   const [ingredients, setIngredients] = useState('')
   const [prep, setPrep]               = useState('')
-
   return (
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={`${styles.modal} ${styles.modalWide}`}>
@@ -165,29 +122,13 @@ function NewRecipeStep2({ recipeData, onClose, onBack, onSave }) {
           <div className={styles.twoCol}>
             <div>
               <label className={styles.textareaLabel}>Ingredients</label>
-              <textarea
-                className={styles.recipeTextarea}
-                value={ingredients}
-                onChange={e => setIngredients(e.target.value)}
-                placeholder={"Dry Mix:\n500g flour\n1/2c semolina\nsalt to taste\n\nWet:\n5 cloves Garlic\n3 egg yolks\nOlive Oil (room temp)"}
-              />
-              <div className={styles.textareaHint}>
-                Add notes to ingredients by putting them in <strong>(note)</strong><br />
-                Add headers use a colon : eg <strong>To Garnish:</strong>
-              </div>
+              <textarea className={styles.recipeTextarea} value={ingredients} onChange={e => setIngredients(e.target.value)} placeholder={"Dry Mix:\n500g flour\n1/2c semolina\nsalt to taste\n\nWet:\n5 cloves Garlic\n3 egg yolks\nOlive Oil (room temp)"} />
+              <div className={styles.textareaHint}>Add notes to ingredients by putting them in <strong>(note)</strong><br />Add headers use a colon : eg <strong>To Garnish:</strong></div>
             </div>
             <div>
               <label className={styles.textareaLabel}>Prep Method</label>
-              <textarea
-                className={styles.recipeTextarea}
-                value={prep}
-                onChange={e => setPrep(e.target.value)}
-                placeholder={"Dry Mix:\nHeat oven to 350f\nCombine dry ingredients in medium bowl\n\nGarnish:\nAdd chopped chocolate chips as garnish"}
-              />
-              <div className={styles.textareaHint}>
-                Add notes to prep method by putting them in <strong>(note)</strong><br />
-                Add headers use a colon : eg <strong>To Garnish:</strong>
-              </div>
+              <textarea className={styles.recipeTextarea} value={prep} onChange={e => setPrep(e.target.value)} placeholder={"Dry Mix:\nHeat oven to 350f\nCombine dry ingredients in medium bowl\n\nGarnish:\nAdd chopped chocolate chips as garnish"} />
+              <div className={styles.textareaHint}>Add notes to prep method by putting them in <strong>(note)</strong><br />Add headers use a colon : eg <strong>To Garnish:</strong></div>
             </div>
           </div>
         </div>
@@ -203,65 +144,80 @@ function NewRecipeStep2({ recipeData, onClose, onBack, onSave }) {
   )
 }
 
+function NewGroupModal({ onClose, onCreate }) {
+  const [name, setName]   = useState('')
+  const [err, setErr]     = useState(false)
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef(null)
+  useEffect(() => { inputRef.current?.focus() }, [])
+  const handleCreate = async () => {
+    if (!name.trim()) { setErr(true); inputRef.current?.focus(); return }
+    setSaving(true)
+    const { data, error } = await supabase.from('recipe_groups').insert({ name: name.trim() }).select().single()
+    setSaving(false)
+    if (!error && data) onCreate(data)
+  }
+  return (
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <div>
+            <div className={styles.modalTitle}>New Recipe Group</div>
+            <div className={styles.modalSub}>Give your recipe group a name to get started.</div>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose}><CloseIcon /></button>
+        </div>
+        <div className={styles.modalBody}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Group Name <span className={styles.req}>*</span></label>
+            <input ref={inputRef} type="text" value={name} onChange={e => { setName(e.target.value); setErr(false) }} placeholder="e.g. Cakes, Cupcakes, Frostings…" className={err ? 'invalid' : ''} onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+            {err && <div className={styles.errMsg}>Group name is required.</div>}
+          </div>
+        </div>
+        <div className={styles.modalFooter}>
+          <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
+          <button className={`btn btn-primary ${styles.saveBtn}`} onClick={handleCreate} disabled={saving}>
+            {saving ? 'Creating…' : 'Create Recipe Group'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Recipes() {
   const navigate                = useNavigate()
   const [tab, setTab]           = useState('recipes')
+  const [viewMode, setViewMode] = useState('grid')
   const [query, setQuery]       = useState('')
   const [dropOpen, setDropOpen] = useState(false)
   const [step, setStep]         = useState(null)
   const [recipeData, setRecipeData] = useState(null)
+  const [showGroupModal, setShowGroupModal] = useState(false)
   const [recipes, setRecipes]   = useState([])
+  const [groups, setGroups]     = useState([])
   const [loadingRecipes, setLoadingRecipes] = useState(true)
   const [syncing, setSyncing]   = useState(false)
   const [syncMsg, setSyncMsg]   = useState(null)
 
-  const handleMeezSync = async () => {
-    setSyncing(true)
-    setSyncMsg(null)
-    try {
-      const res  = await fetch('/api/sync-meez', { method: 'POST' })
-      const data = await res.json()
-      setSyncMsg(data.message || (res.ok ? 'Sync complete' : data.error))
-      if (res.ok) {
-        // Reload recipes after sync
-        const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
-        if (rows) {
-          setRecipes(rows.map(r => ({
-            id:              r.id,
-            name:            r.name,
-            group:           r.group_name || 'Uncategorized',
-            ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
-            yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
-            emoji:           '🧁',
-          })))
-        }
-      }
-    } catch {
-      setSyncMsg('Sync failed — check your connection.')
-    } finally {
-      setSyncing(false)
-      setTimeout(() => setSyncMsg(null), 5000)
-    }
-  }
+  const dropRef = useRef(null)
 
-  const dropRef                 = useRef(null)
-
-  // Load recipes from Supabase
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await safeQuery(() =>
-        supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('created_at', { ascending: false })
-      )
-      if (data) {
-        setRecipes(data.map(r => ({
+      const [{ data: recs }, { data: grps }] = await Promise.all([
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')),
+        safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
+      ])
+      if (recs) {
+        setRecipes(recs.map(r => ({
           id:              r.id,
           name:            r.name,
           group:           r.group_name || 'Uncategorized',
           ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
           yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
-          emoji:           '🧁',
         })))
       }
+      if (grps) setGroups(grps)
       setLoadingRecipes(false)
     }
     load()
@@ -275,27 +231,65 @@ export default function Recipes() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const handleMeezSync = async () => {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const res  = await fetch('/api/sync-meez', { method: 'POST' })
+      const data = await res.json()
+      setSyncMsg(data.message || (res.ok ? 'Sync complete' : data.error))
+      if (res.ok) {
+        const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
+        if (rows) {
+          setRecipes(rows.map(r => ({
+            id:              r.id,
+            name:            r.name,
+            group:           r.group_name || 'Uncategorized',
+            ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+            yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+          })))
+        }
+      }
+    } catch {
+      setSyncMsg('Sync failed — check your connection.')
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncMsg(null), 5000)
+    }
+  }
+
   const filteredRecipes = recipes.filter(r => {
     if (!query.trim()) return true
     const q = query.toLowerCase()
     return r.name.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)
   })
 
+  const filteredGroups = groups.filter(g => {
+    if (!query.trim()) return true
+    return g.name.toLowerCase().includes(query.toLowerCase())
+  })
+
   const handleSaveRecipe = (data) => {
     const newId = `recipe-${Date.now()}`
     setStep(null)
     setRecipeData(null)
-    navigate(`/recipes/${newId}/edit`, {
-      state: {
-        name:        data.name,
-        group:       data.group || '',
-        ingredients: data.ingredients || '',
-        prep:        data.prep || '',
-      }
-    })
+    navigate(`/recipes/${newId}/edit`, { state: { name: data.name, group: data.group || '', ingredients: data.ingredients || '', prep: data.prep || '' } })
+  }
+
+  const handleGroupCreated = (group) => {
+    setGroups(prev => [...prev, group])
+    setShowGroupModal(false)
+    navigate(`/recipe-groups/${group.id}`)
   }
 
   const closeModal = () => { setStep(null); setRecipeData(null) }
+
+  const ViewToggle = () => (
+    <div className={styles.viewToggle}>
+      <button className={`${styles.vtBtn} ${viewMode === 'grid' ? styles.vtActive : ''}`} onClick={() => setViewMode('grid')}><GridIcon /></button>
+      <button className={`${styles.vtBtn} ${viewMode === 'list' ? styles.vtActive : ''}`} onClick={() => setViewMode('list')}><ListIcon /></button>
+    </div>
+  )
 
   return (
     <div className={styles.page}>
@@ -305,70 +299,58 @@ export default function Recipes() {
           <p className={styles.pageSub}>Manage your recipe library, groups, and supporting docs.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className={styles.syncBtn}
-            onClick={handleMeezSync}
-            disabled={syncing}
-          >
+          <button className={styles.syncBtn} onClick={handleMeezSync} disabled={syncing}>
             {syncing ? '⟳ Syncing…' : '⟳ Sync from Meez'}
           </button>
           <div className={styles.dropWrap} ref={dropRef}>
-          <button className={`btn btn-primary ${styles.newBtn}`} onClick={() => setDropOpen(o => !o)}>
-            <PlusIcon /> New <ChevronIcon />
-          </button>
-          {dropOpen && (
-            <div className={styles.dropdown}>
-              <button className={styles.dropItem} onClick={() => { setDropOpen(false); setStep(1) }}>
-                <RecipeFileIcon /> New Recipe
-              </button>
-              <button className={styles.dropItem} onClick={() => setDropOpen(false)}>
-                <FolderIcon /> New Recipe Group
-              </button>
-            </div>
-          )}
-        </div>
+            <button className={`btn btn-primary ${styles.newBtn}`} onClick={() => setDropOpen(o => !o)}>
+              <PlusIcon /> New <ChevronIcon />
+            </button>
+            {dropOpen && (
+              <div className={styles.dropdown}>
+                <button className={styles.dropItem} onClick={() => { setDropOpen(false); setStep(1) }}>
+                  <RecipeFileIcon /> New Recipe
+                </button>
+                <button className={styles.dropItem} onClick={() => { setDropOpen(false); setShowGroupModal(true) }}>
+                  <FolderIcon /> New Recipe Group
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {syncMsg && (
-        <div className={styles.syncMsg}>{syncMsg}</div>
-      )}
+      {syncMsg && <div className={styles.syncMsg}>{syncMsg}</div>}
 
       <div className={styles.searchWrap}>
         <span className={styles.searchIcon}><SearchIcon /></span>
-        <input
-          type="text"
-          className={`${styles.searchInput} searchOverride`}
-          placeholder="Search recipes, ingredients, groups…"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
+        <input type="text" className={`${styles.searchInput} searchOverride`} placeholder="Search recipes, ingredients, groups…" value={query} onChange={e => setQuery(e.target.value)} />
       </div>
 
-      <div className={styles.tabs}>
-        {[{ id: 'recipes', label: 'Recipes' }, { id: 'groups', label: 'Recipe Groups' }, { id: 'docs', label: 'Docs' }].map(t => (
-          <button key={t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
+      <div className={styles.tabRow}>
+        <div className={styles.tabs}>
+          {[{ id: 'recipes', label: 'Recipes' }, { id: 'groups', label: 'Recipe Groups' }, { id: 'docs', label: 'Docs' }].map(t => (
+            <button key={t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+          ))}
+        </div>
+        <ViewToggle />
       </div>
 
+      {/* ── Recipes tab ── */}
       {tab === 'recipes' && (
         loadingRecipes ? (
-          <div className={styles.empty}>
-            <div className={styles.emptySub}>Loading recipes…</div>
-          </div>
+          <div className={styles.empty}><div className={styles.emptySub}>Loading recipes…</div></div>
         ) : filteredRecipes.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🧁</div>
             <div className={styles.emptyTitle}>{query ? 'No recipes found' : 'No recipes yet'}</div>
             <div className={styles.emptySub}>{query ? 'Try a different search.' : 'Click + New to add your first recipe.'}</div>
           </div>
-        ) : (
+        ) : viewMode === 'grid' ? (
           <div className={styles.recipeGrid}>
             {filteredRecipes.map(r => (
               <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/recipes/${r.id}`)}>
-                <div className={styles.cardThumb}>{r.emoji}</div>
+                <div className={styles.cardThumb}>🧁</div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardName}>{r.name}</div>
                   <div className={styles.cardMeta}>{r.ingredientCount} ingredients · Yield: {r.yield}</div>
@@ -377,49 +359,73 @@ export default function Recipes() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className={styles.listView}>
+            {filteredRecipes.map(r => (
+              <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
+                <div className={styles.listThumb}>🧁</div>
+                <div className={styles.listInfo}>
+                  <div className={styles.listName}>{r.name}</div>
+                  <div className={styles.listMeta}>{r.ingredientCount} ingredients · Yield: {r.yield}</div>
+                </div>
+                <div className={styles.listTag}>{r.group}</div>
+              </div>
+            ))}
+          </div>
         )
       )}
 
+      {/* ── Groups tab ── */}
       {tab === 'groups' && (
-        <div className={styles.groupGrid}>
-          {SAMPLE_GROUPS_DETAIL.map(g => (
-            <div key={g.name} className={styles.groupCard}>
-              <div className={styles.groupEmoji}>{g.emoji}</div>
-              <div className={styles.groupName}>{g.name}</div>
-              <div className={styles.groupCount}>{g.count} recipes</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === 'docs' && (
-        <div className={styles.docsList}>
-          {SAMPLE_DOCS.map(d => (
-            <div key={d.name} className={styles.docRow}>
-              <div className={styles.docEmoji}>{d.emoji}</div>
-              <div>
-                <div className={styles.docName}>{d.name}</div>
-                <div className={styles.docMeta}>Updated {d.updated} · {d.type}</div>
+        filteredGroups.length === 0 ? (
+          <div className={styles.empty}>
+            <div className={styles.emptyIcon}>📁</div>
+            <div className={styles.emptyTitle}>{query ? 'No groups found' : 'No recipe groups yet'}</div>
+            <div className={styles.emptySub}>Click + New → New Recipe Group to create one.</div>
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className={styles.groupGrid}>
+            {filteredGroups.map(g => (
+              <div key={g.id} className={styles.groupCard} onClick={() => navigate(`/recipe-groups/${g.id}`)}>
+                {g.cover_image
+                  ? <div className={styles.groupCover} style={{ backgroundImage: `url(${g.cover_image})` }} />
+                  : <div className={styles.groupEmoji}>📁</div>
+                }
+                <div className={styles.groupName}>{g.name}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        ) : (
+          <div className={styles.listView}>
+            {filteredGroups.map(g => (
+              <div key={g.id} className={styles.listRow} onClick={() => navigate(`/recipe-groups/${g.id}`)}>
+                <div className={styles.listThumb}>
+                  {g.cover_image
+                    ? <div className={styles.listCoverThumb} style={{ backgroundImage: `url(${g.cover_image})` }} />
+                    : '📁'
+                  }
+                </div>
+                <div className={styles.listInfo}>
+                  <div className={styles.listName}>{g.name}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* ── Docs tab ── */}
+      {tab === 'docs' && (
+        <div className={styles.empty}>
+          <div className={styles.emptyIcon}>📄</div>
+          <div className={styles.emptyTitle}>No docs yet</div>
+          <div className={styles.emptySub}>Docs coming soon.</div>
         </div>
       )}
 
-      {step === 1 && (
-        <NewRecipeStep1
-          onClose={closeModal}
-          onNext={data => { setRecipeData(data); setStep(2) }}
-        />
-      )}
-      {step === 2 && (
-        <NewRecipeStep2
-          recipeData={recipeData}
-          onClose={closeModal}
-          onBack={() => setStep(1)}
-          onSave={handleSaveRecipe}
-        />
-      )}
+      {step === 1 && <NewRecipeStep1 onClose={closeModal} onNext={data => { setRecipeData(data); setStep(2) }} />}
+      {step === 2 && <NewRecipeStep2 recipeData={recipeData} onClose={closeModal} onBack={() => setStep(1)} onSave={handleSaveRecipe} />}
+      {showGroupModal && <NewGroupModal onClose={() => setShowGroupModal(false)} onCreate={handleGroupCreated} />}
     </div>
   )
 }

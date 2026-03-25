@@ -157,8 +157,9 @@ export default function RecipeEdit() {
   const isNew     = id?.startsWith('recipe-') // temp id from Recipes.jsx
 
   const [loading,     setLoading]     = useState(!isNew)
-  const [saveStatus,  setSaveStatus]  = useState(null) // null | 'saving' | 'saved' | 'error'
+  const [saveStatus,  setSaveStatus]  = useState(null)
   const [dbId,        setDbId]        = useState(isNew ? null : id)
+  const [groups,      setGroups]      = useState([])
   const autosaveTimer = useRef(null)
 
   const [recipeName,  setRecipeName]  = useState(seed.name  || '')
@@ -181,6 +182,12 @@ export default function RecipeEdit() {
 
   const ingDrag  = useDragDrop(setIngs)
   const stepDrag = useDragDrop(setSteps)
+
+  useEffect(() => {
+    supabase.from('recipe_groups').select('id, name').order('name').then(({ data }) => {
+      if (data) setGroups(data)
+    })
+  }, [])
 
   // ── Load existing recipe from Supabase ──
   useEffect(() => {
@@ -366,11 +373,19 @@ export default function RecipeEdit() {
           onChange={e => setRecipeName(e.target.value)}
           placeholder="Recipe name…"
         />
-        {recipeGroup && (
-          <div className={styles.groupTag}>
-            <FolderIcon /> {recipeGroup}
-          </div>
-        )}
+        <div className={styles.groupSelectRow}>
+          <FolderIcon />
+          <select
+            className={styles.groupSelect}
+            value={recipeGroup}
+            onChange={e => setRecipeGroup(e.target.value)}
+          >
+            <option value="">No group assigned</option>
+            {groups.map(g => (
+              <option key={g.id} value={g.name}>{g.name}</option>
+            ))}
+          </select>
+        </div>
 
         <div className={styles.panels}>
 
