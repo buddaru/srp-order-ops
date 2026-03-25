@@ -66,14 +66,14 @@ async function fetchRecipeData(id) {
 }
 
 function parseIngredients(detail) {
-  return (detail.ingredients || []).map(ing => ({
-    meez_id: ing.id,
-    name:    ing.ingredient?.name || ing.name || '',
-    qty:     ing.quantity || '',
-    unit:    ing.unit?.name || ing.unit || '',
-    note:    ing.note || '',
-    type:    ing.sub_recipe ? 'sub_recipe' : 'item',
-  }))
+  return (detail.recipe_items || []).map(item => {
+    if (item.is_header) return { type: 'header', label: item.name || '' }
+    const name = item.ingredient?.name || item.badingredient?.name || item.name || ''
+    const qty  = item.quantity_str || String(item.quantity || '')
+    const unit = item.unit?.name || ''
+    const note = item.preparation_note || ''
+    return { type: 'item', qty, unit, name, note }
+  })
 }
 
 // ── Ensure a recipe_group row exists for a given name, return its id ──
@@ -158,8 +158,9 @@ export default async function handler(req, res) {
           const recipeBooks = (data?.recipe_books_on || []).map(b => b.name)
           const allergens   = (data?.allergies || []).map(a => a.name)
           const groupName   = recipeBooks[0] || 'Uncategorized'
-          const yieldQty    = detail.yield_qty || null
-          const yieldUnit   = detail.yield_unit?.name || detail.yield_unit || null
+          const yieldQty    = detail.total_efficiency_str || detail.yield_qty || null
+          const yieldUnit   = detail.total_efficiency_unit?.name || detail.yield_unit?.name || null
+          const imageUrl    = detail.featured_media?.media || null
 
           const record = {
             meez_id:      String(item.id),
@@ -171,7 +172,7 @@ export default async function handler(req, res) {
             yield_unit:   yieldUnit || null,
             ingredients,
             steps,
-            image_url:    detail.image || detail.photo || null,
+            image_url:    imageUrl,
             notes:        detail.notes || null,
             synced_at:    new Date().toISOString(),
           }
