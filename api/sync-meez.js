@@ -134,68 +134,76 @@ export default async function handler(req, res) {
     let errors = 0
     const groupCache = new Map() // name → id, avoids duplicate DB lookups
 
-    for (const item of list) {
-      try {
-        const [detail, steps, data] = await Promise.all([
-          fetchRecipeDetail(item.id),
-          fetchRecipeSteps(item.id),
-          fetchRecipeData(item.id),
-        ])
+    const errors_detail = []
 
-        if (!detail) { errors++; continue }
+    // Process in batches of 5 concurrently to stay within Vercel's 5s timeout
+    const BATCH_SIZE = 5
+    for (let i = 0; i < list.length; i += BATCH_SIZE) {
+      const batch = list.slice(i, i + BATCH_SIZE)
+      await Promise.all(batch.map(async (item) => {
+        try {
+          const [detail, steps, data] = await Promise.all([
+            fetchRecipeDetail(item.id),
+            fetchRecipeSteps(item.id),
+            fetchRecipeData(item.id),
+          ])
 
-        const ingredients = parseIngredients(detail)
-        const recipeBooks = (data?.recipe_books_on || []).map(b => b.name)
-        const allergens   = (data?.allergies || []).map(a => a.name)
-        const groupName   = recipeBooks[0] || 'Uncategorized'
-        const yieldQty    = detail.yield_qty || null
-        const yieldUnit   = detail.yield_unit?.name || detail.yield_unit || null
+          if (!detail) {
+            errors++
+            errors_detail.push(`Recipe ${item.id}: failed to fetch detail`)
+            return
+          }
 
-        const record = {
-          meez_id:      String(item.id),
-          name:         detail.name || item.name,
-          group_name:   groupName,
-          recipe_books: recipeBooks,
-          allergens,
-          yield_qty:    yieldQty ? String(yieldQty) : null,
-          yield_unit:   yieldUnit || null,
-          ingredients,
-          steps,
-          image_url:    detail.image || detail.photo || null,
-          notes:        detail.notes || null,
-          synced_at:    new Date().toISOString(),
-        }
+          const ingredients = parseIngredients(detail)
+          const recipeBooks = (data?.recipe_books_on || []).map(b => b.name)
+          const allergens   = (data?.allergies || []).map(a => a.name)
+          const groupName   = recipeBooks[0] || 'Uncategorized'
+          const yieldQty    = detail.yield_qty || null
+          const yieldUnit   = detail.yield_unit?.name || detail.yield_unit || null
 
-        // Upsert recipe
-        const { data: upserted, error } = await supabase
-          .from('recipes')
-          .upsert(record, { onConflict: 'meez_id' })
-          .select('id')
-          .single()
+          const record = {
+            meez_id:      String(item.id),
+            name:         detail.name || item.name,
+            group_name:   groupName,
+            recipe_books: recipeBooks,
+            allergens,
+            yield_qty:    yieldQty ? String(yieldQty) : null,
+            yield_unit:   yieldUnit || null,
+            ingredients,
+            steps,
+            image_url:    detail.image || detail.photo || null,
+            notes:        detail.notes || null,
+            synced_at:    new Date().toISOString(),
+          }
 
-        if (error || !upserted) {
-          console.error(`Upsert error for ${item.id}:`, error?.message)
+          const { data: upserted, error } = await supabase
+            .from('recipes')
+            .upsert(record, { onConflict: 'meez_id' })
+            .select('id')
+            .single()
+
+          if (error || !upserted) {
+            console.error(`Upsert error for ${item.id}:`, error?.message)
+            errors++
+            return
+          }
+
+          for (const bookName of recipeBooks) {
+            const groupId = await ensureGroup(bookName, groupCache)
+            if (groupId) await linkRecipeToGroup(upserted.id, groupId)
+          }
+
+          if (recipeBooks.length === 0) {
+            const groupId = await ensureGroup('Uncategorized', groupCache)
+            if (groupId) await linkRecipeToGroup(upserted.id, groupId)
+          }
+
+          synced++
+        } catch (err) {
+          console.error(`Error processing recipe ${item.id}:`, err.message)
           errors++
-          continue
         }
-
-        // Auto-create groups and link recipe to each one
-        for (const bookName of recipeBooks) {
-          const groupId = await ensureGroup(bookName, groupCache)
-          if (groupId) await linkRecipeToGroup(upserted.id, groupId)
-        }
-
-        // If no recipe books, still ensure an Uncategorized group exists
-        if (recipeBooks.length === 0) {
-          const groupId = await ensureGroup('Uncategorized', groupCache)
-          if (groupId) await linkRecipeToGroup(upserted.id, groupId)
-        }
-
-        synced++
-      } catch (err) {
-        console.error(`Error processing recipe ${item.id}:`, err.message)
-        errors++
-      }
+      }))
     }
 
     const groupsCreated = groupCache.size

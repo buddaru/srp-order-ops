@@ -157,8 +157,25 @@ export default function RecipeView() {
   if (loading) return <div className={styles.loadingState}>Loading recipe…</div>
   if (!recipe)  return <div className={styles.loadingState}>Recipe not found.</div>
 
-  const ings  = recipe.ingredients || []
-  const steps = recipe.directions  || []
+  const ings  = (recipe.ingredients || []).map(ing => {
+    if (ing.type === 'header') return ing
+    if (ing.type === 'item' && ing.amount !== undefined) return ing  // manual recipe format
+    // Meez format: {qty, unit, name, note, type}
+    return {
+      type:   'item',
+      amount: [ing.qty, ing.unit].filter(Boolean).join(' '),
+      name:   ing.name || '',
+      note:   ing.note || '',
+    }
+  })
+  // support both 'steps' (Meez sync) and 'directions' (manually created recipes)
+  const rawSteps = recipe.steps || recipe.directions || []
+  // normalize Meez steps format {order, text} to view format {type, text}
+  const steps = rawSteps.map(s => {
+    if (s.type) return s  // already in view format
+    if (s.is_header) return { type: 'header', label: s.text }
+    return { type: 'step', text: s.text }
+  })
 
   const stepNums = {}
   let n = 0
