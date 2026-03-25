@@ -63,16 +63,6 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
             → {next.label}
           </button>
         )}
-        {/* Phone SMS button — only on Ready for Pickup and Picked Up */}
-        {(isReady || isPickedUp) && (
-          <button
-            className={`btn ${styles.smsBtn}`}
-            title={isReady ? 'Send Ready SMS' : 'Send Thank You SMS'}
-            onClick={e => { e.stopPropagation(); onSendSms(order.id); }}
-          >
-            📱
-          </button>
-        )}
         <button className="btn" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit">✏</button>
       </div>
     </div>

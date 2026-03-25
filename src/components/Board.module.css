@@ -1,6 +1,6 @@
 /* ── Board layout ── */
-.boardWrap { width: 100%; }
-.board { display: flex; gap: 12px; min-width: max-content; align-items: flex-start; }
+.boardWrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.board { display: flex; gap: 12px; min-width: max-content; align-items: flex-start; padding-bottom: 8px; }
 .column { width: 296px; flex-shrink: 0; }
 
 /* ── Column header ── */
@@ -141,4 +141,9 @@
   .toolbar { padding: 8px 0 6px; }
   .toolbarCount { font-size: 11px; }
   .vtBtn { font-size: 10px; padding: 4px 10px; }
+}
+
+/* ── iPad / Tablet ── */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .column { width: 230px; }
 }

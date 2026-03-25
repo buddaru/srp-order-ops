@@ -49,7 +49,7 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
 
       {/* ── List view ── */}
       {viewMode === 'list' && (
-        <ListView orders={visible} onDrawer={onDrawer} onMove={onMove} onSetStage={onSetStage} />
+        <ListView orders={visible} onDrawer={onDrawer} onMove={onMove} onSetStage={onSetStage} onEdit={onEdit} />
       )}
 
       {/* ── Card view ── */}

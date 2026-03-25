@@ -11,7 +11,7 @@ const STAGE_META = {
 const AVATAR_COLORS = ['amber','pink','teal','blue','coral','purple']
 const avatarColor = (id) => AVATAR_COLORS[parseInt(id.replace('SRP-','')) % AVATAR_COLORS.length]
 
-export default function ListView({ orders, onDrawer, onMove, onSetStage }) {
+export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit }) {
   if (orders.length === 0) return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>🧁</div>
@@ -32,6 +32,7 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage }) {
         <div className={styles.thead}>
           <div className={styles.tr}>
             <div className={styles.th} style={{width:36}}></div>
+            <div className={styles.th} style={{width:28}}></div>
             <div className={styles.th} style={{flex:'0 0 160px'}}>Customer</div>
             <div className={styles.th} style={{flex:1}}>Items</div>
             <div className={styles.th} style={{width:80}}>Total</div>
@@ -58,6 +59,9 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage }) {
                   <div className={`${styles.avatar} ${styles['av_'+av]}`}>
                     {o.initials || o.customer.slice(0,2).toUpperCase()}
                   </div>
+                </div>
+                <div className={styles.td} style={{width:28}} onClick={e => e.stopPropagation()}>
+                  <button className={styles.editBtn} onClick={() => onEdit(o.id)} title="Edit order">✏</button>
                 </div>
                 <div className={styles.td} style={{flex:'0 0 160px'}}>
                   <div className={styles.name}>{o.customer}</div>

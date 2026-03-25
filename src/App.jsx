@@ -134,6 +134,19 @@ export default function App() {
     loadOrders()
   }, [loadOrders])
 
+  // ── Confirm picked-up (always jumps directly to picked-up regardless of current stage) ──
+  const applyPickup = async (id) => {
+    const o = orders.find(x => x.id === id)
+    if (!o) return
+    const notifs = [...o.notifications,
+      { text: '→ Moved to Picked Up', ts: new Date().toISOString() },
+      { text: '✅ Order picked up',    ts: new Date().toISOString() },
+    ]
+    setOrders(prev => prev.map(x => x.id === id ? { ...x, stage: 'picked-up', notifications: notifs } : x))
+    const { error } = await supabase.from('orders').update({ stage: 'picked-up', notifications: notifs }).eq('id', id)
+    if (error) console.error('applyPickup error:', error)
+  }
+
   // ── Stage movement ──
   const handleMove = (id, dir) => {
     const o = orders.find(x => x.id === id)
@@ -396,16 +409,7 @@ export default function App() {
           message={`Confirm that ${orders.find(o=>o.id===confirmPickup)?.customer}'s order has been picked up.`}
           confirmLabel="Yes, picked up"
           confirmStyle={{ background: 'var(--brand)', borderColor: 'var(--brand)' }}
-          onConfirm={() => {
-            const o = orders.find(x => x.id === confirmPickup)
-            if (o) {
-              const notifs = [...o.notifications, { text: '→ Moved to Picked Up', ts: new Date().toISOString() }, { text: '✅ Order picked up', ts: new Date().toISOString() }]
-              const updated = { ...o, stage: 'picked-up', notifications: notifs }
-              setOrders(prev => prev.map(x => x.id === confirmPickup ? updated : x))
-              supabase.from('orders').update({ stage: 'picked-up', notifications: notifs }).eq('id', confirmPickup)
-            }
-            setConfirmPickup(null)
-          }}
+          onConfirm={() => { applyPickup(confirmPickup); setConfirmPickup(null) }}
           onCancel={() => setConfirmPickup(null)}
         />
       )}

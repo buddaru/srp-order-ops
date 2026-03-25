@@ -19,6 +19,19 @@
 .av_coral  { background: #FAECE7; color: #712B13; }
 .av_purple { background: #EEEDFE; color: #3C3489; }
 
+.editBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
+  line-height: 1;
+}
+.editBtn:hover { background: var(--bg); color: var(--text); }
+
 .name  { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .id    { font-size: 10px; color: var(--text-muted); }
 .items { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

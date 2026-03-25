@@ -6,6 +6,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   const isMobile = window.innerWidth <= 768
   const [msg, setMsg] = useState('')
   const [sent, setSent] = useState(false)
+  const [smsOpen, setSmsOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
 
   if (!order) return null
@@ -111,15 +112,20 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
           </div>
         )}
 
-        <div className={styles.contactSection}>
+        <button className={styles.notifToggle} onClick={() => setSmsOpen(o => !o)}>
           <span className={styles.sectionLabel}>Contact customer (SMS)</span>
-          <div className={styles.contactTo}>
-            {order.phone ? <>To: <strong>{order.phone}</strong></> : <em>No phone number on file</em>}
+          <span className={styles.notifChevron}>{smsOpen ? '▲' : '▼'}</span>
+        </button>
+        {smsOpen && (
+          <div className={styles.contactSection}>
+            <div className={styles.contactTo}>
+              {order.phone ? <>To: <strong>{order.phone}</strong></> : <em>No phone number on file</em>}
+            </div>
+            <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type your SMS message…" style={{height:80,marginTop:6}} />
+            <button className={styles.sendBtn} onClick={sendSms}>Send SMS</button>
+            {sent && <div className={styles.sentConfirm}>✓ SMS logged successfully</div>}
           </div>
-          <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type your SMS message…" style={{height:80,marginTop:6}} />
-          <button className={styles.sendBtn} onClick={sendSms}>Send SMS</button>
-          {sent && <div className={styles.sentConfirm}>✓ SMS logged successfully</div>}
-        </div>
+        )}
       </div>
     </div>
     </>
