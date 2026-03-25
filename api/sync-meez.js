@@ -30,11 +30,23 @@ const meezHeaders = {
 }
 
 async function fetchRecipeList() {
-  const url = `${MEEZ_BASE}/recipes/?organization=${MEEZ_ORG}&is_public=false&page_size=500`
-  const res  = await fetch(url, { headers: meezHeaders })
-  if (!res.ok) throw new Error(`Meez list fetch failed: ${res.status}`)
-  const data = await res.json()
-  return data.results || data
+  const allRecipes = []
+  let url = `https://api.getmeez.com/api/v2/table_page/recipes/?ordering=-last_viewed&page=1&per_page=25&query=&personal=false&adding_filters=false`
+
+  while (url) {
+    const res = await fetch(url, { headers: meezHeaders })
+    if (!res.ok) throw new Error(`Meez list fetch failed: ${res.status}`)
+    const data = await res.json()
+    const results = data.results || []
+    // Only include Sweet Red Peach recipes (concept id 864), skip test/personal recipes
+    const srp = results.filter(r =>
+      r.concepts && r.concepts.some(c => c.id === 864)
+    )
+    allRecipes.push(...srp)
+    url = data.next || null
+  }
+
+  return allRecipes
 }
 
 async function fetchRecipeDetail(id) {
