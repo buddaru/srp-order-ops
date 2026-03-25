@@ -504,3 +504,29 @@
   .recipeGrid { grid-template-columns: 1fr 1fr; }
   .groupGrid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Meez sync ── */
+.syncBtn {
+  background: var(--card);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.syncBtn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.syncBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.syncMsg {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+}

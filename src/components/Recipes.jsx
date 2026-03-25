@@ -212,6 +212,38 @@ export default function Recipes() {
   const [recipeData, setRecipeData] = useState(null)
   const [recipes, setRecipes]   = useState([])
   const [loadingRecipes, setLoadingRecipes] = useState(true)
+  const [syncing, setSyncing]   = useState(false)
+  const [syncMsg, setSyncMsg]   = useState(null)
+
+  const handleMeezSync = async () => {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const res  = await fetch('/api/sync-meez', { method: 'POST' })
+      const data = await res.json()
+      setSyncMsg(data.message || (res.ok ? 'Sync complete' : data.error))
+      if (res.ok) {
+        // Reload recipes after sync
+        const { data: rows } = await supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients').order('name')
+        if (rows) {
+          setRecipes(rows.map(r => ({
+            id:              r.id,
+            name:            r.name,
+            group:           r.group_name || 'Uncategorized',
+            ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+            yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+            emoji:           '🧁',
+          })))
+        }
+      }
+    } catch {
+      setSyncMsg('Sync failed — check your connection.')
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncMsg(null), 5000)
+    }
+  }
+
   const dropRef                 = useRef(null)
 
   // Load recipes from Supabase
@@ -272,7 +304,15 @@ export default function Recipes() {
           <h1 className={styles.pageTitle}>Recipes</h1>
           <p className={styles.pageSub}>Manage your recipe library, groups, and supporting docs.</p>
         </div>
-        <div className={styles.dropWrap} ref={dropRef}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            className={styles.syncBtn}
+            onClick={handleMeezSync}
+            disabled={syncing}
+          >
+            {syncing ? '⟳ Syncing…' : '⟳ Sync from Meez'}
+          </button>
+          <div className={styles.dropWrap} ref={dropRef}>
           <button className={`btn btn-primary ${styles.newBtn}`} onClick={() => setDropOpen(o => !o)}>
             <PlusIcon /> New <ChevronIcon />
           </button>
@@ -287,7 +327,12 @@ export default function Recipes() {
             </div>
           )}
         </div>
+        </div>
       </div>
+
+      {syncMsg && (
+        <div className={styles.syncMsg}>{syncMsg}</div>
+      )}
 
       <div className={styles.searchWrap}>
         <span className={styles.searchIcon}><SearchIcon /></span>
