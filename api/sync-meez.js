@@ -79,21 +79,26 @@ async function fetchRecipeData(id) {
 }
 
 function parseIngredients(detail) {
+  // Build sub-recipe lookup map from top-level sub_recipes array
+  const subRecipeMap = {}
+  for (const sr of (detail.sub_recipes || [])) {
+    subRecipeMap[sr.id] = sr.name
+  }
+
   return (detail.recipe_items || []).map(item => {
-    // Section headers
     if (item.is_header) {
       return { type: 'header', label: item.name || item.description || '' }
     }
-    // Notes
     if (item.is_note) {
       return { type: 'note', text: item.description || item.name || '' }
     }
-    // Resolve name from all possible locations Meez uses
+    // Resolve name — check sub_recipes map first for subrecipe items
+    const subrecipeId = item.subrecipe
     const name =
+      (subrecipeId && subRecipeMap[subrecipeId]) ||
       item.ingredient?.name ||
       item.ingredient_name ||
       item.badingredient?.name ||
-      item.subrecipe?.name ||
       item.invalid_subrecipe_name ||
       item.description ||
       item.name ||
@@ -107,12 +112,27 @@ function parseIngredients(detail) {
 
 async function ensureGroup(name, groupCache) {
   if (groupCache.has(name)) return groupCache.get(name)
+
+  // Upsert — insert if not exists, return existing if conflict
+  const { data, error } = await supabase
+    .from('recipe_groups')
+    .upsert({ name }, { onConflict: 'name', ignoreDuplicates: false })
+    .select('id')
+    .single()
+
+  if (data?.id) {
+    groupCache.set(name, data.id)
+    return data.id
+  }
+
+  // Fallback: fetch if upsert didn't return
   const { data: existing } = await supabase
     .from('recipe_groups').select('id').eq('name', name).maybeSingle()
-  if (existing?.id) { groupCache.set(name, existing.id); return existing.id }
-  const { data: created } = await supabase
-    .from('recipe_groups').insert({ name }).select('id').single()
-  if (created?.id) { groupCache.set(name, created.id); return created.id }
+  if (existing?.id) {
+    groupCache.set(name, existing.id)
+    return existing.id
+  }
+
   return null
 }
 
