@@ -33,29 +33,58 @@
 .savedBadge { font-size: 11px; color: #15803D; font-weight: 500; white-space: nowrap; }
 
 /* ── Category headers ── */
-.catLabel { display: flex; align-items: baseline; gap: 6px; padding-bottom: 6px; border-bottom: 1.5px solid var(--border-2); margin: 16px 0 0; }
-.catName { font-size: 11px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'DM Sans', sans-serif; }
-.catCount { font-size: 11px; color: var(--text-muted); }
+.catLabel { display: flex; align-items: center; gap: 10px; margin: 24px 0 8px; }
+.catName { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.catLine { flex: 1; height: 0.5px; background: var(--border-2); }
+.catCount { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
 /* ── Item rows ── */
-.itemRow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
-.itemRow:last-child { border-bottom: none; }
-.itemRow.done { opacity: 0.4; }
-.check { width: 16px; height: 16px; min-width: 16px; border-radius: 3px; border: 1px solid var(--border-2); flex-shrink: 0; background: none; cursor: pointer; position: relative; transition: all 0.15s; }
-.checked { background: #639922 !important; border-color: #639922 !important; }
-.checked::after { content: ''; position: absolute; left: 3px; top: 1px; width: 4px; height: 8px; border: 1.5px solid white; border-top: none; border-left: none; transform: rotate(45deg); }
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 5px;
+  transition: opacity 0.2s;
+}
+.itemRow.done { opacity: 0.38; }
+.itemQtyBig {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--brand);
+  min-width: 42px;
+  text-align: center;
+  line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+.done .itemQtyBig { color: var(--text-muted); }
 .itemBody { flex: 1; min-width: 0; }
-.itemName { font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; line-height: 1.4; }
+.itemName { font-size: 15px; color: var(--text); font-family: 'DM Sans', sans-serif; line-height: 1.4; }
 .done .itemName { text-decoration: line-through; color: var(--text-muted); }
 .itemNote { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
-.itemQty { font-size: 13px; font-weight: 500; color: var(--brand); flex-shrink: 0; min-width: 28px; text-align: right; }
-.done .itemQty { color: var(--text-muted); }
+.check {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-2);
+  flex-shrink: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+}
+.checked { background: #639922 !important; border-color: #639922 !important; }
+.checked::after { content: ''; position: absolute; left: 6px; top: 3px; width: 5px; height: 9px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg); }
 .itemActions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.1s; }
 .itemRow:hover .itemActions { opacity: 1; }
 .editItemBtn { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; padding: 3px 5px; border-radius: 4px; }
-.editItemBtn:hover { background: var(--bg); color: var(--brand); }
+.editItemBtn:hover { background: var(--card); color: var(--brand); }
 .deleteBtn { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 3px 5px; line-height: 1; border-radius: 4px; }
-.deleteBtn:hover { background: var(--bg); color: #DC2626; }
+.deleteBtn:hover { background: var(--card); color: #DC2626; }
 
 /* ── Add button ── */
 .addBtn { margin-top: 14px; font-size: 13px; color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 4px; }
@@ -114,4 +143,6 @@
   .heroDate span { font-size: 20px; }
   .formRow { flex-direction: column; }
   .inputSm { width: 100%; }
+  .itemQtyBig { font-size: 24px; min-width: 36px; }
+  .itemName { font-size: 14px; }
 }

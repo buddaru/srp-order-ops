@@ -268,7 +268,8 @@ export default function Production() {
             <div key={cat}>
               <div className={styles.catLabel}>
                 <span className={styles.catName}>{cat}</span>
-                <span className={styles.catCount}>· {catItems.length} item{catItems.length !== 1 ? 's' : ''}{catDone > 0 ? `, ${catDone} done` : ''}</span>
+                <div className={styles.catLine}></div>
+                <span className={styles.catCount}>{catItems.length} item{catItems.length !== 1 ? 's' : ''}{catDone > 0 ? `, ${catDone} done` : ''}</span>
               </div>
               {catItems.map(item => (
                 <div key={item.id}>
@@ -289,19 +290,19 @@ export default function Production() {
                     </div>
                   ) : (
                     <div className={`${styles.itemRow} ${item.completed ? styles.done : ''}`}>
-                      <button
-                        className={`${styles.check} ${item.completed ? styles.checked : ''}`}
-                        onClick={() => handleToggle(item.id, item.completed)}
-                      />
+                      <div className={styles.itemQtyBig}>{item.quantity}</div>
                       <div className={styles.itemBody}>
                         <div className={styles.itemName}>{item.item_name}</div>
                         {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
                       </div>
-                      <div className={styles.itemQty}>{item.quantity}</div>
                       <div className={`${styles.itemActions} ${styles.noPrint}`}>
                         <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
                         <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
                       </div>
+                      <button
+                        className={`${styles.check} ${item.completed ? styles.checked : ''}`}
+                        onClick={() => handleToggle(item.id, item.completed)}
+                      />
                     </div>
                   )}
                 </div>
