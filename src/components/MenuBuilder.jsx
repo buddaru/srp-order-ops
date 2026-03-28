@@ -214,25 +214,23 @@ export default function MenuBuilder({ cartItems, onChange }) {
             </button>
           </div>
         )}
-        </div>
 
         {/* Item chips — standard categories only */}
         {!isCustomCat && (
-        <div className={styles.itemGrid}>
-          {catItems.map(item => (
-            <div
-              key={item.name}
-              className={`${styles.itemChip} ${selectedItem?.name === item.name ? styles.itemChipSelected : ''}`}
-              onClick={() => selectItem(item)}
-            >
-              <div className={styles.itemChipName}>{item.name}</div>
-              <div className={styles.itemChipPrice}>{fmt$(item.price)}</div>
-            </div>
-          ))}
-        </div>
+          <div className={styles.itemGrid}>
+            {catItems.map(item => (
+              <div
+                key={item.name}
+                className={`${styles.itemChip} ${selectedItem?.name === item.name ? styles.itemChipSelected : ''}`}
+                onClick={() => selectItem(item)}
+              >
+                <div className={styles.itemChipName}>{item.name}</div>
+                <div className={styles.itemChipPrice}>{fmt$(item.price)}</div>
+              </div>
+            ))}
+          </div>
         )}
 
-        {/* Customization zone — standard categories only */}
         {!isCustomCat && selectedItem && (
           <div className={styles.customZone}>
 
