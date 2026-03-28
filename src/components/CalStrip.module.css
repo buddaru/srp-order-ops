@@ -72,3 +72,51 @@
   .browseWrap { margin-left: 0; }
   .calWrap { right: auto; left: 0; }
 }
+
+/* ── Orders badge (muted pill on active preset) ── */
+.ordersBadge {
+  background: var(--bg-2);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-2);
+}
+
+/* ── Stage filter dropdown ── */
+.stageWrap { position: relative; flex-shrink: 0; }
+.stageBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; border: 1px solid var(--border-2);
+  background: var(--bg); color: var(--text-muted);
+  transition: all 0.12s; white-space: nowrap;
+}
+.stageBtn:hover { background: var(--bg-2); color: var(--text); }
+.stageBtnActive { background: #1a1a1a !important; color: #fff !important; border-color: #1a1a1a !important; }
+.stageDrop {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--card); border: 1px solid var(--border-2);
+  border-radius: 8px; min-width: 210px; z-index: 9999;
+  overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.stageItem {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 9px 14px; font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text); background: none; border: none;
+  cursor: pointer; border-bottom: 0.5px solid var(--border);
+  transition: background 0.1s; text-align: left;
+}
+.stageItem:last-child { border-bottom: none; }
+.stageItem:hover { background: var(--bg); }
+.stageItemActive { font-weight: 600; background: var(--bg); }
+.stageCnt { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+.stageCnt_active        { background: #F1EFE8; color: #5F5E5A; }
+.stageCnt_received      { background: #F1EFE8; color: #5F5E5A; }
+.stageCnt_in_production { background: #FAEEDA; color: #633806; }
+.stageCnt_ready         { background: #EAF3DE; color: #27500A; }
+.stageCnt_picked_up     { background: #E6F1FB; color: #0C447C; }

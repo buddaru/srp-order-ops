@@ -18,8 +18,6 @@ function highlight(str, q) {
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen, onOrdersSynced }) {
   const { user } = useAuth()
-  const [query, setQuery]       = useState('')
-  const [showRes, setShowRes]   = useState(false)
   const [syncing, setSyncing]   = useState(false)
   const [syncMsg, setSyncMsg]   = useState(null)
 
@@ -50,23 +48,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
   const tomorrowCount = orders.filter(o => o.pickupDate === tomorrowDS && o.stage !== 'picked-up').length
   const readyCount    = orders.filter(o => o.stage === 'ready').length
 
-  const matches = query.trim()
-    ? orders.filter(o => {
-        const q = query.toLowerCase()
-        return (
-          o.customer.toLowerCase().includes(q) ||
-          (o.phone && o.phone.toLowerCase().includes(q)) ||
-          (o.email && o.email.toLowerCase().includes(q)) ||
-          o.items.some(i => i.name.toLowerCase().includes(q)) ||
-          o.id.toLowerCase().includes(q)
-        )
-      }).slice(0, 6)
-    : []
-
-  const handleSelect = (id) => {
-    setQuery(''); setShowRes(false); onJumpToOrder(id)
-  }
-
   return (
     <header className={styles.headerWrap}>
       <div className={styles.topRow}>
@@ -75,46 +56,7 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
           <span/><span/><span/>
         </button>
 
-        {/* Search */}
-        <div className={styles.searchWrap}>
-          <div className={styles.searchInner}>
-            <svg className={styles.searchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search..."
-              value={query}
-              onChange={e => { setQuery(e.target.value); setShowRes(true) }}
-              onFocus={() => setShowRes(true)}
-              onBlur={() => setTimeout(() => setShowRes(false), 150)}
-              autoComplete="off"
-            />
-          </div>
-          {showRes && query.trim() && (
-            <div className={styles.results}>
-              {matches.length === 0 ? (
-                <div className={styles.empty}>No orders found</div>
-              ) : matches.map(o => {
-                const q = query.toLowerCase()
-                const stage = STAGES.find(s => s.id === o.stage)?.label || o.stage
-                const matchedItem = o.items.find(i => i.name.toLowerCase().includes(q))
-                return (
-                  <div key={o.id} className={styles.resultItem} onMouseDown={() => handleSelect(o.id)}>
-                    <div className={styles.resultName}>
-                      {highlight(o.customer, query)}
-                      <span className={styles.resultId}> · {o.id}</span>
-                    </div>
-                    <div className={styles.resultMeta}>
-                      {stage} · {fmtDate(o.pickupDate)} · {matchedItem ? highlight(matchedItem.name, query) : o.items[0]?.name || ''}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        <div style={{ flex: 1 }} />
 
         {/* Right — sync button + counters */}
         <div className={styles.right}>

@@ -1,19 +1,26 @@
 import { useState } from 'react'
-import { STAGES, diffDays, STRIP_DAYS } from '../utils/helpers'
+import { STAGES, diffDays, STRIP_DAYS, fmtDate } from '../utils/helpers'
 import OrderCard from './OrderCard'
 import ListView from './ListView'
 import styles from './Board.module.css'
 
-export default function Board({ orders, selectedDay, customDateSelected, dateRange, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
+export default function Board({ orders, selectedDay, customDateSelected, dateRange, selectedStage, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
   const [viewMode, setViewMode] = useState('list')
+  const [query, setQuery]       = useState('')
+  const [showRes, setShowRes]   = useState(false)
 
   const visible = orders.filter(o => {
+    // Stage filter
+    if (selectedStage === 'active') {
+      if (o.stage === 'picked-up') return false
+    } else if (selectedStage && selectedStage !== 'active') {
+      if (o.stage !== selectedStage) return false
+    }
+    // Date filter
     if (dateRange) {
       return o.pickupDate >= dateRange.start && o.pickupDate <= dateRange.end
     }
-    if (selectedDay === 'all') {
-      return o.stage !== 'picked-up'
-    }
+    if (selectedDay === 'all') return true
     return o.pickupDate === selectedDay
   })
 
@@ -21,6 +28,45 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
 
   return (
     <div className={viewMode === 'list' ? styles.boardList : styles.boardWrap}>
+      {/* ── Search ── */}
+      <div className={styles.searchRow}>
+        <div className={styles.searchWrap}>
+          <svg className={styles.searchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="Search orders…"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setShowRes(true) }}
+            onFocus={() => setShowRes(true)}
+            onBlur={() => setTimeout(() => setShowRes(false), 150)}
+            autoComplete="off"
+          />
+        </div>
+        {showRes && query.trim() && (() => {
+          const q = query.toLowerCase()
+          const matches = orders.filter(o =>
+            o.customer.toLowerCase().includes(q) ||
+            (o.phone && o.phone.includes(q)) ||
+            o.id.toLowerCase().includes(q) ||
+            o.items.some(i => i.name.toLowerCase().includes(q))
+          ).slice(0, 6)
+          return (
+            <div className={styles.searchResults}>
+              {matches.length === 0
+                ? <div className={styles.searchEmpty}>No orders found</div>
+                : matches.map(o => (
+                    <div key={o.id} className={styles.searchItem} onMouseDown={() => { onDrawer(o.id); setQuery(''); setShowRes(false) }}>
+                      <div className={styles.searchName}>{o.customer} <span className={styles.searchId}>{o.id}</span></div>
+                      <div className={styles.searchMeta}>{fmtDate(o.pickupDate)} · {o.items[0]?.name || ''}</div>
+                    </div>
+                  ))
+              }
+            </div>
+          )
+        })()}
+      </div>
+
       {/* ── View toggle bar ── */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarCount}>
@@ -31,13 +77,13 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
         </div>
         <div className={styles.toolbarRight}>
           <div className={styles.viewToggle}>
-            <button className={`${styles.vtBtn} ${viewMode === 'list' ? styles.vtActive : ''}`} onClick={() => setViewMode('list')}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0" y="1" width="13" height="2" rx="1" fill="currentColor"/><rect x="0" y="5.5" width="13" height="2" rx="1" fill="currentColor"/><rect x="0" y="10" width="13" height="2" rx="1" fill="currentColor"/></svg>
+            <button className={`${styles.vtBtn} ${viewMode === 'list' ? styles.vtActive : ''}`} onClick={() => setViewMode('list')} title="List view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
               List
             </button>
             <div className={styles.vtDivider} />
-            <button className={`${styles.vtBtn} ${viewMode === 'cards' ? styles.vtActive : ''}`} onClick={() => setViewMode('cards')}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="0" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="0" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="0" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1" fill="currentColor"/></svg>
+            <button className={`${styles.vtBtn} ${viewMode === 'cards' ? styles.vtActive : ''}`} onClick={() => setViewMode('cards')} title="Card view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
               Cards
             </button>
           </div>

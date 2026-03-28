@@ -274,13 +274,8 @@ export default function RecipeView() {
                 <div key={i} className={styles.dirRow}>
                   <div className={styles.stepPill}>{stepNums[i]}</div>
                   <div className={styles.stepText}>{s.text}</div>
-                  {s.media ? (
+                  {s.media && (
                     <img src={s.media} alt={`Step ${stepNums[i]}`} className={styles.stepImg} />
-                  ) : (
-                    <div className={styles.mediaSlot}>
-                      <PhotoIcon />
-                      <span>Add photo / video</span>
-                    </div>
                   )}
                 </div>
               ))}

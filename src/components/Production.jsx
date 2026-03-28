@@ -238,11 +238,12 @@ export default function Production() {
       {/* Shift notes */}
       <div className={`${styles.notesRow} ${styles.noPrint}`}>
         <span className={styles.notesLabel}>Shift notes</span>
-        <input
+        <textarea
           className={styles.notesInput}
           value={note}
           onChange={e => handleNoteChange(e.target.value)}
           placeholder="Add notes for the team today..."
+          rows={3}
         />
         {noteSaved && <span className={styles.savedBadge}>Saved</span>}
       </div>

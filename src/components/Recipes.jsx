@@ -3,6 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
 import styles from './Recipes.module.css'
 
+function fmtTimeAgo(ts) {
+  if (!ts) return null
+  const diff = Date.now() - new Date(ts).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 60)   return `${mins}m ago`
+  if (hours < 24)  return `${hours}h ago`
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 const SAMPLE_GROUPS = ['Cupcakes', 'Cakes', 'Breads', 'Cookies', 'Frostings & Fillings']
 
 const SearchIcon = () => (
@@ -323,8 +334,8 @@ export default function Recipes() {
 
   const ViewToggle = () => (
     <div className={styles.viewToggle}>
-      <button className={`${styles.vtBtn} ${viewMode === 'grid' ? styles.vtActive : ''}`} onClick={() => setViewMode('grid')}><GridIcon /></button>
       <button className={`${styles.vtBtn} ${viewMode === 'list' ? styles.vtActive : ''}`} onClick={() => setViewMode('list')}><ListIcon /></button>
+      <button className={`${styles.vtBtn} ${viewMode === 'grid' ? styles.vtActive : ''}`} onClick={() => setViewMode('grid')}><GridIcon /></button>
     </div>
   )
 
@@ -403,7 +414,10 @@ export default function Recipes() {
                 <div className={styles.cardThumb}>🧁</div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardName}>{r.name}</div>
-                  <div className={styles.cardMeta}>{r.ingredientCount} ingredients · Yield: {r.yield}</div>
+                  <div className={styles.cardMeta}>
+                    {r.yield !== '—' ? `Yield: ${r.yield}` : ''}
+                    {r.lastViewed && <span className={styles.cardViewed}>{fmtTimeAgo(r.lastViewed)}</span>}
+                  </div>
                   <div className={styles.cardTag}>{r.group}</div>
                 </div>
               </div>
@@ -411,14 +425,18 @@ export default function Recipes() {
           </div>
         ) : (
           <div className={styles.listView}>
+            <div className={styles.listHeader}>
+              <div className={styles.listHeaderName}>Name</div>
+              <div className={styles.listHeaderViewed}>Last Viewed</div>
+            </div>
             {filteredRecipes.map(r => (
               <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
                 <div className={styles.listThumb}>🧁</div>
                 <div className={styles.listInfo}>
                   <div className={styles.listName}>{r.name}</div>
-                  <div className={styles.listMeta}>{r.ingredientCount} ingredients · Yield: {r.yield}</div>
+                  {r.yield !== '—' && <div className={styles.listMeta}>Yield: {r.yield}</div>}
                 </div>
-                <div className={styles.listTag}>{r.group}</div>
+                <div className={styles.listViewedTime}>{fmtTimeAgo(r.lastViewed) || '—'}</div>
               </div>
             ))}
           </div>
