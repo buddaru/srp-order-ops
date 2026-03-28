@@ -17,119 +17,11 @@
 
 .topRow {
   padding: 0 18px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* ── Right — counters ── */
-.right { margin-left: auto; display: flex; align-items: center; flex-shrink: 0; }
-.counters { display: flex; align-items: center; gap: 14px; }
-.counter { display: flex; align-items: center; gap: 5px; }
-.counterNum { font-size: 13px; font-weight: 600; color: var(--text); }
-.counterLabel { font-size: 10px; color: var(--text-muted); font-weight: 400; }
-.counterDivider { width: 1px; height: 16px; background: var(--border-2); }
-
-/* ── Mobile ── */
-@media (max-width: 768px) {
-  .hamburger { display: flex; }
-  .topRow { padding: 0 14px; gap: 10px; }
-  .counters { gap: 10px; }
-  .counterNum { font-size: 13px; }
-  .counterLabel { font-size: 10px; }
-  .counterDivider { height: 14px; }
-}
-
-/* ── Sync button ── */
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.syncBtn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 12px; margin-right: 14px;
-  background: var(--bg); border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
-  font-size: 11px; font-weight: 500; color: var(--text-2);
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
-}
-.syncBtn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--brand); color: var(--brand); }
-.syncBtn:disabled { opacity: 0.65; cursor: not-allowed; }
-
-/* ── Pacific time clock ── */
-.clock {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  white-space: nowrap;
-  font-family: 'DM Sans', sans-serif;
-  flex-shrink: 0;
-}
-
-/* ── Hamburger — mobile only ── */
-.hamburger {
-  display: none;
-  background: none; border: 1px solid var(--border-2); border-radius: 6px;
-  width: 32px; height: 32px; flex-direction: column; gap: 4px;
-  align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0;
-}
-.hamburger span { display: block; width: 14px; height: 1.5px; background: var(--text-muted); border-radius: 2px; }
-
-.topRow {
-  padding: 0 18px;
   height: 50px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
-/* ── Search — icon pinned inside left edge ── */
-.searchWrap { flex: 1; max-width: 300px; position: relative; }
-
-.searchInner {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-  flex-shrink: 0;
-  z-index: 1;
-}
-
-.searchInput {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  padding: 0 12px 0 32px !important;
-  height: 34px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px !important;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-  box-shadow: none !important;
-  -webkit-appearance: none;
-}
-.searchInput::placeholder { color: var(--text-muted); }
-.searchInput:focus { border-color: var(--accent); box-shadow: none !important; }
-
-/* ── Results dropdown ── */
-.results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-md); z-index: 400; overflow: hidden; }
-.resultItem { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
-.resultItem:last-child { border-bottom: none; }
-.resultItem:hover { background: var(--bg); }
-.resultName { font-size: 13px; font-weight: 500; color: var(--text); }
-.resultId { font-size: 10px; color: var(--text-muted); font-weight: 400; }
-.resultMeta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.highlight { background: #FEF3C7; color: #92400E; border-radius: 2px; padding: 0 2px; }
-.empty { padding: 14px; font-size: 13px; color: var(--text-muted); font-style: italic; }
 
 /* ── Right — counters ── */
 .right { margin-left: auto; display: flex; align-items: center; flex-shrink: 0; }
@@ -143,8 +35,6 @@
 @media (max-width: 768px) {
   .hamburger { display: flex; }
   .topRow { padding: 0 14px; gap: 10px; }
-  .searchWrap { max-width: unset; flex: 1; }
-  /* Counters — full labels visible on mobile, compact gap */
   .counters { gap: 10px; }
   .counterNum { font-size: 13px; }
   .counterLabel { font-size: 10px; }

@@ -8,7 +8,7 @@
 .sidebar {
   width: 210px;
   min-width: 210px;
-  background: var(--card);
+  background: var(--bg);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -77,9 +77,9 @@
   transition: background 0.1s, color 0.1s;
   white-space: nowrap; overflow: hidden;
 }
-.sidebarItem:hover { background: var(--bg); color: var(--text); }
-.sidebarItemActive { background: #18181B; color: #fff; font-weight: 500; border: none; }
-.sidebarItemActive:hover { background: #27272A; color: #fff; }
+.sidebarItem:hover { background: var(--bg-2); color: var(--text); }
+.sidebarItemActive { background: var(--card); color: var(--text); font-weight: 500; border: 1px solid var(--border); }
+.sidebarItemActive:hover { background: var(--card); }
 
 .sidebarIcon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 16px; }
 
