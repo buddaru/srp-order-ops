@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { fmtDate, fmtTime, orderTotal, fmt$, STAGES } from '../utils/helpers'
 import styles from './ListView.module.css'
 
@@ -12,6 +13,9 @@ const AVATAR_COLORS = ['amber','pink','teal','blue','coral','purple']
 const avatarColor = (id) => AVATAR_COLORS[parseInt(id.replace('SRP-','')) % AVATAR_COLORS.length]
 
 export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit }) {
+  const [sortCol, setSortCol] = useState('pickup')
+  const [sortDir, setSortDir] = useState('asc')
+
   if (orders.length === 0) return (
     <div className={styles.empty}>
       <div className={styles.emptyIcon}>🧁</div>
@@ -20,10 +24,38 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit 
     </div>
   )
 
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+
   const sorted = [...orders].sort((a, b) => {
-    if (a.pickupDate !== b.pickupDate) return a.pickupDate.localeCompare(b.pickupDate)
-    return (a.pickupTime || '').localeCompare(b.pickupTime || '')
+    let av, bv
+    if (sortCol === 'customer') { av = a.customer; bv = b.customer }
+    else if (sortCol === 'total') { av = orderTotal(a); bv = orderTotal(b) }
+    else { // pickup (default)
+      av = (a.pickupDate || '') + (a.pickupTime || '')
+      bv = (b.pickupDate || '') + (b.pickupTime || '')
+    }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1
+    if (av > bv) return sortDir === 'asc' ? 1 : -1
+    return 0
   })
+
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <span className={styles.sortIdle}>↕</span>
+    return <span className={styles.sortActive}>{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  const Th = ({ col, label, style }) => (
+    <div
+      className={`${styles.th} ${sortCol === col ? styles.thActive : ''}`}
+      style={style}
+      onClick={() => handleSort(col)}
+    >
+      {label} <SortIcon col={col} />
+    </div>
+  )
 
   return (
     <div className={styles.wrap}>
@@ -33,10 +65,10 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit 
           <div className={styles.tr}>
             <div className={styles.th} style={{width:36}}></div>
             <div className={styles.th} style={{width:28}}></div>
-            <div className={styles.th} style={{flex:'0 0 160px'}}>Customer</div>
+            <Th col="customer" label="Customer" style={{flex:'0 0 160px'}} />
             <div className={styles.th} style={{flex:1}}>Items</div>
-            <div className={styles.th} style={{width:80}}>Total</div>
-            <div className={styles.th} style={{width:120}}>Pickup</div>
+            <Th col="total" label="Total" style={{width:80}} />
+            <Th col="pickup" label="Pickup" style={{width:120}} />
             <div className={styles.th} style={{width:130}}>Stage</div>
           </div>
         </div>
@@ -50,9 +82,6 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit 
                   const flavor = [i.flavor1, i.flavor2].filter(Boolean).join(', ')
                   return `${i.qty}× ${i.name}${flavor ? ` (${flavor})` : ''}`
                 }).join(', ')
-            const si   = STAGES.findIndex(s => s.id === o.stage)
-            const prev = STAGES[si - 1]
-            const next = STAGES[si + 1]
             return (
               <div key={o.id} className={styles.tr} onClick={() => onDrawer(o.id)}>
                 <div className={styles.td}>

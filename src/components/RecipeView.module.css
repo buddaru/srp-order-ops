@@ -180,3 +180,15 @@
   .content { padding: 16px 16px 80px; }
   .scaleWrap { margin-left: 0; }
 }
+
+.btnEdit {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 7px;
+  background: #18181B; color: #fff; border: none;
+  font-size: 12px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.btnEdit:hover { opacity: 0.85; }
+.editFab { display: none; }

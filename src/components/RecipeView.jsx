@@ -203,6 +203,9 @@ export default function RecipeView() {
           <button className={styles.btnOutline}>
             <ShareIcon /> Share
           </button>
+          <button className={styles.btnEdit} onClick={() => navigate(`/recipes/${id}/edit`)}>
+            <EditIcon /> Edit Recipe
+          </button>
         </div>
       </div>
 
@@ -290,9 +293,6 @@ export default function RecipeView() {
       </div>
 
       {/* ── Edit FAB ── */}
-      <button className={styles.editFab} onClick={() => navigate(`/recipes/${id}/edit`)}>
-        <EditIcon /> Edit Recipe
-      </button>
     </div>
   )
 }

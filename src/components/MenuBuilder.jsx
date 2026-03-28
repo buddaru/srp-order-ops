@@ -7,6 +7,8 @@ import {
 } from '../data/menuData'
 import styles from './MenuBuilder.module.css'
 
+const ALL_CATEGORIES = [...CATEGORIES, 'Custom Item']
+
 const blankAddonState = () => ({
   frostingColor: false, frostingColorNote: '',
   cakeColor: false, cakeColorNote: '',
@@ -78,6 +80,10 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const [flavor2, setFlavor2]           = useState('None')
   const [addonsOpen, setAddonsOpen]     = useState(false)
   const [editIdx, setEditIdx]           = useState(null)
+  const [customName, setCustomName]     = useState('')
+  const [customItemPrice, setCustomItemPrice] = useState('')
+
+  const isCustomCat = activeCat === 'Custom Item'
 
   const catItems    = MENU.filter(m => m.category === activeCat)
   const isCake      = selectedItem && CAKE_CATEGORIES.includes(selectedItem.category)
@@ -138,6 +144,25 @@ export default function MenuBuilder({ cartItems, onChange }) {
 
   const cartTotal = cartItems.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
 
+  const handleAddCustomItem = () => {
+    if (!customName.trim()) return
+    const price = parseFloat(customItemPrice) || 0
+    const newItem = {
+      name: customName.trim(),
+      price,
+      qty: 1,
+      category: 'Custom',
+      addonSummary: [],
+    }
+    if (editIdx !== null) {
+      const next = [...cartItems]; next[editIdx] = newItem; onChange(next); setEditIdx(null)
+    } else {
+      onChange([...cartItems, newItem])
+    }
+    setCustomName('')
+    setCustomItemPrice('')
+  }
+
   return (
     <div className={styles.wrap}>
 
@@ -146,16 +171,53 @@ export default function MenuBuilder({ cartItems, onChange }) {
 
         {/* Category tabs */}
         <div className={styles.catTabs}>
-          {CATEGORIES.map(c => (
+          {ALL_CATEGORIES.map(c => (
             <button
               key={c}
-              className={`${styles.catTab} ${activeCat === c ? styles.catTabActive : ''}`}
+              className={`${styles.catTab} ${activeCat === c ? styles.catTabActive : ''} ${c === 'Custom Item' ? styles.catTabCustom : ''}`}
               onClick={() => { setActiveCat(c); setSelectedItem(null); setAddonsOpen(false) }}
             >{c}</button>
           ))}
         </div>
 
-        {/* Item chips */}
+        {/* Custom item form */}
+        {isCustomCat && (
+          <div className={styles.customItemForm}>
+            <div className={styles.customItemTitle}>Add a custom line item</div>
+            <div className={styles.customItemFields}>
+              <input
+                type="text"
+                className={styles.customItemName}
+                placeholder="Item name (e.g. Delivery fee, Rush order, Special decoration)"
+                value={customName}
+                onChange={e => setCustomName(e.target.value)}
+              />
+              <div className={styles.customItemPriceWrap}>
+                <span className={styles.customItemDollar}>$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className={styles.customItemPriceInput}
+                  placeholder="0.00"
+                  value={customItemPrice}
+                  onChange={e => setCustomItemPrice(e.target.value)}
+                />
+              </div>
+            </div>
+            <button
+              className={styles.saveItemBtn}
+              onClick={handleAddCustomItem}
+              disabled={!customName.trim()}
+            >
+              + Add to order
+            </button>
+          </div>
+        )}
+        </div>
+
+        {/* Item chips — standard categories only */}
+        {!isCustomCat && (
         <div className={styles.itemGrid}>
           {catItems.map(item => (
             <div
@@ -168,9 +230,10 @@ export default function MenuBuilder({ cartItems, onChange }) {
             </div>
           ))}
         </div>
+        )}
 
-        {/* Customization zone */}
-        {selectedItem && (
+        {/* Customization zone — standard categories only */}
+        {!isCustomCat && selectedItem && (
           <div className={styles.customZone}>
 
             {/* Header with live price */}

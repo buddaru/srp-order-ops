@@ -127,3 +127,59 @@
   .flavorRow { flex-direction: column; gap: 8px; }
   .catTab { padding: 8px 11px; font-size: 11px; }
 }
+
+/* ── Custom Item tab ── */
+.catTabCustom { border-left: 1px solid var(--border-2) !important; margin-left: 4px; }
+
+.customItemForm {
+  padding: 16px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border-2);
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.customItemTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.customItemFields {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.customItemName {
+  flex: 1;
+  font-size: 13px !important;
+  padding: 8px 10px !important;
+  border-radius: var(--radius-sm) !important;
+  width: auto !important;
+}
+.customItemPriceWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  background: #fff;
+  width: 100px;
+  flex-shrink: 0;
+}
+.customItemDollar {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.customItemPriceInput {
+  border: none !important;
+  padding: 8px 0 !important;
+  width: 60px !important;
+  font-size: 13px !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
