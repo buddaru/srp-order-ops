@@ -21,7 +21,6 @@ function PacificClock() {
   }, [])
   return <span className={styles.clock}>{now}</span>
 }
-}
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen, onOrdersSynced }) {
   const { user } = useAuth()
