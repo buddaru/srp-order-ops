@@ -49,7 +49,7 @@ export default function ListView({ orders, onDrawer, onMove, onSetStage, onEdit 
 
   const Th = ({ col, label, style }) => (
     <div
-      className={`${styles.th} ${sortCol === col ? styles.thActive : ''}`}
+      className={`${styles.th} ${styles.thSortable} ${sortCol === col ? styles.thActive : ''}`}
       style={style}
       onClick={() => handleSort(col)}
     >

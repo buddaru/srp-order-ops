@@ -430,7 +430,11 @@ export default function Recipes() {
                 Name {sortBy === 'az' ? '↑' : sortBy === 'za' ? '↓' : ''}
               </div>
               <div className={styles.listHeaderViewed} ref={sortRef} style={{position:'relative', cursor:'pointer'}} onClick={() => setSortOpen(v => !v)}>
-                {sortBy === 'last_viewed' ? 'Last Viewed ↓' : sortBy === 'last_modified' ? 'Last Modified ↓' : 'Last Viewed'}
+                {sortBy === 'last_viewed' && 'Last Viewed ↓'}
+                {sortBy === 'last_modified' && 'Last Modified ↓'}
+                {sortBy === 'az' && 'Name A→Z ↓'}
+                {sortBy === 'za' && 'Name Z→A ↓'}
+                {!['last_viewed','last_modified','az','za'].includes(sortBy) && 'Last Viewed'}
                 {sortOpen && (
                   <div className={styles.sortDrop}>
                     <button className={`${styles.sortItem} ${sortBy==='last_viewed'?styles.sortItemActive:''}`} onClick={e=>{e.stopPropagation();setSortBy('last_viewed');setSortOpen(false)}}>Last Viewed</button>
