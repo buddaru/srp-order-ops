@@ -18,6 +18,8 @@ function highlight(str, q) {
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen, onOrdersSynced }) {
   const { user } = useAuth()
+  const location = useLocation()
+  const isOrdersPage = location.pathname === '/'
   const [syncing, setSyncing]   = useState(false)
   const [syncMsg, setSyncMsg]   = useState(null)
 
@@ -60,18 +62,20 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
 
         {/* Right — sync button + counters */}
         <div className={styles.right}>
-          <button
-            className={styles.syncBtn}
-            onClick={handleSync}
-            disabled={syncing}
-            title="Sync orders from email"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }}>
-              <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-              <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-            </svg>
-            {syncing ? 'Syncing...' : syncMsg || 'Sync Orders'}
-          </button>
+          {isOrdersPage && (
+            <button
+              className={styles.syncBtn}
+              onClick={handleSync}
+              disabled={syncing}
+              title="Sync orders from email"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }}>
+                <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+              </svg>
+              {syncing ? 'Syncing...' : syncMsg || 'Sync Orders'}
+            </button>
+          )}
           <div className={styles.counters}>
             <div className={styles.counter}>
               <span className={styles.counterNum}>{todayCount}</span>

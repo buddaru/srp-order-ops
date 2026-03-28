@@ -234,6 +234,10 @@ export default function Recipes() {
       setLoadingRecipes(false)
     }
     load()
+    // Reload when user navigates back to this page
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   useEffect(() => {

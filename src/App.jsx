@@ -320,10 +320,6 @@ export default function App() {
             <span className={styles.sidebarIcon}><IconOrders /></span>
             {sidebarOpen && <span>Orders</span>}
           </NavLink>
-          <NavLink to="/schedule" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Schedule' : undefined}>
-            <span className={styles.sidebarIcon}><IconSchedule /></span>
-            {sidebarOpen && <span>Schedule</span>}
-          </NavLink>
           <NavLink to="/production" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Daily Production' : undefined}>
             <span className={styles.sidebarIcon}><IconProd /></span>
             {sidebarOpen && <span>Daily Production</span>}
@@ -331,6 +327,10 @@ export default function App() {
           <NavLink to="/waste" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Food Waste' : undefined}>
             <span className={styles.sidebarIcon}><IconWaste /></span>
             {sidebarOpen && <span>Food Waste</span>}
+          </NavLink>
+          <NavLink to="/schedule" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Schedule' : undefined}>
+            <span className={styles.sidebarIcon}><IconSchedule /></span>
+            {sidebarOpen && <span>Schedule</span>}
           </NavLink>
 
           {sidebarOpen && <div className={styles.sidebarSection} style={{marginTop: 6}}>Kitchen</div>}
