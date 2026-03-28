@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
 import styles from './Recipes.module.css'
 
@@ -197,7 +197,8 @@ function NewGroupModal({ onClose, onCreate }) {
 }
 
 export default function Recipes() {
-  const navigate                = useNavigate()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [tab, setTab]           = useState('recipes')
   const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy]     = useState('last_viewed')
@@ -234,11 +235,7 @@ export default function Recipes() {
       setLoadingRecipes(false)
     }
     load()
-    // Reload when user navigates back to this page
-    const onFocus = () => load()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [])
+  }, [location.pathname])
 
   useEffect(() => {
     const handler = e => {
