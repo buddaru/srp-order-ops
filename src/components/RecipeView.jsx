@@ -150,8 +150,8 @@ export default function RecipeView() {
       )
       if (data) {
         setRecipe(data)
-        // Update last_viewed timestamp
-        supabase.from('recipes').update({ last_viewed: new Date().toISOString() }).eq('id', id)
+        // Await the update so it's committed before user navigates back
+        await supabase.from('recipes').update({ last_viewed: new Date().toISOString() }).eq('id', id)
       }
       setLoading(false)
     }

@@ -110,25 +110,26 @@
 .viewToggle {
   display: flex;
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  border-radius: 7px;
+  overflow: visible;
   background: var(--card);
 }
 .vtBtn {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
+  padding: 6px 10px;
   font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
-  background: transparent;
+  background: var(--card);
   border: none;
   cursor: pointer;
   transition: all 0.12s;
   font-family: 'DM Sans', sans-serif;
-  letter-spacing: 0.01em;
 }
+.vtBtn:first-child { border-radius: 6px 0 0 6px; }
+.vtBtn:last-child { border-radius: 0 6px 6px 0; }
 .vtBtn:hover { background: var(--bg); color: var(--text); }
 .vtActive { background: var(--brand) !important; color: #fff !important; }
 .vtDivider { width: 1px; background: var(--border); flex-shrink: 0; }

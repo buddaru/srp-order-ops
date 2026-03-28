@@ -18,23 +18,6 @@ const fmtShort = (ds) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function PacificClock() {
-  const [now, setNow] = useState('')
-  useEffect(() => {
-    const update = () => {
-      const s = new Date().toLocaleString('en-US', {
-        timeZone: 'America/Los_Angeles',
-        weekday: 'short', month: 'short', day: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true,
-      })
-      setNow(s)
-    }
-    update()
-    const t = setInterval(update, 30000)
-    return () => clearInterval(t)
-  }, [])
-  return <span className={styles.clock}>{now}</span>
-}
 
 export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect, selectedStage, onStageChange }) {
   const [startVal, setStartVal]   = useState('')
@@ -136,8 +119,6 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
 
   return (
     <div className={styles.strip}>
-      <PacificClock />
-      <div className={styles.stripDivider} />
 
       {/* Date dropdown */}
       <div className={styles.stageWrap} ref={dateRef}>

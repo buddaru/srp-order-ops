@@ -105,3 +105,13 @@
 }
 .syncBtn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--brand); color: var(--brand); }
 .syncBtn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+/* ── Pacific time clock ── */
+.clock {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}

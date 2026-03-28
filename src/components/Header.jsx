@@ -4,16 +4,23 @@ import { STAGES, fmtDate, diffDays, fmtNow, toDS } from '../utils/helpers'
 import styles from './Header.module.css'
 import { useAuth } from '../context/AuthContext'
 
-function highlight(str, q) {
-  const i = str.toLowerCase().indexOf(q.toLowerCase())
-  if (i === -1) return str
-  return (
-    <>
-      {str.substring(0, i)}
-      <mark className={styles.highlight}>{str.substring(i, i + q.length)}</mark>
-      {str.substring(i + q.length)}
-    </>
-  )
+function PacificClock() {
+  const [now, setNow] = useState('')
+  useEffect(() => {
+    const update = () => {
+      const s = new Date().toLocaleString('en-US', {
+        timeZone: 'America/Los_Angeles',
+        weekday: 'short', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      })
+      setNow(s)
+    }
+    update()
+    const t = setInterval(update, 30000)
+    return () => clearInterval(t)
+  }, [])
+  return <span className={styles.clock}>{now}</span>
+}
 }
 
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen, onOrdersSynced }) {
@@ -57,6 +64,8 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
         <button className={styles.hamburger} onClick={onMenuOpen}>
           <span/><span/><span/>
         </button>
+
+        <PacificClock />
 
         <div style={{ flex: 1 }} />
 

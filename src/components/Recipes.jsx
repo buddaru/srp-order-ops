@@ -202,6 +202,8 @@ export default function Recipes() {
   const [tab, setTab]           = useState('recipes')
   const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy]     = useState('last_viewed')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef                 = useRef(null)
   const [query, setQuery]       = useState('')
   const [dropOpen, setDropOpen] = useState(false)
   const [step, setStep]         = useState(null)
@@ -217,8 +219,10 @@ export default function Recipes() {
 
   useEffect(() => {
     const load = async () => {
+      // Small delay ensures any in-flight last_viewed write has committed
+      await new Promise(r => setTimeout(r, 400))
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed').order('name')),
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       if (recs) {
@@ -229,6 +233,7 @@ export default function Recipes() {
           ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
           yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
           lastViewed:      r.last_viewed || null,
+          lastModified:    r.updated_at || null,
         })))
       }
       if (grps) setGroups(grps)
@@ -240,6 +245,7 @@ export default function Recipes() {
   useEffect(() => {
     const handler = e => {
       if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false)
+      if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -268,7 +274,7 @@ export default function Recipes() {
         } else {
           // Done — reload recipes and groups
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed').order('name'),
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at').order('name'),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
@@ -279,6 +285,7 @@ export default function Recipes() {
               ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
               yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
               lastViewed:      r.last_viewed || null,
+              lastModified:    r.updated_at || null,
             })))
           }
           if (grps) setGroups(grps)
@@ -303,12 +310,17 @@ export default function Recipes() {
     .sort((a, b) => {
       if (sortBy === 'az') return a.name.localeCompare(b.name)
       if (sortBy === 'za') return b.name.localeCompare(a.name)
-      // last_viewed — most recent first, nulls last
       if (sortBy === 'last_viewed') {
         if (!a.lastViewed && !b.lastViewed) return 0
         if (!a.lastViewed) return 1
         if (!b.lastViewed) return -1
         return new Date(b.lastViewed) - new Date(a.lastViewed)
+      }
+      if (sortBy === 'last_modified') {
+        if (!a.lastModified && !b.lastModified) return 0
+        if (!a.lastModified) return 1
+        if (!b.lastModified) return -1
+        return new Date(b.lastModified) - new Date(a.lastModified)
       }
       return 0
     })
@@ -382,20 +394,7 @@ export default function Recipes() {
             <button key={t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {tab === 'recipes' && (
-            <select
-              className={styles.sortSelect}
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-            >
-              <option value="last_viewed">Last Viewed</option>
-              <option value="az">A → Z</option>
-              <option value="za">Z → A</option>
-            </select>
-          )}
-          <ViewToggle />
-        </div>
+        <ViewToggle />
       </div>
 
       {/* ── Recipes tab ── */}
@@ -427,8 +426,20 @@ export default function Recipes() {
         ) : (
           <div className={styles.listView}>
             <div className={styles.listHeader}>
-              <div className={styles.listHeaderName}>Name</div>
-              <div className={styles.listHeaderViewed}>Last Viewed</div>
+              <div className={styles.listHeaderName} onClick={() => setSortBy(sortBy === 'az' ? 'za' : 'az')} style={{cursor:'pointer'}}>
+                Name {sortBy === 'az' ? '↑' : sortBy === 'za' ? '↓' : ''}
+              </div>
+              <div className={styles.listHeaderViewed} ref={sortRef} style={{position:'relative', cursor:'pointer'}} onClick={() => setSortOpen(v => !v)}>
+                {sortBy === 'last_viewed' ? 'Last Viewed ↓' : sortBy === 'last_modified' ? 'Last Modified ↓' : 'Last Viewed'}
+                {sortOpen && (
+                  <div className={styles.sortDrop}>
+                    <button className={`${styles.sortItem} ${sortBy==='last_viewed'?styles.sortItemActive:''}`} onClick={e=>{e.stopPropagation();setSortBy('last_viewed');setSortOpen(false)}}>Last Viewed</button>
+                    <button className={`${styles.sortItem} ${sortBy==='last_modified'?styles.sortItemActive:''}`} onClick={e=>{e.stopPropagation();setSortBy('last_modified');setSortOpen(false)}}>Last Modified</button>
+                    <button className={`${styles.sortItem} ${sortBy==='az'?styles.sortItemActive:''}`} onClick={e=>{e.stopPropagation();setSortBy('az');setSortOpen(false)}}>A → Z</button>
+                    <button className={`${styles.sortItem} ${sortBy==='za'?styles.sortItemActive:''}`} onClick={e=>{e.stopPropagation();setSortBy('za');setSortOpen(false)}}>Z → A</button>
+                  </div>
+                )}
+              </div>
             </div>
             {filteredRecipes.map(r => (
               <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
