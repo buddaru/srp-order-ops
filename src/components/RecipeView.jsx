@@ -148,7 +148,11 @@ export default function RecipeView() {
       const { data } = await safeQuery(() =>
         supabase.from('recipes').select('*').eq('id', id).single()
       )
-      if (data) setRecipe(data)
+      if (data) {
+        setRecipe(data)
+        // Update last_viewed timestamp
+        supabase.from('recipes').update({ last_viewed: new Date().toISOString() }).eq('id', id)
+      }
       setLoading(false)
     }
     load()

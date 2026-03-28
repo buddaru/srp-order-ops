@@ -120,3 +120,27 @@
 .stageCnt_in_production { background: #FAEEDA; color: #633806; }
 .stageCnt_ready         { background: #EAF3DE; color: #27500A; }
 .stageCnt_picked_up     { background: #E6F1FB; color: #0C447C; }
+
+/* ── Pacific clock ── */
+.clock {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+.stripDivider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+/* ── Date dropdown button ── */
+.dateBtn { font-weight: 600; color: var(--text) !important; }
+.dateCnt {
+  background: var(--bg-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border-2);
+  font-family: 'DM Sans', sans-serif;
+}
