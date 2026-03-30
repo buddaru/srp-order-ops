@@ -214,6 +214,8 @@ export default function Recipes() {
   const [loadingRecipes, setLoadingRecipes] = useState(true)
   const [syncing, setSyncing]   = useState(false)
   const [syncMsg, setSyncMsg]   = useState(null)
+  const PAGE_SIZE = 20
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const dropRef = useRef(null)
 
@@ -222,7 +224,7 @@ export default function Recipes() {
       // Small delay ensures any in-flight last_viewed write has committed
       await new Promise(r => setTimeout(r, 400))
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at').order('name')),
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at, image_url').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       if (recs) {
@@ -234,6 +236,7 @@ export default function Recipes() {
           yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
           lastViewed:      r.last_viewed || null,
           lastModified:    r.updated_at || null,
+          imageUrl:        r.image_url || null,
         })))
       }
       if (grps) setGroups(grps)
@@ -274,7 +277,7 @@ export default function Recipes() {
         } else {
           // Done — reload recipes and groups
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at').order('name'),
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at, image_url').order('name'),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
@@ -411,7 +414,12 @@ export default function Recipes() {
           <div className={styles.recipeGrid}>
             {filteredRecipes.map(r => (
               <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/recipes/${r.id}`)}>
-                <div className={styles.cardThumb}>🧁</div>
+                <div className={styles.cardThumb}>
+                  {r.imageUrl
+                    ? <img src={r.imageUrl} alt={r.name} className={styles.cardThumbImg} />
+                    : <div className={styles.cardThumbEmpty} />
+                  }
+                </div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardName}>{r.name}</div>
                   <div className={styles.cardMeta}>
@@ -445,9 +453,14 @@ export default function Recipes() {
                 )}
               </div>
             </div>
-            {filteredRecipes.map(r => (
+            {filteredRecipes.slice(0, visibleCount).map(r => (
               <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
-                <div className={styles.listThumb}>🧁</div>
+                <div className={styles.listThumb}>
+                  {r.imageUrl
+                    ? <img src={r.imageUrl} alt={r.name} className={styles.listThumbImg} />
+                    : <div className={styles.listThumbEmpty} />
+                  }
+                </div>
                 <div className={styles.listInfo}>
                   <div className={styles.listName}>{r.name}</div>
                   {r.yield !== '—' && <div className={styles.listMeta}>Yield: {r.yield}</div>}
@@ -455,6 +468,11 @@ export default function Recipes() {
                 <div className={styles.listViewedTime}>{fmtTimeAgo(r.lastViewed) || '—'}</div>
               </div>
             ))}
+          {visibleCount < filteredRecipes.length && (
+            <button className={styles.loadMore} onClick={() => setVisibleCount(v => v + PAGE_SIZE)}>
+              Load more ({filteredRecipes.length - visibleCount} remaining)
+            </button>
+          )}
           </div>
         )
       )}

@@ -59,7 +59,7 @@
 .sidebarToggle:hover { background: var(--bg-2); color: var(--text); }
 
 /* Nav */
-.sidebarNav { flex: 1; padding: 8px 7px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; }
+.sidebarNav { flex: 1; padding: 8px 7px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
 .sidebarSection {
   font-size: 9px; font-weight: 600; letter-spacing: 0.09em;
@@ -92,7 +92,7 @@
 }
 
 /* Footer */
-.sidebarFooter { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.sidebarFooter { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 .sidebarCollapsed .sidebarFooter { padding: 8px; align-items: center; }
 .sidebarUser { display: flex; align-items: center; gap: 9px; overflow: hidden; }
 .sidebarAvatar {
@@ -138,11 +138,15 @@
     top: 0; left: 0; bottom: 0;
     width: 220px !important;
     min-width: 220px !important;
-    height: 100vh;
+    height: 100%;
+    height: -webkit-fill-available;
     transform: translateX(-100%);
     transition: transform 0.22s ease;
     box-shadow: 4px 0 24px rgba(0,0,0,0.15);
     z-index: 300;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
   }
   .sidebarOpen .sidebar {
     transform: translateX(0);

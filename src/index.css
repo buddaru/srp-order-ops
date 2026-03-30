@@ -110,14 +110,14 @@ textarea { resize: none; height: 68px; line-height: 1.6; }
 :root {
   --font-title:   'Fraunces', Georgia, serif;
   --font-body:    'DM Sans', sans-serif;
-  --text-xs:      11px;
-  --text-sm:      12px;
-  --text-base:    13px;
-  --text-md:      14px;
-  --text-lg:      15px;
-  --text-xl:      18px;
-  --text-2xl:     22px;
-  --text-3xl:     28px;
+  --text-xs:      12px;
+  --text-sm:      13px;
+  --text-base:    14px;
+  --text-md:      15px;
+  --text-lg:      16px;
+  --text-xl:      19px;
+  --text-2xl:     23px;
+  --text-3xl:     29px;
 }
 
 /* ── Page-level typography defaults ── */

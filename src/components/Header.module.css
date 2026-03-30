@@ -34,11 +34,16 @@
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .hamburger { display: flex; }
-  .topRow { padding: 0 14px; gap: 10px; }
-  .counters { gap: 10px; }
+  .topRow { padding: 0 12px; gap: 8px; }
+  .counters { gap: 8px; }
   .counterNum { font-size: 13px; }
   .counterLabel { font-size: 10px; }
   .counterDivider { height: 14px; }
+  /* On mobile hide the sync button text label, show icon only */
+  .syncBtn { padding: 5px 8px; margin-right: 8px; font-size: 0; gap: 0; }
+  .syncBtn svg { width: 14px; height: 14px; }
+  /* Prevent right side from overflowing */
+  .right { gap: 0; overflow: hidden; min-width: 0; }
 }
 
 /* ── Sync button ── */

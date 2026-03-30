@@ -11,7 +11,6 @@ function PacificClock() {
       const s = new Date().toLocaleString('en-US', {
         timeZone: 'America/Los_Angeles',
         weekday: 'short', month: 'short', day: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true,
       })
       setNow(s)
     }

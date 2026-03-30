@@ -269,8 +269,6 @@ export default function RecipeView() {
         <button className={styles.backBtn} onClick={() => navigate('/recipes')}>
           <BackIcon /> Recipes
         </button>
-        <span className={styles.breadcrumbSep}>/</span>
-        <span className={styles.breadcrumbName}>{recipe.name}</span>
         <div className={styles.topbarRight}>
           <button className={styles.btnOutline}><ShareIcon /> Share</button>
           <button className={styles.btnEdit} onClick={() => navigate(`/recipes/${id}/edit`)}>

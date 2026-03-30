@@ -106,8 +106,9 @@
 
 /* ── Hero media ── */
 .heroMedia {
-  width: 100%; height: 300px; object-fit: cover;
+  width: 100%; height: auto; max-height: 520px; object-fit: contain;
   border-radius: 10px; display: block; margin-bottom: 10px;
+  background: var(--bg-2);
 }
 .heroEmpty {
   width: 100%; height: 140px; border-radius: 10px;

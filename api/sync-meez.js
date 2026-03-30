@@ -68,6 +68,7 @@ async function fetchRecipeSteps(id) {
       text:      s.description || '',
       is_header: s.is_header || false,
       is_note:   s.is_note   || false,
+      media:     s.media || s.step_media || s.image || s.photo || null,
     }))
 }
 
