@@ -221,10 +221,8 @@ export default function Recipes() {
 
   useEffect(() => {
     const load = async () => {
-      // Small delay ensures any in-flight last_viewed write has committed
-      await new Promise(r => setTimeout(r, 400))
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at, image_url').order('name')),
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       if (recs) {
@@ -232,7 +230,7 @@ export default function Recipes() {
           id:              r.id,
           name:            r.name,
           group:           r.group_name || 'Uncategorized',
-          ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+          ingredientCount: 0,
           yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
           lastViewed:      r.last_viewed || null,
           lastModified:    r.updated_at || null,
@@ -277,7 +275,7 @@ export default function Recipes() {
         } else {
           // Done — reload recipes and groups
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, ingredients, last_viewed, updated_at, image_url').order('name'),
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name'),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
@@ -285,7 +283,7 @@ export default function Recipes() {
               id:              r.id,
               name:            r.name,
               group:           r.group_name || 'Uncategorized',
-              ingredientCount: Array.isArray(r.ingredients) ? r.ingredients.filter(i => i.type === 'item').length : 0,
+              ingredientCount: 0,
               yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
               lastViewed:      r.last_viewed || null,
               lastModified:    r.updated_at || null,
@@ -416,7 +414,9 @@ export default function Recipes() {
               <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/recipes/${r.id}`)}>
                 <div className={styles.cardThumb}>
                   {r.imageUrl
-                    ? <img src={r.imageUrl} alt={r.name} className={styles.cardThumbImg} />
+                    ? /\.(mp4|mov|webm|m4v)(\?|$)/i.test(r.imageUrl)
+                      ? <video src={r.imageUrl} className={styles.cardThumbImg} muted playsInline preload="metadata" style={{pointerEvents:'none'}} />
+                      : <img src={r.imageUrl} alt={r.name} className={styles.cardThumbImg} />
                     : <div className={styles.cardThumbEmpty} />
                   }
                 </div>
@@ -455,12 +455,6 @@ export default function Recipes() {
             </div>
             {filteredRecipes.slice(0, visibleCount).map(r => (
               <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
-                <div className={styles.listThumb}>
-                  {r.imageUrl
-                    ? <img src={r.imageUrl} alt={r.name} className={styles.listThumbImg} />
-                    : <div className={styles.listThumbEmpty} />
-                  }
-                </div>
                 <div className={styles.listInfo}>
                   <div className={styles.listName}>{r.name}</div>
                   {r.yield !== '—' && <div className={styles.listMeta}>Yield: {r.yield}</div>}

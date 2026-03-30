@@ -4,23 +4,6 @@ import { STAGES, fmtDate, diffDays, fmtNow, toDS } from '../utils/helpers'
 import styles from './Header.module.css'
 import { useAuth } from '../context/AuthContext'
 
-function PacificClock() {
-  const [now, setNow] = useState('')
-  useEffect(() => {
-    const update = () => {
-      const s = new Date().toLocaleString('en-US', {
-        timeZone: 'America/Los_Angeles',
-        weekday: 'short', month: 'short', day: 'numeric',
-      })
-      setNow(s)
-    }
-    update()
-    const t = setInterval(update, 30000)
-    return () => clearInterval(t)
-  }, [])
-  return <span className={styles.clock}>{now}</span>
-}
-
 export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onSignOut, onMenuOpen, onOrdersSynced }) {
   const { user } = useAuth()
   const location = useLocation()
@@ -62,8 +45,6 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
         <button className={styles.hamburger} onClick={onMenuOpen}>
           <span/><span/><span/>
         </button>
-
-        <PacificClock />
 
         <div style={{ flex: 1 }} />
 

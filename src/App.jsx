@@ -92,7 +92,7 @@ export default function App() {
   const [showNew, setShowNew]         = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const { user, profile, isAdmin, signOut } = useAuth()
+  const { user, profile, isAdmin, signOut, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -287,6 +287,7 @@ export default function App() {
 
   const handleSelectDay = (ds, isCustom) => { setSelectedDay(ds); setCustomDate(isCustom); setDateRange(null) }
 
+  if (authLoading) return <div className={styles.loadingScreen}><div className={styles.loadingText}>Loading…</div></div>
   if (!user) return <Login />
 
   return (
