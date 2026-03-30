@@ -300,12 +300,11 @@ export default function App() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
           <div className={styles.sidebarLogo}>
-            <div className={styles.sidebarLogoMark}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#e8855a"><path d="M12 2C8 2 4 6 4 10c0 5 8 12 8 12s8-7 8-12c0-4-4-8-8-8z"/></svg>
-            </div>
             <div className={styles.sidebarLogoText}>
-              <div className={styles.sidebarLogoName}>Sweet Red Peach</div>
-              <div className={styles.sidebarLogoSub}>Carson, CA</div>
+              <div className={styles.sidebarLogoBrand}>
+                <span className={styles.sidebarLogoName}>cadro</span>
+                <span className={styles.sidebarLogoDot}></span>
+              </div>
             </div>
           </div>
           <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>

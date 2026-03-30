@@ -474,3 +474,17 @@
 }
 
 .savingLabel { font-size: 12px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
+
+/* ── Allergens ── */
+.allergenSection { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.allergenLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.allergenTags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.allergenTag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 3px 8px 3px 10px; border-radius: 20px; background: #EEF4EC; color: var(--brand); border: 1px solid #CDD8C8; }
+.allergenRemove { background: none; border: none; color: var(--brand); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.6; transition: opacity 0.12s; }
+.allergenRemove:hover { opacity: 1; }
+.allergenInputRow { display: flex; gap: 6px; }
+.allergenInput { flex: 1; border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; font-family: var(--font-body); color: var(--text); background: var(--bg); outline: none; }
+.allergenInput:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(36,90,31,0.1); }
+.allergenAdd { padding: 7px 14px; background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; font-family: var(--font-body); cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+.allergenAdd:hover { background: var(--brand-light); }
+.allergenHint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }

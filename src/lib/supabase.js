@@ -5,13 +5,14 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
-    persistSession: true,
-    storageKey: 'srp-auth',
-    autoRefreshToken: true,
-    detectSessionInUrl: false,
+    persistSession:      true,
+    storageKey:          'srp-auth',
+    autoRefreshToken:    true,
+    detectSessionInUrl:  false,
+    // Refresh the token 3 minutes before it expires instead of waiting until it's gone
+    refreshMargin:       180,
   },
   global: {
-    // 10-second fetch timeout for all requests
     fetch: (url, options = {}) => {
       const controller = new AbortController()
       const id = setTimeout(() => controller.abort(), 10000)

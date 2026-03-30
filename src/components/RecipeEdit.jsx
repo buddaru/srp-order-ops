@@ -166,6 +166,8 @@ export default function RecipeEdit() {
   const [recipeGroup, setRecipeGroup] = useState(seed.group || '')
   const [yieldQty,    setYieldQty]    = useState('')
   const [yieldUnit,   setYieldUnit]   = useState('')
+  const [allergens,   setAllergens]   = useState([])
+  const [newAllergen, setNewAllergen] = useState('')
   const [ings,        setIngs]        = useState(() => parseIngredients(seed.ingredients || ''))
   const [steps,       setSteps]       = useState(() => parseDirections(seed.prep || ''))
 
@@ -201,6 +203,7 @@ export default function RecipeEdit() {
       setRecipeGroup(data.group_name || '')
       setYieldQty(data.yield_qty     || '')
       setYieldUnit(data.yield_unit   || '')
+      setAllergens(data.allergens   || [])
       // Normalize ingredients: Meez uses {qty, unit} but editor uses {amount}
       const rawIngs = data.ingredients || []
       setIngs(rawIngs.map(ing => {
@@ -248,6 +251,7 @@ export default function RecipeEdit() {
       group_name:  recipeGroup.trim() || null,
       yield_qty:   yieldQty.trim()   || null,
       yield_unit:  yieldUnit.trim()  || null,
+      allergens,
       ingredients: ings,
       directions:  steps,
       updated_at:  new Date().toISOString(),
@@ -282,7 +286,7 @@ export default function RecipeEdit() {
 
     if (opts.thenNavigate && savedId) navigate(`/recipes/${savedId}`)
     else if (opts.thenNavigate) navigate('/recipes')
-  }, [recipeName, recipeGroup, yieldQty, yieldUnit, ings, steps, dbId, navigate])
+  }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, ings, steps, dbId, navigate])
 
   // ── Autosave — debounced 2s after any change ──
   const scheduleAutosave = useCallback(() => {
@@ -290,7 +294,7 @@ export default function RecipeEdit() {
     autosaveTimer.current = setTimeout(() => save(), 2000)
   }, [save])
 
-  useEffect(() => { scheduleAutosave() }, [recipeName, recipeGroup, yieldQty, yieldUnit, ings, steps])
+  useEffect(() => { scheduleAutosave() }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, ings, steps])
 
   useEffect(() => () => clearTimeout(autosaveTimer.current), [])
 
@@ -433,6 +437,45 @@ export default function RecipeEdit() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* ── Allergens ── */}
+            <div className={styles.allergenSection}>
+              <div className={styles.allergenLabel}>Allergens</div>
+              <div className={styles.allergenTags}>
+                {allergens.map((a, i) => (
+                  <span key={i} className={styles.allergenTag}>
+                    {a}
+                    <button className={styles.allergenRemove} onClick={() => setAllergens(prev => prev.filter((_, j) => j !== i))}>×</button>
+                  </span>
+                ))}
+              </div>
+              <div className={styles.allergenInputRow}>
+                <input
+                  className={styles.allergenInput}
+                  type="text"
+                  placeholder="e.g. Gluten, Dairy, Eggs…"
+                  value={newAllergen}
+                  onChange={e => setNewAllergen(e.target.value)}
+                  onKeyDown={e => {
+                    if ((e.key === 'Enter' || e.key === ',') && newAllergen.trim()) {
+                      e.preventDefault()
+                      setAllergens(prev => [...prev, newAllergen.trim()])
+                      setNewAllergen('')
+                    }
+                  }}
+                />
+                <button
+                  className={styles.allergenAdd}
+                  onClick={() => {
+                    if (newAllergen.trim()) {
+                      setAllergens(prev => [...prev, newAllergen.trim()])
+                      setNewAllergen('')
+                    }
+                  }}
+                >Add</button>
+              </div>
+              <div className={styles.allergenHint}>Common: Gluten · Dairy · Eggs · Tree Nuts · Peanuts · Soy · Fish · Shellfish</div>
             </div>
 
             <div className={styles.ingList}>

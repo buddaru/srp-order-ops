@@ -47,16 +47,9 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
-      if (event === 'SIGNED_OUT') {
-        // Only sign out if there's no existing session — prevents blank screen on token refresh failure
-        supabase.auth.getSession().then(({ data: { session: existing } }) => {
-          if (!existing?.user) {
-            setUser(null)
-            setProfile(null)
-            setLoading(false)
-          }
-        })
-      } else if (event === 'SIGNED_IN' && session?.user) {
+      // Never auto-sign-out from a state change event — only from explicit signOut() call
+      // This prevents the blank screen when tabs wake from sleep
+      if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user)
         loadProfile(session.user.id).finally(() => {
           if (mounted) setLoading(false)
@@ -64,9 +57,12 @@ export function AuthProvider({ children }) {
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         setUser(session.user)
       } else if (event === 'TOKEN_REFRESH_ERROR') {
-        // Don't blank the screen — keep user logged in, session will retry
-        console.warn('Token refresh failed — keeping user logged in')
+        // Re-attempt session fetch — don't blank the screen
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (s?.user && mounted) setUser(s.user)
+        })
       }
+      // SIGNED_OUT is intentionally ignored here — signOut() sets user to null directly
     })
 
     // Re-check session when user comes back to the tab after idle

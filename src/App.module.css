@@ -36,12 +36,7 @@
   flex-shrink: 0;
 }
 .sidebarLogo { display: flex; align-items: center; gap: 9px; overflow: hidden; flex: 1; min-width: 0; }
-.sidebarLogoMark {
-  width: 26px; height: 26px; border-radius: 6px;
-  background: var(--brand);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
+.sidebarLogoMark { display: none; }
 .sidebarLogoText { overflow: hidden; }
 .sidebarCollapsed .sidebarLogoText { display: none; }
 @media (max-width: 768px) {
@@ -167,7 +162,9 @@
 @media (max-width: 640px) {
   .boardWrapper { padding: 12px; overflow-x: unset; }
 }
-.sidebarLogoName { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+.sidebarLogoBrand { display: flex; align-items: flex-end; gap: 3px; line-height: 1; }
+.sidebarLogoName { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 500; color: var(--text); letter-spacing: -0.5px; white-space: nowrap; line-height: 1; }
+.sidebarLogoDot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); flex-shrink: 0; margin-bottom: 3px; display: inline-block; }
 
 /* Mobile sidebar — always show labels even when desktop is collapsed */
 @media (max-width: 768px) {
