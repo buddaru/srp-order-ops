@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import ImageUpload from './ImageUpload'
 import styles from './RecipeEdit.module.css'
 
 // ── Icons ──
@@ -168,6 +169,7 @@ export default function RecipeEdit() {
   const [yieldUnit,   setYieldUnit]   = useState('')
   const [allergens,   setAllergens]   = useState([])
   const [newAllergen, setNewAllergen] = useState('')
+  const [coverImage,  setCoverImage]  = useState(null)
   const [ings,        setIngs]        = useState(() => parseIngredients(seed.ingredients || ''))
   const [steps,       setSteps]       = useState(() => parseDirections(seed.prep || ''))
 
@@ -204,6 +206,7 @@ export default function RecipeEdit() {
       setYieldQty(data.yield_qty     || '')
       setYieldUnit(data.yield_unit   || '')
       setAllergens(data.allergens   || [])
+      setCoverImage(data.image_url   || null)
       // Normalize ingredients: Meez uses {qty, unit} but editor uses {amount}
       const rawIngs = data.ingredients || []
       setIngs(rawIngs.map(ing => {
@@ -252,6 +255,7 @@ export default function RecipeEdit() {
       yield_qty:   yieldQty.trim()   || null,
       yield_unit:  yieldUnit.trim()  || null,
       allergens,
+      image_url:   coverImage || null,
       ingredients: ings,
       directions:  steps,
       updated_at:  new Date().toISOString(),
@@ -286,7 +290,7 @@ export default function RecipeEdit() {
 
     if (opts.thenNavigate && savedId) navigate(`/recipes/${savedId}`)
     else if (opts.thenNavigate) navigate('/recipes')
-  }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, ings, steps, dbId, navigate])
+  }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, coverImage, ings, steps, dbId, navigate])
 
   // ── Autosave — debounced 2s after any change ──
   const scheduleAutosave = useCallback(() => {
@@ -294,7 +298,7 @@ export default function RecipeEdit() {
     autosaveTimer.current = setTimeout(() => save(), 2000)
   }, [save])
 
-  useEffect(() => { scheduleAutosave() }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, ings, steps])
+  useEffect(() => { scheduleAutosave() }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, coverImage, ings, steps])
 
   useEffect(() => () => clearTimeout(autosaveTimer.current), [])
 
@@ -601,10 +605,9 @@ export default function RecipeEdit() {
               </button>
             </div>
 
-            <div className={styles.coverArea}>
-              <PhotoIcon />
-              Add Cover Image
-              <div className={styles.coverHint}>for best results use an image in landscape</div>
+            <div className={styles.coverAreaWrap}>
+              <div className={styles.coverAreaLabel}>Cover Image</div>
+              <ImageUpload value={coverImage} onChange={setCoverImage} />
             </div>
 
             <div className={styles.dirSectionLabel}>

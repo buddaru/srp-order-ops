@@ -488,3 +488,7 @@
 .allergenAdd { padding: 7px 14px; background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; font-family: var(--font-body); cursor: pointer; transition: background 0.12s; white-space: nowrap; }
 .allergenAdd:hover { background: var(--brand-light); }
 .allergenHint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+/* ── Cover image area ── */
+.coverAreaWrap { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.coverAreaLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
