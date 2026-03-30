@@ -1,6 +1,6 @@
 .page { padding: 20px 28px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.pageTitle { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+.pageTitle { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
 .createBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
 .createBtn:hover { opacity: 0.88; }
 

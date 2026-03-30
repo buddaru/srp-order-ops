@@ -75,7 +75,7 @@
 
 /* ── Recipe title — override global input styles ── */
 .recipeTitle {
-  font-family: 'Cormorant Garamond', serif !important;
+  font-family: 'Fraunces', serif !important;
   font-size: 26px !important;
   font-weight: 600 !important;
   color: var(--text) !important;

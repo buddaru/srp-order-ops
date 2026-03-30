@@ -2,7 +2,7 @@
 
 /* ── Topbar ── */
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.pageTitle { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+.pageTitle { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
 .logBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
 .logBtn:hover { opacity: 0.88; }
 
@@ -28,7 +28,7 @@
 /* ── Summary ── */
 .summaryBlock { margin-bottom: 18px; }
 .summaryCard { display: inline-flex; align-items: center; gap: 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; }
-.summaryTotal { font-size: 32px; font-weight: 400; color: var(--text); font-family: 'Cormorant Garamond', serif; line-height: 1; }
+.summaryTotal { font-size: 32px; font-weight: 400; color: var(--text); font-family: 'Fraunces', serif; line-height: 1; }
 .summaryUnit { font-size: 14px; font-weight: 400; color: var(--text-muted); margin-left: 6px; font-family: 'DM Sans', sans-serif; }
 .summarySub { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: 'DM Sans', sans-serif; }
 .summarySub b { color: var(--text); font-weight: 600; }
@@ -60,7 +60,7 @@
 .emeta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .entryTimestamp { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
 .ecell { font-size: 12px; color: var(--text-2); }
-.reasonPill { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #FAEEDA; color: #854F0B; white-space: nowrap; display: inline-block; }
+.reasonPill { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #DCE9D8; color: #245A1F; white-space: nowrap; display: inline-block; }
 .ecost { font-size: 13px; font-weight: 600; color: var(--brand); }
 .eActions { display: flex; gap: 5px; }
 .ea { background: none; border: 1px solid var(--border-2); border-radius: 5px; padding: 3px 8px; font-size: 10px; cursor: pointer; color: var(--text-muted); font-family: 'DM Sans', sans-serif; transition: all 0.12s; }
@@ -95,7 +95,7 @@
 .tbLabel { font-size: 12px; color: var(--text-2); font-weight: 500; }
 .tbEq { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .tbRight { text-align: right; }
-.tbTotal { font-size: 22px; font-weight: 500; color: var(--brand); font-family: 'Cormorant Garamond', serif; line-height: 1; }
+.tbTotal { font-size: 22px; font-weight: 500; color: var(--brand); font-family: 'Fraunces', serif; line-height: 1; }
 .tbSub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 .divider { height: 1px; background: var(--border); margin: 15px 0; }
 .typeToggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

@@ -15,7 +15,7 @@
 }
 
 .pageTitle {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Fraunces', serif;
   font-size: 28px;
   font-weight: 600;
   color: var(--text);
@@ -327,7 +327,7 @@
 }
 
 .modalTitle {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Fraunces', serif;
   font-size: 22px;
   font-weight: 600;
   color: var(--text);

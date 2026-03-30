@@ -12,7 +12,7 @@
 .td { font-size: 13px; color: var(--text); flex-shrink: 0; min-width: 0; }
 
 .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.av_amber  { background: #FAEEDA; color: #854F0B; }
+.av_amber  { background: #DCE9D8; color: #245A1F; }
 .av_pink   { background: #FBEAF0; color: #72243E; }
 .av_teal   { background: #E1F5EE; color: #085041; }
 .av_blue   { background: #E6F1FB; color: #0C447C; }
@@ -51,13 +51,13 @@
   border-width: 0.5px; border-style: solid;
 }
 .pill_received   { background-color: #F1EFE8; border-color: #D3D1C7; color: #5F5E5A; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235F5E5A'/%3E%3C/svg%3E"); }
-.pill_production { background-color: #FAEEDA; border-color: #FAC775; color: #854F0B; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23854F0B'/%3E%3C/svg%3E"); }
+.pill_production { background-color: #DCE9D8; border-color: #8FBA8A; color: #245A1F; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23245A1F'/%3E%3C/svg%3E"); }
 .pill_ready      { background-color: #EAF3DE; border-color: #C0DD97; color: #3B6D11; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233B6D11'/%3E%3C/svg%3E"); }
 .pill_pickedup   { background-color: #E6F1FB; border-color: #B5D4F4; color: #185FA5; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23185FA5'/%3E%3C/svg%3E"); }
 
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; width: 100%; }
 .emptyIcon { font-size: 48px; margin-bottom: 16px; }
-.emptyTitle { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+.emptyTitle { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; margin-bottom: 8px; }
 .emptySub { font-size: 14px; color: var(--text-muted); }
 
 /* ── Mobile cards — hidden on desktop ── */

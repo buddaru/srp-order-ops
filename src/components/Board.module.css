@@ -72,7 +72,7 @@
 }
 .emptyIcon { font-size: 44px; margin-bottom: 16px; }
 .emptyTitle {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Fraunces', serif;
   font-size: 28px; font-weight: 500;
   margin-bottom: 8px; color: var(--text);
   letter-spacing: -0.02em;

@@ -18,7 +18,7 @@
 .cover:hover .coverOverlay { opacity: 1; }
 
 .groupHeader { padding: 20px 28px 4px; }
-.groupName { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.groupName { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .groupCount { font-size: 13px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
 
 .editSection { margin: 20px 28px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
