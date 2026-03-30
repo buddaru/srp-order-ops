@@ -257,7 +257,7 @@ export default function RecipeEdit() {
       allergens,
       image_url:   coverImage || null,
       ingredients: ings,
-      directions:  steps,
+      steps:       steps,
       updated_at:  new Date().toISOString(),
     }
 
