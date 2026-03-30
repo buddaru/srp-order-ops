@@ -22,11 +22,13 @@ export default function Login() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page}>\
       <div className={styles.card}>
-        <img src="/srp-logo.png" alt="Sweet Red Peach" className={styles.logo} />
-        <div className={styles.brand}>Sweet Red Peach</div>
-        <div className={styles.sub}>Carson Operations</div>
+        <div className={styles.logoMark}>
+          <div className={styles.logoMarkDot}></div>
+        </div>
+        <div className={styles.brand}>cadro</div>
+        <div className={styles.sub}>Operations Dashboard</div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
