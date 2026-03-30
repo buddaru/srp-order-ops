@@ -22,12 +22,12 @@ export default function Login() {
   }
 
   return (
-    <div className={styles.page}>\
+    <div className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.logoMark}>
-          <div className={styles.logoMarkDot}></div>
+        <div className={styles.logoWrap}>
+          <span className={styles.logoText}>cadro</span>
+          <span className={styles.logoDot}></span>
         </div>
-        <div className={styles.brand}>cadro</div>
         <div className={styles.sub}>Operations Dashboard</div>
 
         <form onSubmit={handleSubmit} className={styles.form}>

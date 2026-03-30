@@ -1,6 +1,7 @@
 // api/sync-meez.js
 // Syncs recipes from Meez into Supabase in chunks of 10 per call.
 // The frontend keeps calling until hasMore is false.
+// Now pulls: images, videos, allergens, recipe history
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -12,7 +13,7 @@ const supabase = createClient(
 const MEEZ_TOKEN  = process.env.MEEZ_API_TOKEN
 const MEEZ_ORG    = process.env.MEEZ_ORG_ID || '6380'
 const MEEZ_BASE   = 'https://api.getmeez.com/api/v1'
-const CHUNK_SIZE  = 10  // recipes per call — safe within 5s Hobby limit
+const CHUNK_SIZE  = 10
 
 const meezHeaders = {
   'Authorization': `Token ${MEEZ_TOKEN}`,
@@ -38,7 +39,6 @@ async function fetchRecipeList() {
     if (!res.ok) throw new Error(`Meez list fetch failed: ${res.status}`)
     const data = await res.json()
     const results = data.results || []
-    // Only include Sweet Red Peach recipes (concept id 864), skip test/personal recipes
     const srp = results.filter(r =>
       r.concepts && r.concepts.some(c => c.id === 864)
     )
@@ -78,8 +78,58 @@ async function fetchRecipeData(id) {
   return res.json()
 }
 
+// ── NEW: fetch all media (images + videos) for a recipe ──
+async function fetchRecipeMedia(id) {
+  const url = `${MEEZ_BASE}/recipes/${id}/media/?organization=${MEEZ_ORG}`
+  const res  = await fetch(url, { headers: meezHeaders })
+  if (!res.ok) return { images: [], videos: [] }
+  const data = await res.json()
+  const items = Array.isArray(data) ? data : data.results || []
+
+  const images = []
+  const videos = []
+
+  for (const m of items) {
+    const mediaType = (m.media_type || m.type || '').toLowerCase()
+    const src = m.media || m.url || m.file || null
+    if (!src) continue
+
+    if (mediaType.includes('video')) {
+      videos.push({
+        url:       src,
+        thumbnail: m.thumbnail || m.poster || null,
+        label:     m.label || m.name || null,
+        order:     m.order ?? videos.length,
+      })
+    } else {
+      images.push({
+        url:   src,
+        label: m.label || m.name || null,
+        order: m.order ?? images.length,
+      })
+    }
+  }
+
+  return { images, videos }
+}
+
+// ── NEW: fetch recipe revision history ──
+async function fetchRecipeHistory(id) {
+  const url = `${MEEZ_BASE}/recipes/${id}/history/?organization=${MEEZ_ORG}`
+  const res  = await fetch(url, { headers: meezHeaders })
+  if (!res.ok) return []
+  const data = await res.json()
+  const items = Array.isArray(data) ? data : data.results || []
+
+  return items.map(h => ({
+    version:    h.version || h.id || null,
+    changed_by: h.changed_by?.username || h.user?.username || h.changed_by || null,
+    changed_at: h.changed_at || h.created_at || null,
+    summary:    h.change_summary || h.summary || h.description || null,
+  }))
+}
+
 function parseIngredients(detail) {
-  // Build sub-recipe lookup map from top-level sub_recipes array
   const subRecipeMap = {}
   for (const sr of (detail.sub_recipes || [])) {
     subRecipeMap[sr.id] = sr.name
@@ -92,7 +142,6 @@ function parseIngredients(detail) {
     if (item.is_note) {
       return { type: 'note', text: item.description || item.name || '' }
     }
-    // Resolve name — check sub_recipes map first for subrecipe items
     const subrecipeId = item.subrecipe
     const name =
       (subrecipeId && subRecipeMap[subrecipeId]) ||
@@ -113,7 +162,6 @@ function parseIngredients(detail) {
 async function ensureGroup(name, groupCache) {
   if (groupCache.has(name)) return groupCache.get(name)
 
-  // Upsert — insert if not exists, return existing if conflict
   const { data, error } = await supabase
     .from('recipe_groups')
     .upsert({ name }, { onConflict: 'name', ignoreDuplicates: false })
@@ -125,7 +173,6 @@ async function ensureGroup(name, groupCache) {
     return data.id
   }
 
-  // Fallback: fetch if upsert didn't return
   const { data: existing } = await supabase
     .from('recipe_groups').select('id').eq('name', name).maybeSingle()
   if (existing?.id) {
@@ -145,20 +192,21 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!MEEZ_TOKEN) return res.status(500).json({ error: 'MEEZ_API_TOKEN not set' })
 
+  // Pass ?resync=true to force re-fetch all recipes (picks up new fields on existing recipes)
+  const forceResync = req.query.resync === 'true' || req.body?.resync === true
+
   try {
-    // 1. Get full list from Meez
     const list = await fetchRecipeList()
     if (!list || list.length === 0) {
       return res.status(200).json({ synced: 0, hasMore: false, message: 'No recipes found in Meez' })
     }
 
-    // 2. Get already-synced meez_ids from Supabase
     const { data: existing } = await supabase
       .from('recipes').select('meez_id').not('meez_id', 'is', null)
     const syncedIds = new Set((existing || []).map(r => r.meez_id))
 
-    // 3. Find unsynced recipes
-    const pending = list.filter(r => !syncedIds.has(String(r.id)))
+    // If resyncing, process all; otherwise only new ones
+    const pending = forceResync ? list : list.filter(r => !syncedIds.has(String(r.id)))
     const chunk   = pending.slice(0, CHUNK_SIZE)
 
     if (chunk.length === 0) {
@@ -166,7 +214,7 @@ export default async function handler(req, res) {
         synced: 0,
         hasMore: false,
         total: list.length,
-        message: 'All recipes already synced',
+        message: 'All recipes already synced. Pass ?resync=true to force refresh.',
       })
     }
 
@@ -174,13 +222,14 @@ export default async function handler(req, res) {
     let errors = 0
     const groupCache = new Map()
 
-    // 4. Process this chunk concurrently
     await Promise.all(chunk.map(async (item) => {
       try {
-        const [detail, steps, data] = await Promise.all([
+        const [detail, steps, data, media, history] = await Promise.all([
           fetchRecipeDetail(item.id),
           fetchRecipeSteps(item.id),
           fetchRecipeData(item.id),
+          fetchRecipeMedia(item.id),       // ── NEW
+          fetchRecipeHistory(item.id),     // ── NEW
         ])
 
         if (!detail) { errors++; return }
@@ -191,22 +240,27 @@ export default async function handler(req, res) {
         const groupName   = recipeBooks[0] || 'Uncategorized'
         const yieldQty    = detail.total_efficiency_str || null
         const yieldUnit   = detail.total_efficiency_unit?.name || null
-        const imageUrl    = detail.featured_media?.media || null
+
+        // Featured image: prefer explicit featured_media, fall back to first image
+        const featuredImage = detail.featured_media?.media || media.images[0]?.url || null
 
         const record = {
-          meez_id:      String(item.id),
-          name:         detail.name || item.name,
-          group_name:   groupName,
-          recipe_books: recipeBooks,
+          meez_id:        String(item.id),
+          name:           detail.name || item.name,
+          group_name:     groupName,
+          recipe_books:   recipeBooks,
           allergens,
-          yield_qty:    yieldQty ? String(yieldQty) : null,
-          yield_unit:   yieldUnit || null,
+          yield_qty:      yieldQty ? String(yieldQty) : null,
+          yield_unit:     yieldUnit || null,
           ingredients,
           steps,
-          image_url:    imageUrl,
-          notes:        detail.notes || null,
-          last_viewed:  item.last_viewed || null,
-          synced_at:    new Date().toISOString(),
+          image_url:      featuredImage,
+          images:         media.images,    // ── NEW: all images
+          videos:         media.videos,    // ── NEW: all videos
+          recipe_history: history,         // ── NEW: revision history
+          notes:          detail.notes || null,
+          last_viewed:    item.last_viewed || null,
+          synced_at:      new Date().toISOString(),
         }
 
         const { data: upserted, error } = await supabase
