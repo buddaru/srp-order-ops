@@ -48,10 +48,12 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
     ? new Date(order.createdAt).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true })
     : '—'
 
-  // Parse special request out of notes (notes = item details + special request)
-  const notesText = order.notes || ''
+  // Show full notes — extract special request if formatted that way, otherwise show everything
+  const notesText = (order.notes || '').trim()
   const specialMatch = notesText.match(/Special request:\s*(.+)/i)
   const specialRequest = specialMatch ? specialMatch[1].trim() : null
+  // Show raw notes if they don't follow the special request format
+  const rawNotes = !specialMatch && notesText ? notesText : null
 
   return (
     <>
@@ -100,7 +102,13 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
             </div>
           )}
 
-          {/* Special request */}
+          {/* Notes */}
+          {rawNotes && (
+            <div className={styles.specialRequest}>
+              <div className={styles.specialLabel}>Notes</div>
+              {rawNotes}
+            </div>
+          )}
           {specialRequest && (
             <div className={styles.specialRequest}>
               <div className={styles.specialLabel}>Special request</div>

@@ -13,7 +13,7 @@
   display: flex; align-items: flex-start; justify-content: space-between;
   position: sticky; top: 0; background: var(--card); z-index: 2;
 }
-.name { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
 .pickupBadge {
   display: inline-flex; align-items: center;
   background: #EAF3DE; color: #27500A;
@@ -51,11 +51,11 @@
 /* ── Special request ── */
 .specialRequest {
   margin: 14px 0; padding: 10px 12px;
-  background: #DCE9D8; border-left: 3px solid #245A1F;
-  font-size: 12px; color: #1B4418; line-height: 1.55;
+  background: #FAEEDA; border-left: 3px solid #C4784A;
+  font-size: 12px; color: #633806; line-height: 1.55;
   font-family: 'DM Sans', sans-serif;
 }
-.specialLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #245A1F; margin-bottom: 4px; }
+.specialLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #854F0B; margin-bottom: 4px; }
 
 /* ── Created row ── */
 .createdRow { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin: 16px 0; padding: 8px 10px; background: var(--bg); border-radius: 8px; }
