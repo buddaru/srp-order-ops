@@ -45,14 +45,25 @@ async function gmailGetMessage(accessToken, messageId) {
 
 // ── HTML parser ──
 function getBody(message) {
-  const parts = message.payload?.parts
-  if (parts) {
+  // Recursively search all MIME parts for text/html
+  function findHtmlPart(parts) {
+    if (!parts) return null
     for (const part of parts) {
       if (part.mimeType === 'text/html' && part.body?.data) {
         return Buffer.from(part.body.data, 'base64').toString('utf-8')
       }
+      // Recurse into nested multipart/* containers
+      if (part.mimeType?.startsWith('multipart/') && part.parts) {
+        const found = findHtmlPart(part.parts)
+        if (found) return found
+      }
     }
+    return null
   }
+
+  const fromParts = findHtmlPart(message.payload?.parts)
+  if (fromParts) return fromParts
+
   if (message.payload?.body?.data) {
     return Buffer.from(message.payload.body.data, 'base64').toString('utf-8')
   }
@@ -327,21 +338,17 @@ export default async function handler(req, res) {
         const html  = getBody(full)
 
         if (!html) {
-          return res.status(200).json({
-            imported, skipped, errors: errors + 1,
-            totalFound: messages.length,
-            message: `No HTML body found in message ${msg.id}. Payload keys: ${Object.keys(full.payload || {}).join(', ')}`,
-          })
+          console.warn(`No HTML body in message ${msg.id}`)
+          errors++
+          continue
         }
 
         const order = parseOrder(html, msg.id)
 
         if (!order) {
-          return res.status(200).json({
-            imported, skipped, errors: errors + 1,
-            totalFound: messages.length,
-            message: `Parse failed for message ${msg.id} — check email format`,
-          })
+          console.warn(`Parse failed for message ${msg.id}`)
+          errors++
+          continue
         }
         if (existingIds.has(order.bento_order_id)) { skipped++; continue }
 
@@ -365,22 +372,16 @@ export default async function handler(req, res) {
 
         if (error) {
           console.error(`Insert error for bento #${order.bento_order_id}:`, JSON.stringify(error))
-          return res.status(200).json({
-            imported, skipped, errors: errors + 1,
-            totalFound: messages.length,
-            message: `Insert failed: ${error.message || error.code || JSON.stringify(error)}`,
-          })
+          errors++
+          continue
         } else {
           existingIds.add(order.bento_order_id)
           imported++
         }
       } catch (err) {
         console.error('Error processing message:', err.message)
-        return res.status(200).json({
-          imported, skipped, errors: errors + 1,
-          totalFound: messages.length,
-          message: `Processing error: ${err.message}`,
-        })
+        errors++
+        continue
       }
     }
 
