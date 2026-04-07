@@ -17,13 +17,14 @@ export default function Header({ orders, onNewOrder, onJumpToOrder, profile, onS
     try {
       const res  = await fetch('/api/sync-orders', { method: 'POST' })
       const data = await res.json()
-      setSyncMsg(data.message || 'Done')
+      // Show error field if present, then message, then fallback
+      setSyncMsg(data.error || data.message || 'No response')
       if (data.imported > 0 && onOrdersSynced) onOrdersSynced()
-    } catch {
-      setSyncMsg('Sync failed')
+    } catch (err) {
+      setSyncMsg('Sync failed: ' + err.message)
     } finally {
       setSyncing(false)
-      setTimeout(() => setSyncMsg(null), 4000)
+      setTimeout(() => setSyncMsg(null), 8000)
     }
   }
 
