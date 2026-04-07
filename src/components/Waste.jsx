@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, safeQuery } from '../lib/supabase'
+import { getCache, setCache } from '../lib/cache'
 import styles from './Waste.module.css'
 
 const REASONS = ['Overproduction', 'Order cancelled', 'Quality issue', 'Expired / spoiled', 'Wrong order', 'Other']
@@ -263,12 +264,22 @@ export default function Waste() {
   const [showCal, setShowCal]       = useState(false)
 
   const load = async () => {
-    setLoading(true)
     setLoadError(false)
+    const cached = getCache('waste-log')
+    if (cached) {
+      setEntries(cached)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
     try {
       const { data, error } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
       if (error?.message === 'timeout') { setLoadError(true) }
-      else { setEntries(data || []) }
+      else {
+        const entries = data || []
+        setEntries(entries)
+        setCache('waste-log', entries)
+      }
     } finally {
       setLoading(false)
     }

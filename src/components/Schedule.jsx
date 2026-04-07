@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase, safeQuery } from '../lib/supabase'
+import { getCache, setCache } from '../lib/cache'
 import { useAuth } from '../context/AuthContext'
 import styles from './Schedule.module.css'
 
@@ -358,13 +359,24 @@ export default function Schedule() {
   const weekEnd  = weekDays[6]
 
   const loadAll = async () => {
-    setLoading(true)
+    // Show cached data instantly
+    const cached = getCache('schedule-all')
+    if (cached) {
+      setShifts(cached.shifts)
+      setEmployees(cached.employees)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
     const [r1, r2] = await Promise.all([
       safeQuery(() => supabase.from('shifts').select('*').order('shift_date').order('start_time')),
       safeQuery(() => supabase.from('employees').select('*').order('name')),
     ])
-    setShifts(r1.data || [])
-    setEmployees(r2.data || [])
+    const shifts = r1.data || []
+    const employees = r2.data || []
+    setShifts(shifts)
+    setEmployees(employees)
+    setCache('schedule-all', { shifts, employees })
     setLoading(false)
   }
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import { getCache, setCache, invalidateCache } from '../lib/cache'
 import styles from './Recipes.module.css'
 
 function fmtTimeAgo(ts) {
@@ -196,9 +197,19 @@ function NewGroupModal({ onClose, onCreate }) {
   )
 }
 
+const mapRecipes = (recs) => recs.map(r => ({
+  id:              r.id,
+  name:            r.name,
+  group:           r.group_name || 'Uncategorized',
+  ingredientCount: 0,
+  yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
+  lastViewed:      r.last_viewed || null,
+  lastModified:    r.updated_at || null,
+  imageUrl:        r.image_url || null,
+}))
+
 export default function Recipes() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [tab, setTab]           = useState('recipes')
   const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy]     = useState('last_viewed')
@@ -219,29 +230,33 @@ export default function Recipes() {
 
   const dropRef = useRef(null)
 
+  // mapRecipes is defined at module level below
+
   useEffect(() => {
     const load = async () => {
+      // Show cached data immediately — feels instant
+      const cached = getCache('recipes-list')
+      if (cached) {
+        setRecipes(cached.recipes)
+        setGroups(cached.groups)
+        setLoadingRecipes(false)
+        // Refresh in background silently
+      } else {
+        setLoadingRecipes(true)
+      }
+
       const [{ data: recs }, { data: grps }] = await Promise.all([
         safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
-      if (recs) {
-        setRecipes(recs.map(r => ({
-          id:              r.id,
-          name:            r.name,
-          group:           r.group_name || 'Uncategorized',
-          ingredientCount: 0,
-          yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
-          lastViewed:      r.last_viewed || null,
-          lastModified:    r.updated_at || null,
-          imageUrl:        r.image_url || null,
-        })))
-      }
+      const mapped = recs ? mapRecipes(recs) : null
+      if (mapped) setRecipes(mapped)
       if (grps) setGroups(grps)
+      if (mapped && grps) setCache('recipes-list', { recipes: mapped, groups: grps })
       setLoadingRecipes(false)
     }
     load()
-  }, [location.pathname])
+  }, [])
 
   useEffect(() => {
     const handler = e => {
@@ -279,15 +294,13 @@ export default function Recipes() {
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
-            setRecipes(rows.map(r => ({
-              id:              r.id,
-              name:            r.name,
-              group:           r.group_name || 'Uncategorized',
-              ingredientCount: 0,
-              yield:           r.yield_qty ? `${r.yield_qty}${r.yield_unit ? ' ' + r.yield_unit : ''}` : '—',
-              lastViewed:      r.last_viewed || null,
-              lastModified:    r.updated_at || null,
-            })))
+            const synced = mapRecipes(rows)
+            setRecipes(synced)
+            if (grps) {
+              setCache('recipes-list', { recipes: synced, groups: grps })
+            } else {
+              invalidateCache('recipes-list')
+            }
           }
           if (grps) setGroups(grps)
           setSyncing(false)
@@ -401,7 +414,15 @@ export default function Recipes() {
       {/* ── Recipes tab ── */}
       {tab === 'recipes' && (
         loadingRecipes ? (
-          <div className={styles.empty}><div className={styles.emptySub}>Loading recipes…</div></div>
+          <div className={styles.listView}>
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="skeletonRow">
+                <div className="skeletonLine" style={{ width: `${55 + (i * 17) % 35}%` }} />
+                <div style={{ flex: 1 }} />
+                <div className="skeletonLine" style={{ width: 60 }} />
+              </div>
+            ))}
+          </div>
         ) : filteredRecipes.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🧁</div>

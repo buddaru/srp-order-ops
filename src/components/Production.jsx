@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, safeQuery } from '../lib/supabase'
+import { getCache, setCache } from '../lib/cache'
 import { toDS } from '../utils/helpers'
 import styles from './Production.module.css'
 
@@ -50,8 +51,19 @@ export default function Production() {
   // Load items + note for selected date
   useEffect(() => {
     const load = async () => {
-      setLoading(true)
       setLoadError(false)
+      // Show cached data instantly if available for this date
+      const cacheKey = `production-${date}`
+      const cached = getCache(cacheKey)
+      if (cached) {
+        setItems(cached.items)
+        setNote(cached.note)
+        setNoteId(cached.noteId)
+        setLoading(false)
+        // Still refresh in background
+      } else {
+        setLoading(true)
+      }
       try {
         const [r1, r2] = await Promise.all([
           safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
@@ -60,9 +72,13 @@ export default function Production() {
         if (r1.error?.message === 'timeout' || r2.error?.message === 'timeout') {
           setLoadError(true)
         } else {
-          setItems(r1.data || [])
-          setNote(r2.data?.content || '')
-          setNoteId(r2.data?.id || null)
+          const items = r1.data || []
+          const note = r2.data?.content || ''
+          const noteId = r2.data?.id || null
+          setItems(items)
+          setNote(note)
+          setNoteId(noteId)
+          setCache(cacheKey, { items, note, noteId }, 30000)
         }
       } finally {
         setLoading(false)
