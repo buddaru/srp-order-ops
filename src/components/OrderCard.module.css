@@ -1,0 +1,127 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: box-shadow 0.18s, border-color 0.18s, transform 0.15s;
+  animation: cardIn 0.22s ease forwards;
+  cursor: pointer;
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-2);
+  transform: translateY(-1px);
+}
+.overdueCard { border-left: 2px solid #DC2626; }
+.done { opacity: 0.5; }
+
+/* ── Top ── */
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.customerInfo { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.nameBlock { min-width: 0; }
+.customerName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.orderId { font-size: 10px; color: var(--text-muted); margin-top: 1px; letter-spacing: 0.02em; }
+.bentoId { color: var(--brand); opacity: 0.7; }
+
+/* ── Due badge ── */
+.dueBadge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+.overdue  { background: #FEF2F2; color: #DC2626; }
+.today    { background: #FFFBEB; color: #A16207; }
+.tomorrow { background: #EFF6FF; color: #1D4ED8; }
+.future   { background: #F0FDF4; color: #15803D; }
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 0 10px;
+}
+
+/* ── Items ── */
+.items { margin-bottom: 10px; }
+.itemRow { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 3px; }
+.itemDot {
+  width: 3px;
+  height: 3px;
+  background: var(--border-2);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.itemText { font-size: 12px; color: var(--text-2); line-height: 1.45; }
+.itemDetails { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-style: italic; }
+
+/* ── Total ── */
+.total {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 10px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Note ── */
+.note {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 6px 9px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  border-left: 2px solid rgba(196,120,74,0.3);
+}
+
+/* ── Actions ── */
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.smsBtn { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #15803D; }
+.smsBtn:hover { background: rgba(74,222,128,0.16); }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .card { padding: 13px; }
+  .customerName { font-size: 13px; }
+  .dueBadge { font-size: 9px; padding: 2px 7px; }
+}

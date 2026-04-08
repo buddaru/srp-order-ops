@@ -1,0 +1,138 @@
+.page { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--bg); }
+.content { padding: 24px 32px 80px; overflow-y: auto; flex: 1; }
+
+/* ── Title section — back button above, title + actions on same row ── */
+.titleSection { margin-bottom: 16px; }
+.backBtn {
+  display: inline-flex; align-items: center; gap: 5px; background: none; border: none;
+  font-family: var(--font-body); font-size: 13px; color: var(--brand);
+  cursor: pointer; padding: 0 0 10px; transition: opacity 0.12s;
+}
+.backBtn:hover { opacity: 0.75; }
+.titleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.recipeTitle {
+  font-family: var(--font-title); font-size: 38px; font-weight: 500;
+  color: var(--text); letter-spacing: -1.5px; line-height: 1.1; flex: 1;
+}
+.titleActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 6px; }
+.btnOutline {
+  display: flex; align-items: center; gap: 5px; padding: 6px 14px; background: none;
+  color: var(--text-2); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 12px; cursor: pointer; transition: background 0.12s;
+}
+.btnOutline:hover { background: var(--bg); }
+.btnEdit {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-sm);
+  background: var(--brand); color: #fff; border: none;
+  font-size: 12px; font-weight: 500; font-family: var(--font-body);
+  cursor: pointer; transition: background 0.15s;
+}
+.btnEdit:hover { background: var(--brand-light); }
+
+/* ── Allergens ── */
+.allergenRow { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+.allergenPill { font-size: 12px; font-weight: 500; padding: 4px 13px; border-radius: 20px; }
+.allergenGluten  { background: #FEF3C7; color: #92400E; }
+.allergenDairy   { background: #DBEAFE; color: #1E40AF; }
+.allergenEggs    { background: #FCE7F3; color: #9D174D; }
+.allergenNuts    { background: #D1FAE5; color: #065F46; }
+.allergenPeanuts { background: #FEF9C3; color: #713F12; }
+.allergenSoy     { background: #EDE9FE; color: #5B21B6; }
+.allergenFish    { background: #E0F2FE; color: #0C4A6E; }
+.allergenShellfish { background: #FFE4E6; color: #9F1239; }
+.allergenDefault { background: var(--bg-2); color: var(--text-2); border: 1px solid var(--border); }
+
+/* ── Meta row ── */
+.metaRow { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); background: var(--bg-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+.yieldTag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--brand); font-weight: 500; background: #EEF4EC; border: 1px solid #CDD8C8; border-radius: 20px; padding: 3px 10px; }
+
+/* ── Scale ── */
+.scaleWrap { position: relative; margin-left: auto; }
+.scaleBtn { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 12.5px; font-weight: 500; color: var(--text); cursor: pointer; transition: border-color 0.12s; }
+.scaleBtn:hover { border-color: var(--brand); }
+.scaleBtnActive { border-color: var(--brand); background: #EEF4EC; color: var(--brand); }
+.scaleBadge { background: var(--brand); color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.scaleDropdown { position: absolute; top: calc(100% + 5px); right: 0; background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); min-width: 180px; overflow: hidden; z-index: 100; }
+.scaleHeader { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px 6px; }
+.scaleOption { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; font-size: 13px; color: var(--text-2); cursor: pointer; transition: background 0.1s; border: none; background: none; font-family: var(--font-body); width: 100%; }
+.scaleOption:hover { background: var(--bg); }
+.scaleSelected { color: var(--brand) !important; font-weight: 500; background: #EEF4EC !important; }
+.scaleYield { font-size: 11.5px; color: var(--text-muted); }
+.scaleDivider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.customRow { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+.customLabel { font-size: 12px; color: var(--text-muted); }
+.customInput { width: 58px !important; border: 1px solid var(--border-2) !important; border-radius: var(--radius-sm) !important; padding: 5px 8px !important; font-family: var(--font-body) !important; font-size: 12px !important; color: var(--text) !important; outline: none; background: #fff !important; }
+.customInput:focus { border-color: var(--brand) !important; box-shadow: 0 0 0 2px rgba(36,90,31,0.1) !important; }
+
+/* ── Two-column layout ── */
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.col {}
+.colLabel { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+.stepCount { font-size: 11px; font-weight: 500; color: var(--text-muted); background: var(--bg-2); border-radius: 20px; padding: 1px 8px; text-transform: none; letter-spacing: 0; }
+.emptyCol { font-size: 13px; color: var(--text-muted); font-style: italic; }
+
+/* ── Media — sits directly above directions column ── */
+.mediaBlock { margin-bottom: 16px; }
+.heroMedia { width: 100%; height: auto; max-height: 440px; object-fit: contain; border-radius: 10px; display: block; background: var(--bg-2); }
+.galleryStrip { display: flex; gap: 8px; margin-top: 8px; }
+.galleryThumb { width: 56px; height: 46px; border-radius: 7px; overflow: hidden; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; padding: 0; background: none; position: relative; }
+.galleryThumbActive { border-color: var(--brand); }
+.thumbImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.videoThumb { width: 100%; height: 100%; position: relative; background: #1B4418; }
+.videoThumbBlank { width: 100%; height: 100%; background: #1B4418; }
+.playOverlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); }
+
+/* ── Section headers ── */
+.sectionHeader { font-family: var(--font-body); font-size: 14px; font-weight: 700; color: var(--text); margin: 18px 0 6px; padding-bottom: 6px; border-bottom: 2px solid var(--border-2); }
+.sectionHeader:first-child { margin-top: 0; }
+
+/* ── Ingredient rows ── */
+.ingRow { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.ingRow:last-child { border-bottom: none; }
+.ingName { color: var(--text); flex: 1; padding-right: 12px; line-height: 1.5; }
+.ingNote { color: var(--text-muted); font-style: italic; font-size: 12px; }
+.ingAmt { color: var(--brand); font-weight: 500; white-space: nowrap; font-size: 13px; }
+
+/* ── Steps ── */
+.stepBlock { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.stepBlock:last-child { border-bottom: none; }
+.stepRow { display: flex; align-items: flex-start; gap: 10px; }
+.stepPill { width: 22px; height: 22px; border-radius: 50%; background: #EEF4EC; border: 1px solid #CDD8C8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--brand); flex-shrink: 0; margin-top: 1px; }
+.stepText { flex: 1; font-size: 13px; color: var(--text); line-height: 1.65; }
+.stepMedia { display: block; width: calc(100% - 32px); margin-left: 32px; margin-top: 8px; height: 120px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+/* ── Notes ── */
+.notesBlock { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+.notesText { font-size: 13px; color: var(--text-2); line-height: 1.7; margin-top: 10px; }
+
+/* ── History ── */
+.historySection { margin-top: 28px; border-top: 1px solid var(--border); }
+.historyToggle { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; cursor: pointer; background: none; border: none; width: 100%; font-family: var(--font-body); }
+.historyLabel { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.historyCount { background: #EEF4EC; color: var(--brand); font-size: 10px; padding: 1px 7px; border-radius: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.historyChevron { color: var(--text-muted); transition: transform 0.2s; display: flex; }
+.historyChevronOpen { transform: rotate(180deg); }
+.historyBody { padding-bottom: 8px; }
+.historyRow { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.historyRow:last-child { border-bottom: none; }
+.historyDot { width: 8px; height: 8px; border-radius: 50%; background: #EEF4EC; border: 2px solid var(--border-2); flex-shrink: 0; margin-top: 3px; }
+.historyDotCurrent { border-color: var(--brand); }
+.historyInfo { flex: 1; min-width: 0; }
+.historyNote { font-size: 13px; color: var(--text); line-height: 1.4; }
+.historyMeta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.historyBadgeCurrent { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #EEF4EC; color: var(--brand); border: 1px solid #CDD8C8; margin-left: auto; flex-shrink: 0; font-weight: 500; }
+.historyVersion { font-size: 11px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; }
+
+/* ── Loading ── */
+.loadingState { display: flex; align-items: center; justify-content: center; flex: 1; font-size: 14px; color: var(--text-muted); font-family: var(--font-body); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .columns { grid-template-columns: 1fr; gap: 28px; }
+  .content { padding: 16px 16px 80px; }
+  .scaleWrap { margin-left: 0; }
+  .recipeTitle { font-size: 28px; }
+  .titleRow { flex-direction: column; }
+  .titleActions { padding-top: 0; }
+}

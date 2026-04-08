@@ -1,0 +1,39 @@
+.zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  background: var(--bg);
+}
+.zone:hover { border-color: var(--accent); background: var(--accent-light); }
+.zone.hasImage {
+  border-style: solid;
+  padding: 0;
+  overflow: hidden;
+  cursor: default;
+}
+.preview { width: 100%; max-height: 180px; object-fit: cover; display: block; }
+.removeBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 2;
+}
+.icon { font-size: 24px; margin-bottom: 6px; }
+.text { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.text strong { color: var(--accent); }
