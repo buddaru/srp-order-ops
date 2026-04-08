@@ -32,7 +32,8 @@ async function gmailSearch(accessToken, query, maxResults = 500) {
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
   const data = await res.json()
-  return data.messages || []
+  // Return full response so caller can inspect errors
+  return data
 }
 
 async function gmailGetMessage(accessToken, messageId) {
@@ -299,6 +300,27 @@ async function nextOrderId() {
 
 // ── Main handler ──
 export default async function handler(req, res) {
+  // GET ?debug=1 → test OAuth + Gmail search without importing anything
+  if (req.method === 'GET') {
+    if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to test' })
+    try {
+      const accessToken = await getAccessToken()
+      const since = new Date()
+      since.setDate(since.getDate() - 90)
+      const afterDate = `${since.getFullYear()}/${String(since.getMonth()+1).padStart(2,'0')}/${String(since.getDate()).padStart(2,'0')}`
+      const query = `from:noreply@notifications.getbento.com after:${afterDate}`
+      const gmailResponse = await gmailSearch(accessToken, query)
+      return res.status(200).json({
+        oauthOk: true,
+        query,
+        messageCount: gmailResponse.messages?.length ?? 0,
+        gmailResponse,
+      })
+    } catch (err) {
+      return res.status(200).json({ oauthOk: false, error: err.message })
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -311,13 +333,26 @@ export default async function handler(req, res) {
     const since = new Date()
     since.setDate(since.getDate() - 90)
     const afterDate = `${since.getFullYear()}/${String(since.getMonth()+1).padStart(2,'0')}/${String(since.getDate()).padStart(2,'0')}`
-    const messages = await gmailSearch(
-      accessToken,
-      `from:noreply@notifications.getbento.com after:${afterDate}`
-    )
+    const query = `from:noreply@notifications.getbento.com after:${afterDate}`
+    const gmailResponse = await gmailSearch(accessToken, query)
+
+    // Surface any Gmail API errors for debugging
+    if (gmailResponse.error) {
+      return res.status(200).json({
+        imported: 0, skipped: 0,
+        message: 'Gmail API error — check debug field',
+        debug: { query, gmailError: gmailResponse.error }
+      })
+    }
+
+    const messages = gmailResponse.messages || []
 
     if (messages.length === 0) {
-      return res.status(200).json({ imported: 0, skipped: 0, message: 'No Bento orders found in Gmail' })
+      return res.status(200).json({
+        imported: 0, skipped: 0,
+        message: 'No Bento orders found in Gmail',
+        debug: { query, gmailRawResponse: gmailResponse }
+      })
     }
 
     // 3. Get existing bento_order_ids to deduplicate
