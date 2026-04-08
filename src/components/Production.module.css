@@ -1,8 +1,8 @@
-.page { max-width: 600px; margin: 0 auto; padding: 28px 24px; position: relative; }
+.page { max-width: 600px; margin: 0 auto; padding: var(--page-pad, 24px 28px); position: relative; }
 
 /* ── Title bar ── */
 .titlebar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.titleLabel { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+.titleLabel { font-family: 'Fraunces', serif; font-size: var(--text-3xl, 29px); font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
 
 /* ── Date hero ── */
 .hero { text-align: center; margin-bottom: 0; }

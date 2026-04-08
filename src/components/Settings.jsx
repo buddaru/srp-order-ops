@@ -9,7 +9,7 @@ export default function Settings() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Settings</h1>
+      <h1 className={styles.pageTitle}>Settings</h1>
       <p className={styles.sub}>Manage your account and preferences.</p>
 
       <div className={styles.section}>

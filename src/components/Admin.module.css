@@ -1,8 +1,6 @@
-.page { padding: 20px 28px; }
-.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.pageTitle { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
-.createBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-.createBtn:hover { opacity: 0.88; }
+.page { padding: var(--page-pad, 24px 28px); }
+.pageTitle { font-family: 'Fraunces', serif; font-size: var(--text-3xl, 29px); font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+
 
 .listWrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .listHeader { display: grid; grid-template-columns: 1.5fr 2fr 100px 100px; gap: 8px; padding: 8px 16px; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--bg); }
@@ -30,7 +28,7 @@
 
 /* Modal */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 24px; }
-.modal { background: var(--card); border-radius: 14px; border: 1px solid var(--border-2); width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+.modal { background: var(--card); border-radius: var(--modal-radius, 16px); border: 1px solid var(--border-2); width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
 .modalHeader { padding: 18px 20px 0; display: flex; align-items: center; justify-content: space-between; }
 .modalTitle { font-size: 15px; font-weight: 500; color: var(--text); }
 .closeBtn { background: var(--bg); border: none; border-radius: 20px; width: 26px; height: 26px; font-size: 12px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
@@ -38,8 +36,6 @@
 .modalFooter { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; padding: 0 20px 18px; }
 .formRow { display: flex; flex-direction: column; gap: 5px; }
 .flabel { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; }
-.finput { width: 100%; border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s; }
-.finput:focus { border-color: var(--accent); }
 .roleToggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .roleBtn { padding: 8px; font-size: 12px; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid var(--border-2); color: var(--text-muted); background: var(--bg); font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.12s; }
 .roleActive { background: var(--accent-light) !important; border-color: var(--accent) !important; color: var(--accent) !important; }
@@ -48,7 +44,7 @@
 .saveBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 .errorMsg { font-size: 12px; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-sm); padding: 8px 12px; }
-.confirmBox { background: var(--card); border-radius: 14px; border: 1px solid var(--border-2); padding: 24px; max-width: 340px; width: 100%; }
+.confirmBox { background: var(--card); border-radius: var(--modal-radius, 16px); border: 1px solid var(--border-2); padding: 24px; max-width: 340px; width: 100%; }
 .confirmTitle { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
 .confirmMsg { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
 .confirmActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

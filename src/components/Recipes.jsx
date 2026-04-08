@@ -368,10 +368,10 @@ export default function Recipes() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
+      <div className="pageHeader">
         <div>
-          <h1 className={styles.pageTitle}>Recipes</h1>
-          <p className={styles.pageSub}>Manage your recipe library, groups, and supporting docs.</p>
+          <h1 className="pageTitle">Recipes</h1>
+          <p className="pageSub">Manage your recipe library, groups, and supporting docs.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button className={styles.syncBtn} onClick={handleMeezSync} disabled={syncing}>

@@ -1,32 +1,9 @@
 /* ── Page layout ── */
 .page {
-  padding: 24px 28px;
+  padding: var(--page-pad, 24px 28px);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-.pageHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 16px;
-}
-
-.pageTitle {
-  font-family: 'Fraunces', serif;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.1;
-  margin-bottom: 4px;
-}
-
-.pageSub {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.5;
 }
 
 /* ── + New button + dropdown ── */

@@ -1,10 +1,6 @@
-.page { padding: 20px 28px; }
+.page { padding: var(--page-pad, 24px 28px); }
 
 /* ── Topbar ── */
-.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.pageTitle { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
-.logBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-.logBtn:hover { opacity: 0.88; }
 
 /* ── Period tabs ── */
 .periodRow { display: flex; gap: 0; background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; margin-bottom: 12px; }
@@ -85,8 +81,7 @@
 .formRow { margin-bottom: 15px; }
 .flabel { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; display: block; letter-spacing: 0.04em; font-family: 'DM Sans', sans-serif; }
 .labelErr { color: #DC2626; }
-.finput { width: 100%; border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-.finput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,106,56,0.1); }
+
 .invalid { border-color: #DC2626 !important; background: #FEF2F2; }
 .qtyGrid { display: grid; grid-template-columns: 1fr 1.1fr 1.3fr; gap: 8px; margin-bottom: 10px; }
 .qtyField label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; letter-spacing: 0.04em; }
@@ -113,7 +108,7 @@
 .saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Confirm delete ── */
-.confirmBox { background: var(--card); border-radius: 14px; border: 1px solid var(--border-2); padding: 24px; max-width: 360px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.14); }
+.confirmBox { background: var(--card); border-radius: var(--modal-radius, 16px); border: 1px solid var(--border-2); padding: 24px; max-width: 360px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.14); }
 .confirmTitle { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; font-family: 'DM Sans', sans-serif; }
 .confirmMsg { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
 .confirmActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

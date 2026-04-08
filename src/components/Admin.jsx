@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import styles from './Admin.module.css'
+import PageHeader from './PageHeader'
 
 function CreateUserModal({ onClose, onCreated }) {
   const [name, setName]     = useState('')
@@ -34,11 +35,11 @@ where email = '${email}';`
             <>
               <div className={styles.formRow}>
                 <label className={styles.flabel}>Full name</label>
-                <input className={styles.finput} value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
+                <input className="modal-input" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
               </div>
               <div className={styles.formRow}>
                 <label className={styles.flabel}>Email</label>
-                <input className={styles.finput} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
+                <input className="modal-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
               </div>
               <div className={styles.formRow}>
                 <label className={styles.flabel}>Role</label>
@@ -117,7 +118,7 @@ function EditUserModal({ user, onClose, onSaved }) {
         <div className={styles.modalBody}>
           <div className={styles.formRow}>
             <label className={styles.flabel}>Full name</label>
-            <input className={styles.finput} value={name} onChange={e => setName(e.target.value)} />
+            <input className="modal-input" value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className={styles.formRow}>
             <label className={styles.flabel}>Email</label>
@@ -125,7 +126,7 @@ function EditUserModal({ user, onClose, onSaved }) {
           </div>
           <div className={styles.formRow}>
             <label className={styles.flabel}>New password (leave blank to keep current)</label>
-            <input className={styles.finput} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="New password…" />
+            <input className="modal-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="New password…" />
           </div>
           <div className={styles.formRow}>
             <label className={styles.flabel}>Role</label>
@@ -178,10 +179,9 @@ export default function Admin() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.topbar}>
-        <div className={styles.pageTitle}>Team Management</div>
-        <button className={styles.createBtn} onClick={() => setShowCreate(true)}>+ Add account</button>
-      </div>
+      <PageHeader title="Team Management">
+        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ Add account</button>
+      </PageHeader>
 
       {loading ? (
         <div className={styles.empty}>Loading…</div>

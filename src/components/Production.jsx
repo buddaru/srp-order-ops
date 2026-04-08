@@ -208,7 +208,7 @@ export default function Production() {
 
       {/* Title bar */}
       <div className={`${styles.titlebar} ${styles.noPrint}`}>
-        <span className={styles.titleLabel}>Daily Production</span>
+        <span className="pageTitle">Daily Production</span>
         <div className={styles.menuWrap}>
           <button className={styles.menuBtn} onClick={() => setMenuOpen(v => !v)}>≡ Menu</button>
           {menuOpen && (

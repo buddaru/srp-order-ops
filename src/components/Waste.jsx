@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache } from '../lib/cache'
 import styles from './Waste.module.css'
-
+import PageHeader from './PageHeader'
 const REASONS = ['Overproduction', 'Order cancelled', 'Quality issue', 'Expired / spoiled', 'Wrong order', 'Other']
 
 const REASON_COLORS = {
@@ -143,7 +143,7 @@ function WasteModal({ entry, onSave, onClose }) {
           <div className={styles.formRow}>
             <label className={styles.flabel}>Item name</label>
             <input
-              className={`${styles.finput} ${errors.name ? styles.invalid : ''}`}
+              className={`modal-input ${errors.name ? styles.invalid : ''}`}
               value={name} onChange={e => { setName(e.target.value); setErrors(v=>({...v,name:false})) }}
               placeholder="e.g. Red Velvet Cupcakes"
             />
@@ -155,7 +155,7 @@ function WasteModal({ entry, onSave, onClose }) {
               <div className={styles.qtyField}>
                 <label className={styles.qtyLabel}>Qty</label>
                 <input
-                  className={`${styles.finput} ${errors.qty ? styles.invalid : ''}`}
+                  className={`modal-input ${errors.qty ? styles.invalid : ''}`}
                   type="number" min="0" value={qty}
                   onChange={e => { setQty(e.target.value); setErrors(v=>({...v,qty:false})) }}
                   placeholder="12"
@@ -163,12 +163,12 @@ function WasteModal({ entry, onSave, onClose }) {
               </div>
               <div className={styles.qtyField}>
                 <label className={styles.qtyLabel}>Unit</label>
-                <input className={styles.finput} value={unit} onChange={e => setUnit(e.target.value)} placeholder="cupcakes" />
+                <input className="modal-input" value={unit} onChange={e => setUnit(e.target.value)} placeholder="cupcakes" />
               </div>
               <div className={styles.qtyField}>
                 <label className={styles.qtyLabel}>Cost per unit ($)</label>
                 <input
-                  className={`${styles.finput} ${errors.cpu ? styles.invalid : ''}`}
+                  className={`modal-input ${errors.cpu ? styles.invalid : ''}`}
                   type="number" min="0" step="0.01" value={cpu}
                   onChange={e => { setCpu(e.target.value); setErrors(v=>({...v,cpu:false})) }}
                   placeholder="1.50"
@@ -218,7 +218,7 @@ function WasteModal({ entry, onSave, onClose }) {
 
           <div className={styles.formRow} style={{marginBottom:0}}>
             <label className={styles.flabel}>Notes (optional)</label>
-            <textarea className={styles.finput} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any additional context…" style={{height:56,resize:'none'}} />
+            <textarea className="modal-input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any additional context…" style={{height:56,resize:'none'}} />
           </div>
         </div>
 
@@ -337,10 +337,9 @@ export default function Waste() {
   return (
     <div className={styles.page}>
       {/* Header */}
-      <div className={styles.topbar}>
-        <div className={styles.pageTitle}>Food Waste Tracker</div>
-        <button className={styles.logBtn} onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
-      </div>
+      <PageHeader title="Food Waste Tracker">
+        <button className="btn btn-primary" onClick={() => { setEditEntry(null); setShowModal(true) }}>+ Log Waste</button>
+      </PageHeader>
 
       {/* Period tabs */}
       <div className={styles.periodRow}>

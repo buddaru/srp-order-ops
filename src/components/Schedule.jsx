@@ -3,6 +3,7 @@ import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache } from '../lib/cache'
 import { useAuth } from '../context/AuthContext'
 import styles from './Schedule.module.css'
+import PageHeader from './PageHeader'
 
 const ROLES = ['Baker', 'Decorator', 'Cashier', 'Lead']
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -71,21 +72,21 @@ function EmployeeModal({ employee, onSave, onClose }) {
         <div className={styles.modalBody}>
           <div className={styles.formRow}>
             <label className={styles.flabel}>Full name</label>
-            <input className={styles.finput} value={name} onChange={e=>{setName(e.target.value);setError('')}} placeholder="Jane Smith" autoFocus />
+            <input className="modal-input" value={name} onChange={e=>{setName(e.target.value);setError('')}} placeholder="Jane Smith" autoFocus />
           </div>
           <div className={styles.formRow2}>
             <div>
               <label className={styles.flabel}>Email</label>
-              <input className={styles.finput} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jane@example.com" />
+              <input className="modal-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="jane@example.com" />
             </div>
             <div>
               <label className={styles.flabel}>Phone</label>
-              <input className={styles.finput} type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(555) 000-0000" />
+              <input className="modal-input" type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(555) 000-0000" />
             </div>
           </div>
           <div className={styles.formRow}>
             <label className={styles.flabel}>Pay rate ($/hr)</label>
-            <input className={styles.finput} type="number" min="0" step="0.01" value={payRate} onChange={e=>setPayRate(e.target.value)} placeholder="15.00" />
+            <input className="modal-input" type="number" min="0" step="0.01" value={payRate} onChange={e=>setPayRate(e.target.value)} placeholder="15.00" />
           </div>
           <div className={styles.formRow} style={{marginBottom:0}}>
             <label className={styles.flabel}>Default role</label>
@@ -178,7 +179,7 @@ function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
             <>
               <div className={styles.formRow}>
                 <label className={styles.flabel}>Employee</label>
-                <select className={`${styles.finput} ${errors.emp?styles.invalid:''}`} value={empId}
+                <select className={`modal-input ${errors.emp?styles.invalid:''}`} value={empId}
                   onChange={e=>{handleEmpChange(e.target.value);setErrors(v=>({...v,emp:false}))}}>
                   <option value="">Select employee…</option>
                   {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
@@ -186,7 +187,7 @@ function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
               </div>
               <div className={styles.formRow}>
                 <label className={styles.flabel}>Date</label>
-                <select className={`${styles.finput} ${errors.date?styles.invalid:''}`} value={date}
+                <select className={`modal-input ${errors.date?styles.invalid:''}`} value={date}
                   onChange={e=>{setDate(e.target.value);setErrors(v=>({...v,date:false}))}}>
                   {weekDays.map(d=>(
                     <option key={toDS(d)} value={toDS(d)}>{d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</option>
@@ -196,12 +197,12 @@ function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
               <div className={styles.formRow2}>
                 <div>
                   <label className={styles.flabel}>Start time</label>
-                  <input className={`${styles.finput} ${errors.start?styles.invalid:''}`} type="time" value={startTime}
+                  <input className={`modal-input ${errors.start?styles.invalid:''}`} type="time" value={startTime}
                     onChange={e=>{setStartTime(e.target.value);setErrors(v=>({...v,start:false}))}} />
                 </div>
                 <div>
                   <label className={styles.flabel}>End time</label>
-                  <input className={`${styles.finput} ${errors.end?styles.invalid:''}`} type="time" value={endTime}
+                  <input className={`modal-input ${errors.end?styles.invalid:''}`} type="time" value={endTime}
                     onChange={e=>{setEndTime(e.target.value);setErrors(v=>({...v,end:false}))}} />
                 </div>
               </div>
@@ -217,7 +218,7 @@ function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
               </div>
               <div className={styles.formRow} style={{marginBottom:0}}>
                 <label className={styles.flabel}>Notes (optional)</label>
-                <textarea className={styles.finput} value={notes} onChange={e=>setNotes(e.target.value)}
+                <textarea className="modal-input" value={notes} onChange={e=>setNotes(e.target.value)}
                   placeholder="Any special instructions…" style={{height:52,resize:'none'}} />
               </div>
             </>
@@ -443,12 +444,11 @@ export default function Schedule() {
   return (
     <div className={styles.page}>
       {/* Header */}
-      <div className={styles.topbar}>
-        <div className={styles.pageTitle}>Schedule</div>
+      <PageHeader title="Schedule">
         <div className={styles.topbarRight}>
           {isAdmin && (
             <>
-              <button className={styles.addBtn} onClick={()=>{setEditShift(null);setShowShiftModal(true)}}>+ Add shift</button>
+              <button className="btn btn-primary" onClick={()=>{setEditShift(null);setShowShiftModal(true)}}>+ Add shift</button>
               <div className={styles.menuWrap}>
                 <button className={styles.hamburger} onClick={()=>setMenuOpen(v=>!v)}>
                   <span/><span/><span/>
@@ -473,7 +473,7 @@ export default function Schedule() {
             </>
           )}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Employee panel */}
       {isAdmin && showEmpPanel && (
@@ -481,8 +481,8 @@ export default function Schedule() {
           <div className={styles.empPanelHeader}>
             <div className={styles.empPanelTitle}>Employees</div>
             <div style={{display:'flex',gap:8}}>
-              <button className={styles.addBtn} style={{fontSize:11,padding:'5px 12px'}} onClick={()=>{setEditEmp(null);setShowEmpModal(true)}}>+ Add employee</button>
-              <button className={styles.copyBtn} style={{fontSize:11,padding:'5px 12px'}} onClick={()=>setShowEmpPanel(false)}>Hide ✕</button>
+              <button className="btn btn-primary" style={{fontSize:11,padding:'5px 12px'}} onClick={()=>{setEditEmp(null);setShowEmpModal(true)}}>+ Add employee</button>
+              <button className="btn" style={{fontSize:11,padding:'5px 12px'}} onClick={()=>setShowEmpPanel(false)}>Hide ✕</button>
             </div>
           </div>
           {employees.length===0 ? (

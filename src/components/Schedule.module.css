@@ -1,16 +1,8 @@
-.page { padding: 20px 28px; }
+.page { padding: var(--page-pad, 24px 28px); }
 
 /* ── Topbar ── */
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.pageTitle { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
 .topbarRight { display: flex; gap: 8px; align-items: center; }
-.addBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-.addBtn:hover { opacity: 0.88; }
-.copyBtn { background: var(--card); border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: background 0.12s; }
-.copyBtn:hover { background: var(--bg); }
-.copyBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-.sendBtn { background: var(--brand-light); color: #fff; border: none; border-radius: var(--radius-sm); padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-.sendBtn:hover { opacity: 0.88; }
 
 /* ── Employee panel ── */
 .empPanel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; }
@@ -119,8 +111,6 @@
 .formRow { display: flex; flex-direction: column; gap: 5px; }
 .formRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .flabel { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; }
-.finput { width: 100%; border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s; }
-.finput:focus { border-color: var(--accent); }
 .invalid { border-color: #DC2626 !important; background: #FEF2F2; }
 .roleGrid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
 .roleChip { padding: 7px 6px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); text-align: center; cursor: pointer; color: var(--text-muted); background: var(--bg); font-family: 'DM Sans', sans-serif; transition: all 0.12s; }
@@ -133,7 +123,7 @@
 .deleteBtn { background: #DC2626; color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .deleteBtn:hover { background: #B91C1C; }
 .errorMsg { font-size: 12px; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-sm); padding: 8px 12px; }
-.confirmBox { background: var(--card); border-radius: 14px; border: 1px solid var(--border-2); padding: 24px; max-width: 360px; width: 100%; }
+.confirmBox { background: var(--card); border-radius: var(--modal-radius, 16px); border: 1px solid var(--border-2); padding: 24px; max-width: 360px; width: 100%; }
 .confirmTitle { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
 .confirmMsg { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
 .confirmActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

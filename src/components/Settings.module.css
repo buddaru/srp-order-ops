@@ -1,5 +1,5 @@
-.page { padding: 28px 28px; max-width: 600px; }
-.title { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.page { padding: var(--page-pad, 24px 28px); max-width: 600px; }
+.pageTitle { font-family: 'Fraunces', serif; font-size: var(--text-3xl, 29px); font-weight: 500; color: var(--text); margin-bottom: 4px; }
 .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
 .section { margin-bottom: 28px; }
 .sectionLabel { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; font-family: 'DM Sans', sans-serif; }
