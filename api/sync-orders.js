@@ -307,10 +307,13 @@ export default async function handler(req, res) {
     // 1. Get Gmail access token
     const accessToken = await getAccessToken()
 
-    // 2. Fetch Bento order emails from 2026/03/21 onward
+    // 2. Fetch Bento order emails from the last 90 days (dynamic so it never goes stale)
+    const since = new Date()
+    since.setDate(since.getDate() - 90)
+    const afterDate = `${since.getFullYear()}/${String(since.getMonth()+1).padStart(2,'0')}/${String(since.getDate()).padStart(2,'0')}`
     const messages = await gmailSearch(
       accessToken,
-      'from:noreply@notifications.getbento.com subject:"New Pickup Order" after:2026/03/08'
+      `from:noreply@notifications.getbento.com after:${afterDate}`
     )
 
     if (messages.length === 0) {
