@@ -305,9 +305,7 @@ export default async function handler(req, res) {
     if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to test' })
     try {
       const accessToken = await getAccessToken()
-      const since = new Date()
-      since.setDate(since.getDate() - 90)
-      const afterDate = `${since.getFullYear()}/${String(since.getMonth()+1).padStart(2,'0')}/${String(since.getDate()).padStart(2,'0')}`
+      const afterDate = '2026/04/04' // only sync orders from this date forward
       const query = `from:noreply@notifications.getbento.com after:${afterDate}`
       const gmailResponse = await gmailSearch(accessToken, query)
       return res.status(200).json({
@@ -329,10 +327,8 @@ export default async function handler(req, res) {
     // 1. Get Gmail access token
     const accessToken = await getAccessToken()
 
-    // 2. Fetch Bento order emails from the last 90 days (dynamic so it never goes stale)
-    const since = new Date()
-    since.setDate(since.getDate() - 90)
-    const afterDate = `${since.getFullYear()}/${String(since.getMonth()+1).padStart(2,'0')}/${String(since.getDate()).padStart(2,'0')}`
+    // 2. Fetch Bento order emails from 4/4/2026 forward
+    const afterDate = '2026/04/04' // only sync orders from this date forward
     const query = `from:noreply@notifications.getbento.com after:${afterDate}`
     const gmailResponse = await gmailSearch(accessToken, query)
 
