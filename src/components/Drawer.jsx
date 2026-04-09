@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fmtDate, fmtTime, orderTotal, fmt$ } from '../utils/helpers'
+import { fmtDate, fmtTime, fmtTimeRange, orderTotal, fmt$ } from '../utils/helpers'
 import styles from './Drawer.module.css'
 
 export default function Drawer({ order, onClose, onSmsLog, showToast }) {
@@ -64,7 +64,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
         <div className={styles.header}>
           <div>
             <div className={styles.name}>{order.customer}</div>
-            <div className={styles.pickupBadge}>{fmtDate(order.pickupDate)} · {fmtTime(order.pickupTime)}</div>
+            <div className={styles.pickupBadge}>{fmtDate(order.pickupDate)} · {fmtTimeRange(order)}</div>
             <div className={styles.meta}>{order.id}{order.bentoOrderId ? ` · #${order.bentoOrderId}` : ''}</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
