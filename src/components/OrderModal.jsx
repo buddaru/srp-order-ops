@@ -21,12 +21,12 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
 
   useEffect(() => {
     if (isEdit && order) {
-      setCustomer(order.customer)
+      setCustomer(order.customer || '')
       setPhone(order.phone || '')
       setEmail(order.email || '')
-      setDate(order.pickupDate)
-      setTime(order.pickupTime)
-      setItems(order.items.map(i => ({ ...i })))
+      setDate(order.pickupDate || toDS(today))
+      setTime(order.pickupTime || DEFAULT_TIME)
+      setItems((order.items || []).map(i => ({ ...i })))
       setNotes(order.notes || '')
       setImage(order.image || null)
     }

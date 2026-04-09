@@ -116,6 +116,16 @@
 
 /* ── Actions ── */
 .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.stageBtn {
+  background: var(--brand-faint) !important;
+  color: var(--brand) !important;
+  border-color: rgba(36,90,31,0.25) !important;
+  font-weight: 600;
+}
+.stageBtn:hover {
+  background: rgba(36,90,31,0.14) !important;
+  border-color: var(--brand) !important;
+}
 .smsBtn { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #15803D; }
 .smsBtn:hover { background: rgba(74,222,128,0.16); }
 

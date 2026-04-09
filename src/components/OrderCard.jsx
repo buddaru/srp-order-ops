@@ -30,11 +30,14 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
       </div>
 
       <div className={styles.items}>
-        {order.items.map((item, i) => {
+        {(order.items || []).map((item, i) => {
+          const nameHasFlavors = item.name && item.name.includes('—')
+          const addonRaw = item.addonSummary
+          const addonStr = Array.isArray(addonRaw) ? addonRaw.join(' · ') : (addonRaw || '')
           const details = [
-            item.flavor1,
-            item.flavor2,
-            item.addonSummary,
+            !nameHasFlavors ? item.flavor1 : null,
+            !nameHasFlavors ? item.flavor2 : null,
+            addonStr,
             item.writingText ? `"${item.writingText}"` : null,
           ].filter(Boolean).join(' · ')
           return (
@@ -59,11 +62,11 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
           </button>
         )}
         {next && (
-          <button className="btn btn-primary" onClick={e => { e.stopPropagation(); onMove(order.id, 1); }}>
+          <button className={`btn ${styles.stageBtn}`} onClick={e => { e.stopPropagation(); onMove(order.id, 1); }}>
             → {next.label}
           </button>
         )}
-        <button className="btn" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit">✏</button>
+        <button className="btn" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit order">✏</button>
       </div>
     </div>
   )

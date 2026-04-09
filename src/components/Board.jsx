@@ -4,7 +4,7 @@ import OrderCard from './OrderCard'
 import ListView from './ListView'
 import styles from './Board.module.css'
 
-export default function Board({ orders, selectedDay, customDateSelected, dateRange, selectedStage, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
+export default function Board({ orders, ordersLoaded, selectedDay, customDateSelected, dateRange, selectedStage, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
   const [viewMode, setViewMode] = useState('list')
   const [query, setQuery]       = useState('')
   const [showRes, setShowRes]   = useState(false)
@@ -39,7 +39,7 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
             value={query}
             onChange={e => { setQuery(e.target.value); setShowRes(true) }}
             onFocus={() => setShowRes(true)}
-            onBlur={() => setTimeout(() => setShowRes(false), 150)}
+            onBlur={() => setShowRes(false)}
             autoComplete="off"
           />
         </div>
@@ -56,7 +56,7 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
               {matches.length === 0
                 ? <div className={styles.searchEmpty}>No orders found</div>
                 : matches.map(o => (
-                    <div key={o.id} className={styles.searchItem} onMouseDown={() => { onDrawer(o.id); setQuery(''); setShowRes(false) }}>
+                    <div key={o.id} className={styles.searchItem} onMouseDown={e => { e.preventDefault(); onDrawer(o.id); setQuery(''); setShowRes(false) }}>
                       <div className={styles.searchName}>{o.customer} <span className={styles.searchId}>{o.id}</span></div>
                       <div className={styles.searchMeta}>{fmtDate(o.pickupDate)} · {o.items[0]?.name || ''}</div>
                     </div>
@@ -94,12 +94,52 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
       </div>
 
       {/* ── List view ── */}
-      {viewMode === 'list' && (
+      {viewMode === 'list' && !ordersLoaded && (
+        <div className={styles.skeletonWrap}>
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="skeletonRow">
+              <div className="skeletonLine" style={{width:28,height:28,borderRadius:'50%',flexShrink:0}} />
+              <div className="skeletonLine" style={{width:24,height:24,borderRadius:6,flexShrink:0}} />
+              <div style={{flex:'0 0 160px'}}><div className="skeletonLine" style={{width:'80%',marginBottom:5}} /><div className="skeletonLine" style={{width:'50%',height:10}} /></div>
+              <div style={{flex:1}}><div className="skeletonLine" style={{width:'70%'}} /></div>
+              <div className="skeletonLine" style={{width:60,flexShrink:0}} />
+              <div style={{width:120,flexShrink:0}}><div className="skeletonLine" style={{width:'80%',marginBottom:5}} /><div className="skeletonLine" style={{width:'55%',height:10}} /></div>
+              <div className="skeletonLine" style={{width:110,flexShrink:0,borderRadius:20}} />
+            </div>
+          ))}
+        </div>
+      )}
+      {viewMode === 'list' && ordersLoaded && (
         <ListView orders={visible} onDrawer={onDrawer} onMove={onMove} onSetStage={onSetStage} onEdit={onEdit} />
       )}
 
       {/* ── Card view ── */}
-      {viewMode === 'cards' && (
+      {viewMode === 'cards' && !ordersLoaded && (
+        <div className={styles.board}>
+          {STAGES.filter(s => s.id !== 'picked-up').map(stage => (
+            <div key={stage.id} className={`${styles.column} ${styles['col_' + stage.id.replace(/-/g,'_')]}`}>
+              <div className={styles.colHeader}>
+                <div className={styles.colLabel}><span className={styles.colName}>{stage.label}</span></div>
+                <div className={`${styles.colCount} ${styles['badge_' + stage.id.replace(/-/g,'_')]}`}><div className="skeletonLine" style={{width:16,height:16,borderRadius:10}} /></div>
+              </div>
+              <div className={styles.cards}>
+                {[1,2].map(i => (
+                  <div key={i} className="skeletonCard" style={{margin:'0 0 8px',padding:14}}>
+                    <div style={{display:'flex',gap:8,marginBottom:10}}>
+                      <div className="skeletonLine" style={{width:28,height:28,borderRadius:'50%',flexShrink:0}} />
+                      <div style={{flex:1}}><div className="skeletonLine" style={{width:'65%',marginBottom:6}} /><div className="skeletonLine" style={{width:'40%',height:10}} /></div>
+                    </div>
+                    <div className="skeletonLine" style={{width:'90%',marginBottom:6}} />
+                    <div className="skeletonLine" style={{width:'70%',marginBottom:12}} />
+                    <div style={{display:'flex',gap:6}}><div className="skeletonLine" style={{width:80,height:28,borderRadius:6}} /><div className="skeletonLine" style={{width:100,height:28,borderRadius:6}} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {viewMode === 'cards' && ordersLoaded && (
         <div className={styles.board}>
           {!hasAny && (
             <div className={styles.emptyState}>
@@ -127,7 +167,7 @@ export default function Board({ orders, selectedDay, customDateSelected, dateRan
                   {stageOrders.length === 0
                     ? <div className={styles.emptyCol}>
                         <div className={styles.emptyColIcon}>{stage.id === 'ready' ? '🎁' : stage.id === 'picked-up' ? '✓' : '📋'}</div>
-                        <div>{stage.id === 'ready' ? 'Nothing ready yet' : stage.id === 'picked-up' ? 'No pickups today' : 'No orders here'}</div>
+                        <div>{stage.id === 'ready' ? 'Nothing ready yet — move orders here from In Production' : stage.id === 'picked-up' ? 'No pickups today' : 'No orders here'}</div>
                       </div>
                     : stageOrders.map(o => (
                         <OrderCard

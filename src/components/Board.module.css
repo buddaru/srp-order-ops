@@ -163,3 +163,10 @@
 .searchId { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
 .searchMeta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .searchEmpty { padding: 12px 14px; font-size: 13px; color: var(--text-muted); }
+
+.skeletonWrap {
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+}

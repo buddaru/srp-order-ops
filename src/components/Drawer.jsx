@@ -77,8 +77,12 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
           <div className={styles.itemsList}>
             {order.items.map((item, i) => {
               const price = (parseFloat(item.price)||0) * (parseInt(item.qty)||0)
-              const flavors = [item.flavor1, item.flavor2].filter(Boolean).join(' · ')
-              const addon = item.addonSummary || ''
+              // Cupcake names already embed flavors (e.g. "Cupcakes (1 Dozen) — Red Velvet / …")
+              // Only show flavor1/flavor2 separately for items that don't embed them in the name
+              const nameHasFlavors = item.name && item.name.includes('—')
+              const flavors = nameHasFlavors ? '' : [item.flavor1, item.flavor2].filter(Boolean).join(' · ')
+              const addonRaw = item.addonSummary
+              const addon = Array.isArray(addonRaw) ? addonRaw.join(' · ') : (addonRaw || '')
               const flavorLine = [flavors, addon].filter(Boolean).join(' · ')
               return (
                 <div key={i} className={styles.itemRow}>

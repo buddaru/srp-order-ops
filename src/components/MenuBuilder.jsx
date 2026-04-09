@@ -132,13 +132,36 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const removeFromCart = (idx) => onChange(cartItems.filter((_, i) => i !== idx))
 
   const startEdit = (idx) => {
-    setEditIdx(idx)
     const ci = cartItems[idx]
-    const menuItem = MENU.find(m => ci.name.startsWith(m.name) || ci.name.includes(m.name))
+    if (!ci) return
+    setEditIdx(idx)
+    // For custom items, just set editIdx — handled by Custom Item tab
+    if (ci.category === 'Custom') {
+      setActiveCat('Custom Item')
+      setSelectedItem(null)
+      setCustomName(ci.name || '')
+      setCustomItemPrice(String(ci.price || ''))
+      return
+    }
+    const menuItem = MENU.find(m =>
+      (ci.name && ci.name.startsWith(m.name)) ||
+      (ci.name && ci.name.includes(m.name))
+    )
     if (menuItem) {
       setActiveCat(menuItem.category)
       setSelectedItem(menuItem)
       setSize(ci.size || 'round')
+      // Restore cupcake flavors if present
+      if (menuItem.category === 'Cupcakes') {
+        if (ci.flavor1) setFlavor1(ci.flavor1)
+        if (ci.flavor2) setFlavor2(ci.flavor2 || 'None')
+      }
+    } else {
+      // Item not found in menu (Bento-synced or old format) — switch to Custom Item
+      setActiveCat('Custom Item')
+      setSelectedItem(null)
+      setCustomName(ci.name || '')
+      setCustomItemPrice(String(ci.price || ''))
     }
   }
 
@@ -169,69 +192,67 @@ export default function MenuBuilder({ cartItems, onChange }) {
       {/* ── Builder ── */}
       <div className={styles.builder}>
 
-        {/* Category tabs */}
-        <div className={styles.catTabs}>
-          {ALL_CATEGORIES.map(c => (
-            <button
-              key={c}
-              className={`${styles.catTab} ${activeCat === c ? styles.catTabActive : ''} ${c === 'Custom Item' ? styles.catTabCustom : ''}`}
-              onClick={() => { setActiveCat(c); setSelectedItem(null); setAddonsOpen(false) }}
-            >{c}</button>
-          ))}
-        </div>
-
-        {/* Custom item form */}
-        {isCustomCat && (
-          <div className={styles.customItemForm}>
-            <div className={styles.customItemTitle}>Add a custom line item</div>
-            <div className={styles.customItemFields}>
-              <input
-                type="text"
-                className={styles.customItemName}
-                placeholder="Item name (e.g. Delivery fee, Rush order, Special decoration)"
-                value={customName}
-                onChange={e => setCustomName(e.target.value)}
-              />
-              <div className={styles.customItemPriceWrap}>
-                <span className={styles.customItemDollar}>$</span>
+        {/* All items — flat pill layout grouped by category */}
+        <div className={styles.allItemsScroll}>
+          {CATEGORIES.map(cat => {
+            const catItems = MENU.filter(m => m.category === cat)
+            return (
+              <div key={cat} className={styles.catSection}>
+                <div className={styles.catSectionLabel}>{cat}</div>
+                <div className={styles.pillRow}>
+                  {catItems.map(item => (
+                    <div
+                      key={item.name}
+                      className={`${styles.pill} ${selectedItem?.name === item.name ? styles.pillSelected : ''}`}
+                      onClick={() => { selectItem(item); setActiveCat(cat) }}
+                    >
+                      <span className={styles.pillName}>{item.name}</span>
+                      <span className={styles.pillPrice}>{fmt$(item.price)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+          {/* Custom item section */}
+          <div className={styles.catSection}>
+            <div className={styles.catSectionLabel}>Custom item</div>
+            <div className={styles.customItemForm} style={{margin: 0, border: 'none', padding: '8px 0 4px'}}>
+              <div className={styles.customItemFields}>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className={styles.customItemPriceInput}
-                  placeholder="0.00"
-                  value={customItemPrice}
-                  onChange={e => setCustomItemPrice(e.target.value)}
+                  type="text"
+                  className={styles.customItemName}
+                  placeholder="Item name (e.g. Delivery fee, Rush order)"
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
                 />
+                <div className={styles.customItemPriceWrap}>
+                  <span className={styles.customItemDollar}>$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className={styles.customItemPriceInput}
+                    placeholder="0.00"
+                    value={customItemPrice}
+                    onChange={e => setCustomItemPrice(e.target.value)}
+                  />
+                </div>
+                <button
+                  className={styles.saveItemBtn}
+                  style={{padding: '7px 14px', fontSize: 12}}
+                  onClick={handleAddCustomItem}
+                  disabled={!customName.trim()}
+                >
+                  + Add
+                </button>
               </div>
             </div>
-            <button
-              className={styles.saveItemBtn}
-              onClick={handleAddCustomItem}
-              disabled={!customName.trim()}
-            >
-              + Add to order
-            </button>
           </div>
-        )}
+        </div>
 
-        {/* Item chips — standard categories only */}
-        {!isCustomCat && (
-          <div className={styles.itemGrid}>
-            {catItems.map(item => (
-              <div
-                key={item.name}
-                className={`${styles.itemChip} ${selectedItem?.name === item.name ? styles.itemChipSelected : ''}`}
-                onClick={() => selectItem(item)}
-              >
-                <div className={styles.itemChipName}>{item.name}</div>
-                <div className={styles.itemChipPrice}>{fmt$(item.price)}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!isCustomCat && selectedItem && (
+        {/* Customization zone — appears when an item is selected */}
+        {selectedItem && (
           <div className={styles.customZone}>
 
             {/* Header with live price */}
@@ -401,6 +422,21 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
             )}
 
+            {/* Writing text for cakes */}
+            {isCake && (
+              <div className={styles.customOnlyRow}>
+                <div className={styles.customOnlyLabel}>Writing on cake (optional)</div>
+                <input
+                  type="text"
+                  className={styles.customLabelInput}
+                  style={{width:'100%'}}
+                  placeholder="e.g. Happy Birthday Kelly!"
+                  value={addons.writingText || ''}
+                  onChange={e => setAddon('writingText', e.target.value)}
+                />
+              </div>
+            )}
+
             {/* Save item button */}
             <div className={styles.saveItemRow}>
               <button className={styles.saveItemBtn} onClick={handleAddToCart}>
@@ -416,21 +452,23 @@ export default function MenuBuilder({ cartItems, onChange }) {
       {cartItems.length > 0 && (
         <div className={styles.cart}>
           <div className={styles.cartLabel}>Order items</div>
-          {cartItems.map((ci, idx) => (
-            <div key={idx} className={styles.cartRow}>
-              <div className={styles.cartInfo}>
-                <div className={styles.cartName}>{ci.name}</div>
-                {ci.addonSummary?.length > 0 && (
-                  <div className={styles.cartAddons}>{ci.addonSummary.join(' · ')}</div>
-                )}
+          {cartItems.map((ci, idx) => {
+            const addonRaw = ci.addonSummary
+            const addonStr = Array.isArray(addonRaw) ? addonRaw.join(' · ') : (addonRaw || '')
+            return (
+              <div key={idx} className={styles.cartRow}>
+                <div className={styles.cartInfo}>
+                  <div className={styles.cartName}>{ci.name}</div>
+                  {addonStr && <div className={styles.cartAddons}>{addonStr}</div>}
+                </div>
+                <div className={styles.cartRight}>
+                  <div className={styles.cartPrice}>{fmt$(ci.price)}</div>
+                  <button className={styles.cartEdit} onClick={() => startEdit(idx)}>Edit</button>
+                  <button className={styles.cartRemove} onClick={() => removeFromCart(idx)}>×</button>
+                </div>
               </div>
-              <div className={styles.cartRight}>
-                <div className={styles.cartPrice}>{fmt$(ci.price)}</div>
-                <button className={styles.cartEdit} onClick={() => startEdit(idx)}>Edit</button>
-                <button className={styles.cartRemove} onClick={() => removeFromCart(idx)}>×</button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
           <div className={styles.cartTotal}>
             <span>Order total</span>
             <span className={styles.cartTotalAmt}>{fmt$(cartTotal)}</span>
@@ -439,7 +477,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
       )}
 
       {cartItems.length === 0 && !selectedItem && (
-        <div className={styles.emptyCart}>Select a category and item above to begin</div>
+        <div className={styles.emptyCart}>Select an item above to begin</div>
       )}
     </div>
   )

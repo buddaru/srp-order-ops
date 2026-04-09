@@ -84,6 +84,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 
 export default function App() {
   const [orders, setOrders]           = useState([])
+  const [ordersLoaded, setOrdersLoaded] = useState(false)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [selectedStage, setSelectedStage] = useState('active')
@@ -120,7 +121,7 @@ export default function App() {
         .select('*')
         .order('created_at', { ascending: true })
 
-      if (error) { console.error('Load orders error:', error); return }
+      if (error) { console.error('Load orders error:', error); setOrdersLoaded(true); return }
       if (data && data.length > 0) {
         const mapped = data.map(fromDB)
         setOrders(mapped)
@@ -129,8 +130,10 @@ export default function App() {
           return Math.max(max, n)
         }, 0)
       }
+      setOrdersLoaded(true)
     } catch(e) {
       console.error('Orders load exception:', e)
+      setOrdersLoaded(true)
     }
   }, [])
 
@@ -178,8 +181,14 @@ export default function App() {
       notifs.push({ text: `↩ Moved back to ${STAGES[ni].label}`, ts: now })
     }
     const updated = { ...o, stage: newStage, notifications: notifs }
+    // Optimistic update
     setOrders(prev => prev.map(x => x.id === id ? updated : x))
-    await supabase.from('orders').update({ stage: newStage, notifications: notifs }).eq('id', id)
+    const { error } = await supabase.from('orders').update({ stage: newStage, notifications: notifs }).eq('id', id)
+    if (error) {
+      // Rollback on failure
+      setOrders(prev => prev.map(x => x.id === id ? o : x))
+      showToast({ label: '⚠️ Update failed', customer: o.customer, msg: 'Stage change could not be saved. Please try again.' })
+    }
   }
 
   const handleSetStage = async (id, newStageId) => {
@@ -189,8 +198,14 @@ export default function App() {
     const stage = STAGES.find(s => s.id === newStageId)
     const notifs = [...o.notifications, { text: `→ Moved to ${stage.label}`, ts: new Date().toISOString() }]
     const updated = { ...o, stage: newStageId, notifications: notifs }
+    // Optimistic update
     setOrders(prev => prev.map(x => x.id === id ? updated : x))
-    await supabase.from('orders').update({ stage: newStageId, notifications: notifs }).eq('id', id)
+    const { error } = await supabase.from('orders').update({ stage: newStageId, notifications: notifs }).eq('id', id)
+    if (error) {
+      // Rollback on failure
+      setOrders(prev => prev.map(x => x.id === id ? o : x))
+      showToast({ label: '⚠️ Update failed', customer: o.customer, msg: 'Stage change could not be saved. Please try again.' })
+    }
   }
 
   // ── Manual SMS ──
@@ -238,31 +253,48 @@ export default function App() {
   const handleSaveEdit = async (data) => {
     const notifs = [...(editOrder?.notifications || []), { text: '✏ Order updated by staff', ts: new Date().toISOString() }]
     const updated = { ...editOrder, ...data, notifications: notifs }
-    const { error } = await supabase.from('orders').update(toDB(updated)).eq('id', editingId)
-    if (error) {
-      console.error('Update order error:', error)
-      showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Could not save changes. Check your connection.' })
-      return
-    }
+    // Optimistic update
     setOrders(prev => prev.map(o => o.id !== editingId ? o : updated))
     setEditingId(null)
+    const { error } = await supabase.from('orders').update(toDB(updated)).eq('id', editingId)
+    if (error) {
+      // Rollback: restore original order
+      setOrders(prev => prev.map(o => o.id !== editingId ? o : editOrder))
+      showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Could not save changes. Your edits have been reverted.' })
+    }
   }
 
   // ── Create ──
   const handleCreateOrder = async (data) => {
-    orderSeq++
-    const id = `SRP-${String(orderSeq).padStart(3, '0')}`
-    const newOrder = { id, ...data, notifications: [{ text: '✓ Order created', ts: new Date().toISOString() }], stage: 'received', createdAt: new Date().toISOString() }
+    // Generate a temporary optimistic ID while we wait for the DB
+    const tempSeq = orderSeq + 1
+    const tempId = `SRP-${String(tempSeq).padStart(3, '0')}`
+    const newOrder = {
+      id: tempId, ...data,
+      notifications: [{ text: '✓ Order created', ts: new Date().toISOString() }],
+      stage: 'received',
+      createdAt: new Date().toISOString(),
+    }
+    // Optimistic: show order immediately
+    setOrders(prev => [...prev, newOrder])
+    setShowNew(false)
+
     const dbRow = toDB(newOrder)
-    const { error } = await supabase.from('orders').insert(dbRow)
+    const { data: inserted, error } = await supabase.from('orders').insert(dbRow).select('id').single()
     if (error) {
-      console.error('Create order error:', error)
+      // Rollback
+      setOrders(prev => prev.filter(o => o.id !== tempId))
+      setShowNew(true)
       showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Order could not be saved. Check your connection.' })
       return
     }
-    setOrders(prev => [...prev, newOrder])
-    setShowNew(false)
-    showToast({ label: '✓ Order created', customer: data.customer, msg: `${id} added to the board.` })
+    // If server returned a different ID (future: use DB sequence), update it
+    const finalId = inserted?.id || tempId
+    if (finalId !== tempId) {
+      setOrders(prev => prev.map(o => o.id === tempId ? { ...o, id: finalId } : o))
+    }
+    orderSeq = tempSeq
+    showToast({ label: '✓ Order created', customer: data.customer, msg: `${finalId} added to the board.` })
   }
 
   // ── SMS log from drawer ──
@@ -382,6 +414,7 @@ export default function App() {
       <div className={styles.boardWrapper}>
         <Board
           orders={orders}
+          ordersLoaded={ordersLoaded}
           selectedDay={selectedDay}
           customDateSelected={customDate}
           dateRange={dateRange}
@@ -405,6 +438,7 @@ export default function App() {
       )}
 
       {editingId && editOrder && <OrderModal mode="edit" order={editOrder} onSave={handleSaveEdit} onClose={() => setEditingId(null)} onDelete={handleDelete} isAdmin={isAdmin} />}
+      {editingId && !editOrder && (() => { setTimeout(() => setEditingId(null), 0); return null })()}
 
       {confirmDelete && (
         <ConfirmModal

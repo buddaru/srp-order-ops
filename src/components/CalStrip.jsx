@@ -86,6 +86,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     { id: 'tomorrow', label: 'Tomorrow',      count: countTomorrow },
     { id: '7d',       label: 'Next 7 days',   count: count7d },
     { id: '30d',      label: 'Next 30 days',  count: count30d },
+    { id: 'custom',   label: 'Custom range',  count: null },
   ]
 
   const activePresetLabel = PRESETS.find(p => p.id === activePreset)?.label
@@ -94,6 +95,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
   const activeCount = PRESETS.find(p => p.id === activePreset)?.count ?? stageFiltered.length
 
   const handlePreset = (preset) => {
+    if (preset === 'custom') { setDateOpen(false); return }  // keep panel open for inputs
     onRangeSelect(null)
     if (preset === 'all')      onSelectDay('all', false)
     if (preset === 'today')    onSelectDay(today, false)
@@ -139,9 +141,23 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
                 onClick={() => handlePreset(p.id)}
               >
                 <span>{p.label}</span>
-                <span className={styles.stageCnt + ' ' + styles.stageCnt_active}>{p.count}</span>
+                {p.count !== null && <span className={styles.stageCnt + ' ' + styles.stageCnt_active}>{p.count}</span>}
               </button>
             ))}
+            {/* Inline custom range inputs */}
+            <div className={styles.inlineRange} onMouseDown={e => e.stopPropagation()}>
+              <input type="date" className={styles.dateInput} value={startVal} onChange={e => setStartVal(e.target.value)} />
+              <span className={styles.rangeArrow}>→</span>
+              <input type="date" className={styles.dateInput} value={endVal} onChange={e => setEndVal(e.target.value)} />
+              {startVal && endVal && startVal <= endVal && (
+                <button className={styles.applyBtn} onClick={() => { onRangeSelect({ start: startVal, end: endVal }); setDateOpen(false) }}>Apply</button>
+              )}
+            </div>
+            {dateRange && (
+              <button className={styles.clearRangeBtn} onClick={() => { setStartVal(''); setEndVal(''); onRangeSelect(null); onSelectDay('all', false); setDateOpen(false) }}>
+                ✕ Clear custom range
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -172,20 +188,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
         )}
       </div>
 
-      {/* Custom date range */}
-      <div className={styles.rangeRow}>
-        <input type="date" className={styles.dateInput} value={startVal} onChange={e => setStartVal(e.target.value)} />
-        <span className={styles.rangeArrow}>→</span>
-        <input type="date" className={styles.dateInput} value={endVal} onChange={e => setEndVal(e.target.value)} />
-        {startVal && endVal && startVal <= endVal && (
-          <button className={styles.applyBtn} onClick={() => { onRangeSelect({ start: startVal, end: endVal }) }}>Apply</button>
-        )}
-        {dateRange && (
-          <button className={styles.clearBtn} onClick={() => { setStartVal(''); setEndVal(''); onRangeSelect(null); onSelectDay('all', false) }}>✕</button>
-        )}
-      </div>
-
-      {/* Calendar browse */}
+      {/* Calendar browse — single date pick */}
       <div className={styles.browseWrap} ref={calRef}>
         <button
           className={`${styles.browseBtn} ${activePreset === 'custom' && !dateRange ? styles.browseBtnActive : ''}`}
