@@ -29,22 +29,13 @@ export const mkInitials = (name) => name.trim().split(/\s+/).map(w=>w[0]).join('
 export const firstName = (name) => name.split(' ')[0]
 export const orderTotal = (order) => order.items.reduce((s,i)=>s+(parseFloat(i.price)||0)*(parseInt(i.qty)||0),0)
 
-export const fmtTimeRange = (order) => {
-  const from = order.pickupTimeFrom || order.pickupTime
-  const to   = order.pickupTimeTo
-  if (!from) return ''
-  return to ? `${fmtTime(from)} – ${fmtTime(to)}` : fmtTime(from)
-}
-
 export const dueBadge = (order) => {
   const d = diffDays(order.pickupDate)
   const short = fmtDateShort(order.pickupDate)
-  const timeStr = fmtTimeRange(order)
-  const suffix = timeStr ? ` · ${timeStr}` : ''
-  if (d < 0)   return { cls: 'overdue',  label: `Overdue · ${short}${suffix}` }
-  if (d === 0) return { cls: 'today',    label: `Today, ${short}${suffix}` }
-  if (d === 1) return { cls: 'tomorrow', label: `Tomorrow, ${short}${suffix}` }
-  return { cls: 'future', label: `${fmtDate(order.pickupDate)}${suffix}` }
+  if (d < 0)   return { cls: 'overdue',  label: `Overdue · ${short} · ${fmtTime(order.pickupTime)}` }
+  if (d === 0) return { cls: 'today',    label: `Today, ${short} · ${fmtTime(order.pickupTime)}` }
+  if (d === 1) return { cls: 'tomorrow', label: `Tomorrow, ${short} · ${fmtTime(order.pickupTime)}` }
+  return { cls: 'future', label: `${fmtDate(order.pickupDate)} · ${fmtTime(order.pickupTime)}` }
 }
 
 
