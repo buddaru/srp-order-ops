@@ -52,7 +52,6 @@ const fromDB = (row) => ({
 })
 
 const toDB = (o) => ({
-  id:            o.id,
   customer:      o.customer,
   initials:      o.initials,
   phone:         o.phone,
