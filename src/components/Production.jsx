@@ -39,20 +39,17 @@ export default function Production() {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
 
-  // Add item form
   const [newName, setNewName]     = useState('')
   const [newQty, setNewQty]       = useState('')
   const [newCat, setNewCat]       = useState('')
   const [newNotes, setNewNotes]   = useState('')
   const [showForm, setShowForm]   = useState(false)
-  const [editingItem, setEditingItem] = useState(null) // {id, item_name, quantity, category, notes}
+  const [editingItem, setEditingItem] = useState(null)
   const noteTimer = useRef(null)
 
-  // Load items + note for selected date
   useEffect(() => {
     const load = async () => {
       setLoadError(false)
-      // Show cached data instantly if available for this date
       const cacheKey = `production-${date}`
       const cached = getCache(cacheKey)
       if (cached) {
@@ -60,7 +57,6 @@ export default function Production() {
         setNote(cached.note)
         setNoteId(cached.noteId)
         setLoading(false)
-        // Still refresh in background
       } else {
         setLoading(true)
       }
@@ -84,7 +80,6 @@ export default function Production() {
         setLoading(false)
       }
     }
-    // expose load so retry button can call it
     loadRef.current = load
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
@@ -92,7 +87,6 @@ export default function Production() {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [date])
 
-  // Auto-save note with debounce
   const handleNoteChange = (val) => {
     setNote(val)
     setNoteSaved(false)
@@ -109,7 +103,6 @@ export default function Production() {
     }, 800)
   }
 
-  // Add item
   const handleAdd = async () => {
     if (!newName.trim() || !newQty.trim()) return
     const item = { date, item_name: newName.trim(), quantity: newQty.trim(), category: newCat.trim() || 'General', notes: newNotes.trim(), completed: false }
@@ -118,19 +111,16 @@ export default function Production() {
     setNewName(''); setNewQty(''); setNewCat(''); setNewNotes(''); setShowForm(false)
   }
 
-  // Toggle complete
   const handleToggle = async (id, completed) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !completed } : i))
     await supabase.from('production').update({ completed: !completed }).eq('id', id)
   }
 
-  // Delete item
   const handleDelete = async (id) => {
     setItems(prev => prev.filter(i => i.id !== id))
     await supabase.from('production').delete().eq('id', id)
   }
 
-  // ── Edit item ──
   const handleEditItem = (item) => {
     setEditingItem({ id: item.id, item_name: item.item_name, quantity: item.quantity, category: item.category, notes: item.notes || '' })
   }
@@ -143,12 +133,9 @@ export default function Production() {
     await supabase.from('production').update({ item_name, quantity, category, notes }).eq('id', id)
   }
 
-  // ── Template ──
   const handleSaveTemplate = async () => {
     if (items.length === 0) return
-    // Clear existing template
     await supabase.from('production_template').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    // Save current items as template
     const templateItems = items.map((item, i) => ({
       item_name: item.item_name,
       quantity: item.quantity,
@@ -182,10 +169,8 @@ export default function Production() {
     if (inserted) setItems(prev => [...prev, ...inserted])
   }
 
-  // Print
   const handlePrint = () => window.print()
 
-  // Group by category
   const grouped = items.reduce((acc, item) => {
     const cat = item.category || 'General'
     if (!acc[cat]) acc[cat] = []
@@ -200,51 +185,63 @@ export default function Production() {
 
   return (
     <div className={styles.page}>
+
       {/* Print header */}
       <div className={styles.printHeader}>
         <div className={styles.printTitle}>Sweet Red Peach — Daily Production</div>
         <div className={styles.printDate}>{fmtDisplayDate(date)}</div>
       </div>
 
-      {/* Title bar */}
-      <div className={`${styles.titlebar} ${styles.noPrint}`}>
-        <span className="pageTitle">Daily Production</span>
-        <div className={styles.menuWrap}>
-          <button className={styles.menuBtn} onClick={() => setMenuOpen(v => !v)}>≡ Menu</button>
-          {menuOpen && (
-            <>
-              <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
-              <div className={styles.menuDropdown}>
-                <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
-                <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
-                <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
-              </div>
-            </>
-          )}
+      {/* ── Top bar ── */}
+      <div className={`${styles.topBar} ${styles.noPrint}`}>
+        {/* Left: title + date nav */}
+        <div className={styles.topLeft}>
+          <span className="pageTitle">Daily Production</span>
+          <div className={styles.dateNav}>
+            <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
+            <span className={styles.dateLabel}>{fmtDisplayDate(date)}</span>
+            <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, 1))}>→</button>
+            {date !== todayDS() && (
+              <button className={styles.todayBtn} onClick={() => setDate(todayDS())}>Today</button>
+            )}
+          </div>
+        </div>
+
+        {/* Right: stats + actions */}
+        <div className={styles.topRight}>
+          <div className={styles.statBadge}>
+            <span className={styles.statNum}>{total}</span>
+            <span className={styles.statLbl}>Total</span>
+          </div>
+          <div className={`${styles.statBadge} ${styles.statDone}`}>
+            <span className={styles.statNum}>{completed}</span>
+            <span className={styles.statLbl}>Done</span>
+          </div>
+          <div className={`${styles.statBadge} ${styles.statLeft}`}>
+            <span className={styles.statNum}>{remaining}</span>
+            <span className={styles.statLbl}>Left</span>
+          </div>
+
+          <button className={styles.addPrimaryBtn} onClick={() => setShowForm(true)}>+ Add Item</button>
+
+          {/* Menu (secondary) */}
+          <div className={styles.menuWrap}>
+            <button className={styles.menuBtn} onClick={() => setMenuOpen(v => !v)}>≡</button>
+            {menuOpen && (
+              <>
+                <div className={styles.menuBackdrop} onClick={() => setMenuOpen(false)} />
+                <div className={styles.menuDropdown}>
+                  <button className={styles.menuItem} onClick={() => { handlePrint(); setMenuOpen(false) }}>🖨 Print</button>
+                  <button className={styles.menuItem} onClick={() => { handleLoadTemplate(); setMenuOpen(false) }}>📋 Load Template</button>
+                  <button className={styles.menuItem} onClick={() => { handleSaveTemplate(); setMenuOpen(false) }}>💾 Save as Template</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Date hero */}
-      <div className={`${styles.hero} ${styles.noPrint}`}>
-        <div className={styles.heroDate}>
-          <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, -1))}>←</button>
-          <span>{fmtDisplayDate(date)}</span>
-          <button className={styles.navBtn} onClick={() => setDate(shiftDate(date, 1))}>→</button>
-        </div>
-        {date !== todayDS() && (
-          <button className={styles.todayBtn} onClick={() => setDate(todayDS())}>Jump to today</button>
-        )}
-      </div>
-
-      <div className={`${styles.divider} ${styles.noPrint}`} />
-
-      {/* Stats */}
-      <div className={`${styles.stats} ${styles.noPrint}`}>
-        <div className={styles.stat}><strong>{total}</strong> total</div>
-        <div className={styles.stat} style={{color:'#639922'}}><strong>{completed}</strong> done</div>
-        <div className={styles.stat} style={{color:'#B45309'}}><strong>{remaining}</strong> left</div>
-      </div>
-
+      {/* Progress bar */}
       {total > 0 && (
         <div className={`${styles.progressBar} ${styles.noPrint}`}>
           <div className={styles.progressFill} style={{width: `${pct}%`}} />
@@ -259,12 +256,12 @@ export default function Production() {
           value={note}
           onChange={e => handleNoteChange(e.target.value)}
           placeholder="Add notes for the team today..."
-          rows={3}
+          rows={2}
         />
         {noteSaved && <span className={styles.savedBadge}>Saved</span>}
       </div>
 
-      {/* Items */}
+      {/* ── Table ── */}
       {loading ? (
         <div className={styles.empty}>Loading...</div>
       ) : loadError ? (
@@ -279,15 +276,24 @@ export default function Production() {
           <button className={styles.addFirstBtn} onClick={() => setShowForm(true)}>+ Add first item</button>
         </div>
       ) : (
-        Object.entries(grouped).map(([cat, catItems]) => {
-          const catDone = catItems.filter(i => i.completed).length
-          return (
+        <div className={styles.table}>
+          {/* Column headers */}
+          <div className={styles.tableHead}>
+            <div className={styles.colQty}>QTY</div>
+            <div className={styles.colItem}>ITEM</div>
+            <div className={styles.colCat}>CATEGORY</div>
+            <div className={styles.colCheck}></div>
+          </div>
+
+          {/* Rows grouped by category */}
+          {Object.entries(grouped).map(([cat, catItems]) => (
             <div key={cat}>
-              <div className={styles.catLabel}>
+              <div className={styles.catDivider}>
                 <span className={styles.catName}>{cat}</span>
                 <div className={styles.catLine}></div>
-                <span className={styles.catCount}>{catItems.length} item{catItems.length !== 1 ? 's' : ''}{catDone > 0 ? `, ${catDone} done` : ''}</span>
+                <span className={styles.catCount}>{catItems.length} item{catItems.length !== 1 ? 's' : ''}</span>
               </div>
+
               {catItems.map(item => (
                 <div key={item.id}>
                   {editingItem?.id === item.id ? (
@@ -307,31 +313,38 @@ export default function Production() {
                     </div>
                   ) : (
                     <div className={`${styles.itemRow} ${item.completed ? styles.done : ''}`}>
-                      <div className={styles.itemQtyBig}>{item.quantity}</div>
-                      <div className={styles.itemBody}>
-                        <div className={styles.itemName}>{item.item_name}</div>
-                        {item.notes && <div className={styles.itemNote}>{item.notes}</div>}
+                      <div className={styles.colQty}>
+                        <span className={styles.itemQtyBig}>{item.quantity}</span>
                       </div>
-                      <div className={`${styles.itemActions} ${styles.noPrint}`}>
-                        <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
-                        <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
+                      <div className={styles.colItem}>
+                        <span className={styles.itemName}>{item.item_name}</span>
+                        {item.notes && <span className={styles.itemNote}>{item.notes}</span>}
                       </div>
-                      <button
-                        className={`${styles.check} ${item.completed ? styles.checked : ''}`}
-                        onClick={() => handleToggle(item.id, item.completed)}
-                      />
+                      <div className={styles.colCat}>
+                        <span className={styles.catBadge}>{item.category}</span>
+                      </div>
+                      <div className={`${styles.colCheck}`}>
+                        <div className={`${styles.itemActions} ${styles.noPrint}`}>
+                          <button className={styles.editItemBtn} onClick={() => handleEditItem(item)} title="Edit">✏</button>
+                          <button className={styles.deleteBtn} onClick={() => handleDelete(item.id)}>×</button>
+                        </div>
+                        <button
+                          className={`${styles.check} ${item.completed ? styles.checked : ''}`}
+                          onClick={() => handleToggle(item.id, item.completed)}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )
-        })
+          ))}
+        </div>
       )}
 
       {/* Add form */}
       <div className={styles.noPrint}>
-        {showForm ? (
+        {showForm && (
           <div className={styles.addForm}>
             <div className={styles.formRow}>
               <input placeholder="Item name *" value={newName} onChange={e => setNewName(e.target.value)} className={styles.input} />
@@ -346,10 +359,9 @@ export default function Production() {
               <button className={styles.saveBtn} onClick={handleAdd}>Add item</button>
             </div>
           </div>
-        ) : total > 0 ? (
-          <button className={styles.addBtn} onClick={() => setShowForm(true)}>+ Add item</button>
-        ) : null}
+        )}
       </div>
+
     </div>
   )
 }
