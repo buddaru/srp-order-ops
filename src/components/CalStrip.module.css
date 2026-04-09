@@ -159,3 +159,19 @@
   border: 0.5px solid var(--border-2);
   font-family: 'DM Sans', sans-serif;
 }
+
+/* ── Range picker popup (full calendar in range mode) ── */
+.rangePickerWrap {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  z-index: 9999;
+  background: var(--card); border: 1px solid var(--border-2);
+  border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+.clearRangeBtnPopup {
+  width: 100%; text-align: left; background: none; border: none;
+  border-top: 1px solid var(--border); padding: 9px 16px;
+  font-size: 12px; color: #DC2626; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.clearRangeBtnPopup:hover { background: #FEF2F2; }
