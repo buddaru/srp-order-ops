@@ -4,20 +4,22 @@ import MenuBuilder from './MenuBuilder'
 import ImageUpload from './ImageUpload'
 import styles from './OrderModal.module.css'
 
-const DEFAULT_TIME = toTS(13, 0)
+const DEFAULT_TIME_FROM = toTS(12, 0)
+const DEFAULT_TIME_TO   = toTS(17, 0)
 
 export default function OrderModal({ mode, order, onSave, onClose, onDelete, isAdmin }) {
   const isEdit = mode === 'edit'
 
-  const [customer, setCustomer] = useState('')
-  const [phone, setPhone]       = useState('')
-  const [email, setEmail]       = useState('')
-  const [pickupDate, setDate]   = useState(toDS(today))
-  const [pickupTime, setTime]   = useState(DEFAULT_TIME)
-  const [items, setItems]       = useState([])
-  const [notes, setNotes]       = useState('')
-  const [image, setImage]       = useState(null)
-  const [errors, setErrors]     = useState({})
+  const [customer, setCustomer]         = useState('')
+  const [phone, setPhone]               = useState('')
+  const [email, setEmail]               = useState('')
+  const [pickupDate, setDate]           = useState(toDS(today))
+  const [pickupTimeFrom, setTimeFrom]   = useState(DEFAULT_TIME_FROM)
+  const [pickupTimeTo, setTimeTo]       = useState(DEFAULT_TIME_TO)
+  const [items, setItems]               = useState([])
+  const [notes, setNotes]               = useState('')
+  const [image, setImage]               = useState(null)
+  const [errors, setErrors]             = useState({})
 
   useEffect(() => {
     if (isEdit && order) {
@@ -25,7 +27,8 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
       setPhone(order.phone || '')
       setEmail(order.email || '')
       setDate(order.pickupDate || toDS(today))
-      setTime(order.pickupTime || DEFAULT_TIME)
+      setTimeFrom(order.pickupTimeFrom || order.pickupTime || DEFAULT_TIME_FROM)
+      setTimeTo(order.pickupTimeTo || DEFAULT_TIME_TO)
       setItems((order.items || []).map(i => ({ ...i })))
       setNotes(order.notes || '')
       setImage(order.image || null)
@@ -46,7 +49,7 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
     onSave({
       customer: customer.trim(),
       initials: mkInitials(customer.trim()),
-      phone, email, pickupDate, pickupTime,
+      phone, email, pickupDate, pickupTimeFrom, pickupTimeTo,
       items: items.map(i => ({
         name: i.name,
         price: i.price,
@@ -100,8 +103,12 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
               <input type="date" value={pickupDate} onChange={e=>setDate(e.target.value)} />
             </div>
             <div>
-              <label className={styles.label}>Pickup time</label>
-              <input type="time" value={pickupTime} onChange={e=>setTime(e.target.value)} />
+              <label className={styles.label}>Pickup window</label>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <input type="time" value={pickupTimeFrom} onChange={e=>setTimeFrom(e.target.value)} style={{flex:1}} />
+                <span style={{color:'var(--text-muted)',fontSize:12,flexShrink:0}}>to</span>
+                <input type="time" value={pickupTimeTo} onChange={e=>setTimeTo(e.target.value)} style={{flex:1}} />
+              </div>
             </div>
           </div>
 

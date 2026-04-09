@@ -153,7 +153,7 @@ export default function Board({ orders, ordersLoaded, selectedDay, customDateSel
               .filter(o => o.stage === stage.id)
               .sort((a, b) => {
                 if (a.pickupDate !== b.pickupDate) return a.pickupDate.localeCompare(b.pickupDate)
-                return (a.pickupTime || '').localeCompare(b.pickupTime || '')
+                return (a.pickupTimeFrom || a.pickupTime || '').localeCompare(b.pickupTimeFrom || b.pickupTime || '')
               })
             return (
               <div key={stage.id} className={`${styles.column} ${styles['col_' + stage.id.replace(/-/g,'_')]}`}>
