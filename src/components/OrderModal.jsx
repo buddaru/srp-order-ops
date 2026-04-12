@@ -62,6 +62,10 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
         flavor1: i.flavor1,
         flavor2: i.flavor2,
         writingText: i.writingText,
+        size: i.size,
+        category: i.category,
+        _addons: i._addons || null,
+        _itemKey: i._itemKey || null,
       })),
       notes, image,
     })

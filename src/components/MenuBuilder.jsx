@@ -149,6 +149,27 @@ export default function MenuBuilder({ cartItems, onChange }) {
 
   const removeFromCart = (idx) => onChange(cartItems.filter((_, i) => i !== idx))
 
+  // Reconstruct addon state from addonSummary strings (fallback for old orders without _addons)
+  const reconstructAddons = (addonSummary, size) => {
+    const state = blankAddonState()
+    if (!Array.isArray(addonSummary)) return state
+    CAKE_ADDONS.forEach(a => {
+      const match = addonSummary.find(s => s.startsWith(a.label))
+      if (!match) return
+      state[a.id] = true
+      if (a.type === 'toggle+note') {
+        const note = match.includes(': ') ? match.split(': ').slice(1).join(': ') : ''
+        state[`${a.id}Note`] = note
+      }
+      if (a.type === 'toggle+price') {
+        const priceMatch = match.match(/\+(\d+)/)
+        if (priceMatch) state[`${a.id}Price`] = parseInt(priceMatch[1])
+      }
+    })
+    // Try to restore writingText
+    return state
+  }
+
   const startEdit = (idx) => {
     const ci = cartItems[idx]
     if (!ci) return
@@ -172,10 +193,24 @@ export default function MenuBuilder({ cartItems, onChange }) {
       setSelectedItem(menuItem)
       setShowCustomForm(false)
       setSize(ci.size || 'round')
+
+      // Prefer saved _addons; fall back to reconstructing from addonSummary for old orders
       if (ci._addons) {
-        setAddons({ ...blankAddonState(), ...ci._addons })
+        const restored = { ...blankAddonState(), ...ci._addons }
+        if (ci.writingText) restored.writingText = ci.writingText
+        setAddons(restored)
         if (Object.values(ci._addons).some(v => v === true)) setAddonsOpen(true)
+      } else if (ci.addonSummary && ci.addonSummary.length > 0) {
+        const restored = reconstructAddons(ci.addonSummary, ci.size || 'round')
+        if (ci.writingText) restored.writingText = ci.writingText
+        setAddons(restored)
+        setAddonsOpen(true)
+      } else {
+        const base = blankAddonState()
+        if (ci.writingText) base.writingText = ci.writingText
+        setAddons(base)
       }
+
       if (menuItem.category === 'Cupcakes') {
         if (ci.flavor1) setFlavor1(ci.flavor1)
         if (ci.flavor2) setFlavor2(ci.flavor2 || 'None')
