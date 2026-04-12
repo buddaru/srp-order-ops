@@ -7,8 +7,6 @@ import {
 } from '../data/menuData'
 import styles from './MenuBuilder.module.css'
 
-const ALL_CATEGORIES = [...CATEGORIES, 'Custom Item']
-
 const blankAddonState = () => ({
   frostingColor: false, frostingColorNote: '',
   cakeColor: false, cakeColorNote: '',
@@ -21,13 +19,13 @@ const blankAddonState = () => ({
   additionalLayer: false,
   printedImage: false,
   customLabel: '', customPrice: '',
+  writingText: '',
 })
 
 function calcItemPrice(item, size, addons) {
   if (!item) return 0
   const sizeObj = SIZES.find(s => s.id === size) || SIZES[0]
   let total = sizeObj.mod(item.price)
-
   if (CAKE_CATEGORIES.includes(item.category)) {
     CAKE_ADDONS.forEach(a => {
       if (!addons[a.id]) return
@@ -71,8 +69,9 @@ function buildAddonSummary(item, addons) {
   return list
 }
 
+const itemKey = (item) => `${item.category}::${item.name}`
+
 export default function MenuBuilder({ cartItems, onChange }) {
-  const [activeCat, setActiveCat]       = useState('Cakes')
   const [selectedItem, setSelectedItem] = useState(null)
   const [size, setSize]                 = useState('round')
   const [addons, setAddons]             = useState(blankAddonState())
@@ -80,12 +79,10 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const [flavor2, setFlavor2]           = useState('None')
   const [addonsOpen, setAddonsOpen]     = useState(false)
   const [editIdx, setEditIdx]           = useState(null)
+  const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName]     = useState('')
   const [customItemPrice, setCustomItemPrice] = useState('')
 
-  const isCustomCat = activeCat === 'Custom Item'
-
-  const catItems    = MENU.filter(m => m.category === activeCat)
   const isCake      = selectedItem && CAKE_CATEGORIES.includes(selectedItem.category)
   const isCupcake   = selectedItem?.category === 'Cupcakes'
   const isCustomOnly = selectedItem && CUSTOM_ONLY_CATEGORIES.includes(selectedItem.category)
@@ -93,18 +90,36 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const showCustomOnly = isCustomOnly || isCupcake
 
   const activeAddonCount = CAKE_ADDONS.filter(a => addons[a.id]).length
-
   const livePrice = selectedItem ? calcItemPrice(selectedItem, size, addons) : 0
 
   const setAddon = (key, val) => setAddons(p => ({ ...p, [key]: val }))
 
   const selectItem = (item) => {
     setSelectedItem(item)
+    setShowCustomForm(false)
     setSize('round')
     setAddons(blankAddonState())
     setFlavor1(CUPCAKE_FLAVORS[0])
     setFlavor2('None')
     setAddonsOpen(false)
+  }
+
+  const handleSelectChange = (e) => {
+    const val = e.target.value
+    if (!val) {
+      setSelectedItem(null)
+      setShowCustomForm(false)
+      return
+    }
+    if (val === '__custom__') {
+      setSelectedItem(null)
+      setShowCustomForm(true)
+      return
+    }
+    const [cat, ...rest] = val.split('::')
+    const name = rest.join('::')
+    const item = MENU.find(m => m.category === cat && m.name === name)
+    if (item) selectItem(item)
   }
 
   const handleAddToCart = () => {
@@ -118,6 +133,9 @@ export default function MenuBuilder({ cartItems, onChange }) {
       size, addonSummary,
       flavor1: isCupcake ? flavor1 : undefined,
       flavor2: isCupcake ? flavor2 : undefined,
+      writingText: addons.writingText || '',
+      _addons: { ...addons },
+      _itemKey: itemKey(selectedItem),
     }
     if (editIdx !== null) {
       const next = [...cartItems]; next[editIdx] = newItem; onChange(next); setEditIdx(null)
@@ -135,31 +153,36 @@ export default function MenuBuilder({ cartItems, onChange }) {
     const ci = cartItems[idx]
     if (!ci) return
     setEditIdx(idx)
-    // For custom items, just set editIdx — handled by Custom Item tab
+
     if (ci.category === 'Custom') {
-      setActiveCat('Custom Item')
       setSelectedItem(null)
+      setShowCustomForm(true)
       setCustomName(ci.name || '')
       setCustomItemPrice(String(ci.price || ''))
       return
     }
+
     const menuItem = MENU.find(m =>
+      (ci._itemKey && ci._itemKey === itemKey(m)) ||
       (ci.name && ci.name.startsWith(m.name)) ||
       (ci.name && ci.name.includes(m.name))
     )
+
     if (menuItem) {
-      setActiveCat(menuItem.category)
       setSelectedItem(menuItem)
+      setShowCustomForm(false)
       setSize(ci.size || 'round')
-      // Restore cupcake flavors if present
+      if (ci._addons) {
+        setAddons({ ...blankAddonState(), ...ci._addons })
+        if (Object.values(ci._addons).some(v => v === true)) setAddonsOpen(true)
+      }
       if (menuItem.category === 'Cupcakes') {
         if (ci.flavor1) setFlavor1(ci.flavor1)
         if (ci.flavor2) setFlavor2(ci.flavor2 || 'None')
       }
     } else {
-      // Item not found in menu (Bento-synced or old format) — switch to Custom Item
-      setActiveCat('Custom Item')
       setSelectedItem(null)
+      setShowCustomForm(true)
       setCustomName(ci.name || '')
       setCustomItemPrice(String(ci.price || ''))
     }
@@ -170,13 +193,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const handleAddCustomItem = () => {
     if (!customName.trim()) return
     const price = parseFloat(customItemPrice) || 0
-    const newItem = {
-      name: customName.trim(),
-      price,
-      qty: 1,
-      category: 'Custom',
-      addonSummary: [],
-    }
+    const newItem = { name: customName.trim(), price, qty: 1, category: 'Custom', addonSummary: [] }
     if (editIdx !== null) {
       const next = [...cartItems]; next[editIdx] = newItem; onChange(next); setEditIdx(null)
     } else {
@@ -184,84 +201,84 @@ export default function MenuBuilder({ cartItems, onChange }) {
     }
     setCustomName('')
     setCustomItemPrice('')
+    setShowCustomForm(false)
   }
+
+  const menuByCategory = CATEGORIES.reduce((acc, cat) => {
+    acc[cat] = MENU.filter(m => m.category === cat)
+    return acc
+  }, {})
+
+  const selectValue = selectedItem ? itemKey(selectedItem) : showCustomForm ? '__custom__' : ''
 
   return (
     <div className={styles.wrap}>
-
-      {/* ── Builder ── */}
       <div className={styles.builder}>
 
-        {/* All items — flat pill layout grouped by category */}
-        <div className={styles.allItemsScroll}>
-          {CATEGORIES.map(cat => {
-            const catItems = MENU.filter(m => m.category === cat)
-            return (
-              <div key={cat} className={styles.catSection}>
-                <div className={styles.catSectionLabel}>{cat}</div>
-                <div className={styles.pillRow}>
-                  {catItems.map(item => (
-                    <div
-                      key={item.name}
-                      className={`${styles.pill} ${selectedItem?.name === item.name ? styles.pillSelected : ''}`}
-                      onClick={() => { selectItem(item); setActiveCat(cat) }}
-                    >
-                      <span className={styles.pillName}>{item.name}</span>
-                      <span className={styles.pillPrice}>{fmt$(item.price)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-          {/* Custom item section */}
-          <div className={styles.catSection}>
-            <div className={styles.catSectionLabel}>Custom item</div>
-            <div className={styles.customItemForm} style={{margin: 0, border: 'none', padding: '8px 0 4px'}}>
-              <div className={styles.customItemFields}>
-                <input
-                  type="text"
-                  className={styles.customItemName}
-                  placeholder="Item name (e.g. Delivery fee, Rush order)"
-                  value={customName}
-                  onChange={e => setCustomName(e.target.value)}
-                />
-                <div className={styles.customItemPriceWrap}>
-                  <span className={styles.customItemDollar}>$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className={styles.customItemPriceInput}
-                    placeholder="0.00"
-                    value={customItemPrice}
-                    onChange={e => setCustomItemPrice(e.target.value)}
-                  />
-                </div>
-                <button
-                  className={styles.saveItemBtn}
-                  style={{padding: '7px 14px', fontSize: 12}}
-                  onClick={handleAddCustomItem}
-                  disabled={!customName.trim()}
-                >
-                  + Add
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Grouped dropdown */}
+        <div className={styles.dropdownWrap}>
+          <select
+            className={styles.itemSelect}
+            value={selectValue}
+            onChange={handleSelectChange}
+          >
+            <option value="">Select an item...</option>
+            {CATEGORIES.map(cat => (
+              <optgroup key={cat} label={cat}>
+                {menuByCategory[cat]?.map(item => (
+                  <option key={itemKey(item)} value={itemKey(item)}>
+                    {item.name} — {fmt$(item.price)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+            <optgroup label="Other">
+              <option value="__custom__">+ Add custom item...</option>
+            </optgroup>
+          </select>
         </div>
 
-        {/* Customization zone — appears when an item is selected */}
+        {/* Custom item form */}
+        {showCustomForm && (
+          <div className={styles.customItemForm} style={{ marginTop: 12 }}>
+            <div className={styles.customItemFields}>
+              <input
+                type="text"
+                className={styles.customItemName}
+                placeholder="Item name (e.g. Delivery fee, Rush order)"
+                value={customName}
+                onChange={e => setCustomName(e.target.value)}
+              />
+              <div className={styles.customItemPriceWrap}>
+                <span className={styles.customItemDollar}>$</span>
+                <input
+                  type="number" min="0" step="0.01"
+                  className={styles.customItemPriceInput}
+                  placeholder="0.00"
+                  value={customItemPrice}
+                  onChange={e => setCustomItemPrice(e.target.value)}
+                />
+              </div>
+              <button
+                className={styles.saveItemBtn}
+                style={{ padding: '7px 14px', fontSize: 12 }}
+                onClick={handleAddCustomItem}
+                disabled={!customName.trim()}
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Customization zone */}
         {selectedItem && (
           <div className={styles.customZone}>
-
-            {/* Header with live price */}
             <div className={styles.selectedHeader}>
               <div className={styles.selectedName}>{selectedItem.name}</div>
               <div className={styles.livePrice}>{fmt$(livePrice)}</div>
             </div>
 
-            {/* Size — cake categories only */}
             {isCake && (
               <div className={styles.sizeSection}>
                 <div className={styles.zoneSectionLabel}>Size</div>
@@ -280,7 +297,6 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
             )}
 
-            {/* Cupcake flavors */}
             {isCupcake && (
               <div className={styles.sizeSection}>
                 <div className={styles.zoneSectionLabel}>Flavors</div>
@@ -302,7 +318,21 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
             )}
 
-            {/* Full add-ons accordion — cake categories */}
+            {/* Writing on cake — shown before add-ons */}
+            {isCake && (
+              <div className={styles.customOnlyRow}>
+                <div className={styles.customOnlyLabel}>Writing on cake <span style={{ fontWeight: 400, fontStyle: 'italic' }}>(optional)</span></div>
+                <input
+                  type="text"
+                  className={styles.customLabelInput}
+                  style={{ width: '100%' }}
+                  placeholder="e.g. Happy Birthday Kelly!"
+                  value={addons.writingText || ''}
+                  onChange={e => setAddon('writingText', e.target.value)}
+                />
+              </div>
+            )}
+
             {showFullAddons && (
               <div className={styles.accordionWrap}>
                 <div
@@ -317,8 +347,8 @@ export default function MenuBuilder({ cartItems, onChange }) {
                   </div>
                   <div className={styles.accordionRight}>
                     <span className={styles.accordionHint}>{addonsOpen ? 'Collapse' : 'Expand'}</span>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{transform: addonsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0}}>
-                      <polyline points="6 9 12 15 18 9"/>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: addonsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+                      <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </div>
                 </div>
@@ -348,7 +378,6 @@ export default function MenuBuilder({ cartItems, onChange }) {
                           <button className={`${styles.toggle} ${isOn ? styles.toggleOn : ''}`} onClick={e => { e.stopPropagation(); setAddon(a.id, !isOn) }}>
                             <span className={styles.toggleThumb} />
                           </button>
-
                           {isOn && a.type === 'toggle+note' && (
                             <input
                               className={styles.addonSubInput}
@@ -372,8 +401,6 @@ export default function MenuBuilder({ cartItems, onChange }) {
                         </div>
                       )
                     })}
-
-                    {/* Custom add-on inside panel */}
                     <div className={styles.customAddonRow} onClick={e => e.stopPropagation()}>
                       <input
                         className={styles.customLabelInput}
@@ -397,7 +424,6 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
             )}
 
-            {/* Custom-only add-on for non-cake categories */}
             {showCustomOnly && (
               <div className={styles.customOnlyRow}>
                 <div className={styles.customOnlyLabel}>Custom add-on (optional)</div>
@@ -422,33 +448,16 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
             )}
 
-            {/* Writing text for cakes */}
-            {isCake && (
-              <div className={styles.customOnlyRow}>
-                <div className={styles.customOnlyLabel}>Writing on cake (optional)</div>
-                <input
-                  type="text"
-                  className={styles.customLabelInput}
-                  style={{width:'100%'}}
-                  placeholder="e.g. Happy Birthday Kelly!"
-                  value={addons.writingText || ''}
-                  onChange={e => setAddon('writingText', e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Save item button */}
             <div className={styles.saveItemRow}>
               <button className={styles.saveItemBtn} onClick={handleAddToCart}>
                 {editIdx !== null ? '✓ Update item' : '✓ Save item to order'}
               </button>
             </div>
-
           </div>
         )}
       </div>
 
-      {/* ── Cart ── */}
+      {/* Cart */}
       {cartItems.length > 0 && (
         <div className={styles.cart}>
           <div className={styles.cartLabel}>Order items</div>
@@ -460,6 +469,9 @@ export default function MenuBuilder({ cartItems, onChange }) {
                 <div className={styles.cartInfo}>
                   <div className={styles.cartName}>{ci.name}</div>
                   {addonStr && <div className={styles.cartAddons}>{addonStr}</div>}
+                  {ci.writingText && (
+                    <div className={styles.cartWriting}>✏ "{ci.writingText}"</div>
+                  )}
                 </div>
                 <div className={styles.cartRight}>
                   <div className={styles.cartPrice}>{fmt$(ci.price)}</div>
@@ -476,7 +488,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
         </div>
       )}
 
-      {cartItems.length === 0 && !selectedItem && (
+      {cartItems.length === 0 && !selectedItem && !showCustomForm && (
         <div className={styles.emptyCart}>Select an item above to begin</div>
       )}
     </div>

@@ -19,6 +19,13 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
   const [image, setImage]       = useState(null)
   const [errors, setErrors]     = useState({})
 
+  const formatPhone = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 10)
+    if (digits.length <= 3) return digits
+    if (digits.length <= 6) return `(${digits.slice(0,3)}) ${digits.slice(3)}`
+    return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`
+  }
+
   useEffect(() => {
     if (isEdit && order) {
       setCustomer(order.customer || '')
@@ -82,7 +89,7 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
             </div>
             <div>
               <label className={styles.label}>Phone <span className={styles.req}>*</span></label>
-              <input type="tel" value={phone} onChange={e=>{setPhone(e.target.value);setErrors(p=>({...p,phone:''}))}} placeholder="(310) 000-0000" className={errors.phone?'invalid':''} />
+              <input type="tel" value={phone} onChange={e=>{setPhone(formatPhone(e.target.value));setErrors(p=>({...p,phone:''}))}} placeholder="(310) 000-0000" className={errors.phone?'invalid':''} />
               {errors.phone && <div className={styles.errMsg}>{errors.phone}</div>}
             </div>
           </div>
