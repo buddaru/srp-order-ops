@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import { calculateRecipeCost, buildIngredientMap } from '../utils/costCalculator'
 import styles from './RecipeView.module.css'
 
 const BackIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -163,6 +164,7 @@ export default function RecipeView() {
   const [activeImg,  setActiveImg]  = useState(0)
   const [auditLog,   setAuditLog]   = useState(null)
   const [auditOpen,  setAuditOpen]  = useState(false)
+  const [liveCost,   setLiveCost]   = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -170,13 +172,36 @@ export default function RecipeView() {
       if (data) {
         setRecipe(data)
         await supabase.from('recipes').update({ last_viewed: new Date().toISOString() }).eq('id', id)
-        // Load audit log separately so it doesn't block recipe render
         supabase.from('recipe_audit_log')
           .select('user_email, changed_at')
           .eq('recipe_id', id)
           .order('changed_at', { ascending: false })
           .limit(20)
           .then(({ data: log }) => setAuditLog(log || []))
+
+        // Live cost calculation — fetch ingredient library and compute fresh
+        try {
+          const { data: allIngredients } = await supabase.from('ingredients').select('*')
+          if (allIngredients && allIngredients.length > 0) {
+            const ingredientMap = buildIngredientMap(allIngredients)
+            const result = calculateRecipeCost(data, ingredientMap)
+            setLiveCost(result)
+            const now = new Date().toISOString()
+            await supabase.from('recipes').update({
+              cached_cost:      result.partialCost,
+              cost_per_serving: result.partialCostPerServing,
+              cost_updated_at:  now,
+            }).eq('id', id)
+            setRecipe(prev => prev ? {
+              ...prev,
+              cached_cost:      result.partialCost,
+              cost_per_serving: result.partialCostPerServing,
+              cost_updated_at:  now,
+            } : prev)
+          }
+        } catch (e) {
+          console.warn('Live cost calculation failed:', e.message)
+        }
       }
       setLoading(false)
     }
@@ -336,34 +361,52 @@ export default function RecipeView() {
         <RecipeHistory history={recipe.recipe_history} />
 
         {/* ── Cost Panel ── */}
-        {(recipe.cached_cost != null || recipe.cost_per_serving != null) && (
-          <div className={styles.costPanel}>
-            <div className={styles.costPanelHeader}>Recipe Cost</div>
-            <div className={styles.costRow}>
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>Total cost</span>
-                <span className={styles.costValue}>
-                  {recipe.cached_cost != null ? `$${parseFloat(recipe.cached_cost).toFixed(2)}` : '—'}
-                </span>
+        {(liveCost || recipe.cached_cost != null || recipe.cost_per_serving != null) && (() => {
+          const totalCost      = liveCost ? liveCost.partialCost            : parseFloat(recipe.cached_cost)
+          const costPerServing = liveCost ? liveCost.partialCostPerServing  : parseFloat(recipe.cost_per_serving)
+          const unpricedCount  = liveCost ? liveCost.unpricedCount          : 0
+          const pricedCount    = liveCost ? liveCost.pricedCount            : 1
+          const isPartial      = unpricedCount > 0
+          const hasAnyCost     = pricedCount > 0 && totalCost > 0
+          if (!hasAnyCost) return null
+          return (
+            <div className={styles.costPanel}>
+              <div className={styles.costPanelHeader}>
+                Recipe Cost
+                {isPartial && (
+                  <span className={styles.costPartialBadge}>
+                    {unpricedCount} ingredient{unpricedCount !== 1 ? 's' : ''} unpriced
+                  </span>
+                )}
               </div>
-              <div className={styles.costDivider} />
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>
-                  Cost per serving
-                  {recipe.yield_qty ? ` (÷${recipe.yield_qty})` : ''}
-                </span>
-                <span className={styles.costValue}>
-                  {recipe.cost_per_serving != null ? `$${parseFloat(recipe.cost_per_serving).toFixed(2)}` : '—'}
-                </span>
+              <div className={styles.costRow}>
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>
+                    {isPartial ? 'Partial cost' : 'Total cost'}
+                  </span>
+                  <span className={styles.costValue}>
+                    ${totalCost.toFixed(2)}
+                  </span>
+                </div>
+                <div className={styles.costDivider} />
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>
+                    {isPartial ? 'Partial per serving' : 'Cost per serving'}
+                    {recipe.yield_qty ? ` (÷${recipe.yield_qty})` : ''}
+                  </span>
+                  <span className={styles.costValue}>
+                    ${costPerServing.toFixed(2)}
+                  </span>
+                </div>
               </div>
+              {recipe.cost_updated_at && (
+                <div className={styles.costUpdated}>
+                  Last updated {new Date(recipe.cost_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                </div>
+              )}
             </div>
-            {recipe.cost_updated_at && (
-              <div className={styles.costUpdated}>
-                Last updated {new Date(recipe.cost_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
-              </div>
-            )}
-          </div>
-        )}
+          )
+        })()}
 
         {/* ── Audit / Change Log ── */}
         {auditLog && auditLog.length > 0 && (
