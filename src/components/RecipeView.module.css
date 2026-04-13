@@ -136,3 +136,115 @@
   .titleRow { flex-direction: column; }
   .titleActions { padding-top: 0; }
 }
+
+/* ── Cost Panel ── */
+.costPanel {
+  margin-top: 28px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.costPanelHeader {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.costRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+.costItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.costDivider {
+  width: 1px;
+  background: var(--border);
+  margin: 0 20px;
+}
+.costLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.costValue {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.costUpdated {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Audit Log ── */
+.auditSection {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.auditToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.auditLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.auditCount {
+  font-size: 11px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-weight: 400;
+}
+.auditBody {
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.auditRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.auditRow:last-child { border-bottom: none; }
+.auditInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.auditUser {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.auditTime {
+  font-size: 11px;
+  color: var(--text-muted);
+}

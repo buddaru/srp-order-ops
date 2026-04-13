@@ -157,10 +157,12 @@ function RecipeVideo({ src, poster, className }) {
 export default function RecipeView() {
   const navigate = useNavigate()
   const { id }   = useParams()
-  const [loading,   setLoading]   = useState(true)
-  const [recipe,    setRecipe]    = useState(null)
-  const [scale,     setScale]     = useState(1)
-  const [activeImg, setActiveImg] = useState(0)
+  const [loading,    setLoading]    = useState(true)
+  const [recipe,     setRecipe]     = useState(null)
+  const [scale,      setScale]      = useState(1)
+  const [activeImg,  setActiveImg]  = useState(0)
+  const [auditLog,   setAuditLog]   = useState(null)
+  const [auditOpen,  setAuditOpen]  = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -168,6 +170,13 @@ export default function RecipeView() {
       if (data) {
         setRecipe(data)
         await supabase.from('recipes').update({ last_viewed: new Date().toISOString() }).eq('id', id)
+        // Load audit log separately so it doesn't block recipe render
+        supabase.from('recipe_audit_log')
+          .select('user_email, changed_at')
+          .eq('recipe_id', id)
+          .order('changed_at', { ascending: false })
+          .limit(20)
+          .then(({ data: log }) => setAuditLog(log || []))
       }
       setLoading(false)
     }
@@ -325,6 +334,70 @@ export default function RecipeView() {
         )}
 
         <RecipeHistory history={recipe.recipe_history} />
+
+        {/* ── Cost Panel ── */}
+        {(recipe.cached_cost != null || recipe.cost_per_serving != null) && (
+          <div className={styles.costPanel}>
+            <div className={styles.costPanelHeader}>Recipe Cost</div>
+            <div className={styles.costRow}>
+              <div className={styles.costItem}>
+                <span className={styles.costLabel}>Total cost</span>
+                <span className={styles.costValue}>
+                  {recipe.cached_cost != null ? `$${parseFloat(recipe.cached_cost).toFixed(2)}` : '—'}
+                </span>
+              </div>
+              <div className={styles.costDivider} />
+              <div className={styles.costItem}>
+                <span className={styles.costLabel}>
+                  Cost per serving
+                  {recipe.yield_qty ? ` (÷${recipe.yield_qty})` : ''}
+                </span>
+                <span className={styles.costValue}>
+                  {recipe.cost_per_serving != null ? `$${parseFloat(recipe.cost_per_serving).toFixed(2)}` : '—'}
+                </span>
+              </div>
+            </div>
+            {recipe.cost_updated_at && (
+              <div className={styles.costUpdated}>
+                Last updated {new Date(recipe.cost_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Audit / Change Log ── */}
+        {auditLog && auditLog.length > 0 && (
+          <div className={styles.auditSection}>
+            <button
+              className={styles.auditToggle}
+              onClick={() => setAuditOpen(o => !o)}
+            >
+              <span className={styles.auditLabel}>
+                <ClockIcon /> Change history
+                <span className={styles.auditCount}>{auditLog.length} save{auditLog.length !== 1 ? 's' : ''}</span>
+              </span>
+              <span className={`${styles.historyChevron} ${auditOpen ? styles.historyChevronOpen : ''}`}>
+                <ChevronIcon />
+              </span>
+            </button>
+            {auditOpen && (
+              <div className={styles.auditBody}>
+                {auditLog.map((entry, i) => (
+                  <div key={i} className={styles.auditRow}>
+                    <div className={`${styles.historyDot} ${i === 0 ? styles.historyDotCurrent : ''}`} />
+                    <div className={styles.auditInfo}>
+                      <span className={styles.auditUser}>{entry.user_email || 'Unknown user'}</span>
+                      <span className={styles.auditTime}>
+                        {new Date(entry.changed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    {i === 0 && <span className={styles.historyBadgeCurrent}>latest</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>

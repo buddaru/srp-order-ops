@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import ImageUpload from './ImageUpload'
 import styles from './RecipeEdit.module.css'
 
@@ -152,6 +153,7 @@ export default function RecipeEdit() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { id }    = useParams()
+  const { user }  = useAuth()
 
   // Seed from navigation state (coming from step-2 modal)
   const seed      = location.state || {}
@@ -286,11 +288,20 @@ export default function RecipeEdit() {
     } else {
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus(null), 2000)
+      // Write audit log entry
+      if (savedId && user) {
+        supabase.from('recipe_audit_log').insert({
+          recipe_id:   savedId,
+          recipe_name: recipeName.trim() || 'Untitled Recipe',
+          user_id:     user.id,
+          user_email:  user.email,
+        }).then(() => {})
+      }
     }
 
     if (opts.thenNavigate && savedId) navigate(`/recipes/${savedId}`)
     else if (opts.thenNavigate) navigate('/recipes')
-  }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, coverImage, ings, steps, dbId, navigate])
+  }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, coverImage, ings, steps, dbId, navigate, user])
 
   // ── Autosave — debounced 2s after any change ──
   const scheduleAutosave = useCallback(() => {

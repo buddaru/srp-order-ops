@@ -66,3 +66,96 @@
 .cancelBtn { background: none; border: 1px solid var(--border-2); border-radius: var(--radius-sm); padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
 .saveBtn { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Item detail modal ── */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; }
+.itemModal { background:var(--bg); border-radius:14px; width:100%; max-width:600px; max-height:90vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.2); }
+.itemModalHeader { display:flex; align-items:flex-start; justify-content:space-between; padding:20px 20px 14px; border-bottom:1px solid var(--border); gap:12px; flex-shrink:0; }
+.itemModalName { font-family:var(--font-display); font-size:19px; font-weight:600; color:var(--text-primary); }
+.itemModalCat { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.closeBtn { background:none; border:none; font-size:16px; cursor:pointer; color:var(--text-muted); padding:0; flex-shrink:0; margin-top:2px; }
+.tabBar { display:flex; gap:0; border-bottom:1px solid var(--border); flex-shrink:0; padding:0 4px; }
+.tabBtn { background:none; border:none; border-bottom:2px solid transparent; padding:10px 16px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; font-family:var(--font-body); transition:color 0.15s; }
+.tabBtnActive { color:var(--brand); border-bottom-color:var(--brand); }
+.itemModalBody { overflow-y:auto; flex:1; }
+.tabContent { padding:18px 20px; display:flex; flex-direction:column; gap:12px; }
+.tabHint { font-size:12px; color:var(--text-muted); line-height:1.5; padding:8px 10px; background:var(--surface); border-radius:6px; }
+.tabLoading { padding:32px 20px; text-align:center; color:var(--text-muted); font-size:13px; }
+
+/* detail tab */
+.detailRow { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+.detailRow:last-child { border-bottom:none; }
+.detailLabel { font-size:13px; color:var(--text-secondary); }
+.toggleRow { display:flex; align-items:center; gap:8px; }
+.toggleLabel { font-size:12px; color:var(--text-muted); }
+
+/* variants / addons shared */
+.variantList { display:flex; flex-direction:column; gap:6px; }
+.variantHeader { display:grid; grid-template-columns:1fr 110px 32px; gap:8px; padding:0 4px 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+.variantRow { display:grid; grid-template-columns:1fr 110px 32px; gap:8px; align-items:center; }
+.addonHeader { display:grid; grid-template-columns:1fr 110px 110px 32px; gap:8px; padding:0 4px 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+.addonRow { display:grid; grid-template-columns:1fr 110px 110px 32px; gap:8px; align-items:center; }
+.inlineInput { padding:7px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); font-size:13px; font-family:var(--font-body); color:var(--text-primary); outline:none; width:100%; }
+.inlineInput:focus { border-color:var(--brand); }
+.inlineInputSm { padding:7px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); font-size:13px; font-family:var(--font-body); color:var(--text-primary); outline:none; width:100%; }
+.inlineInputSm:focus { border-color:var(--brand); }
+.deltaWrap { display:flex; align-items:center; gap:0; }
+.deltaSign { font-size:13px; color:var(--text-muted); padding:0 6px 0 0; flex-shrink:0; }
+.addRow { display:flex; gap:8px; align-items:center; margin-top:4px; }
+.addLinkRow { display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+.removeBtn { background:none; border:1px solid var(--border); border-radius:5px; padding:5px 7px; cursor:pointer; color:var(--text-muted); display:flex; align-items:center; transition:border-color 0.15s,color 0.15s; flex-shrink:0; }
+.removeBtn:hover { border-color:#d94040; color:#d94040; }
+.addSmBtn { display:flex; align-items:center; gap:4px; padding:7px 12px; background:var(--brand); color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; font-family:var(--font-body); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.addSmBtn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* cost tab */
+.costLinks { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.costLinkRow { display:grid; grid-template-columns:1fr auto auto 32px; gap:12px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--border); }
+.costLinkRow:last-of-type { border-bottom:none; }
+.costLinkName { font-size:13px; color:var(--text-primary); }
+.costLinkYield { display:block; font-size:11px; color:var(--text-muted); margin-top:2px; }
+.costLinkPortion { display:flex; align-items:center; gap:6px; }
+.portionLabel { font-size:11px; color:var(--text-muted); white-space:nowrap; }
+.portionInput { width:60px; padding:5px 8px; border:1px solid var(--border); border-radius:5px; background:var(--bg); font-size:13px; font-family:var(--font-body); color:var(--text-primary); outline:none; }
+.portionInput:focus { border-color:var(--brand); }
+.portionAddWrap { display:flex; align-items:center; gap:6px; }
+.costLinkCost { text-align:right; min-width:70px; }
+.costLinkVal { font-size:14px; font-weight:600; color:var(--text-primary); font-family:var(--font-display); }
+.costLinkNone { font-size:11px; color:var(--text-muted); font-style:italic; }
+.costTotal { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--surface); border-top:1px solid var(--border); }
+.costTotalLabel { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+.costTotalVal { font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--text-primary); }
+.costMargin { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:#f0f7ed; border-top:1px solid #bddbb4; font-size:12px; color:var(--text-secondary); }
+.marginVal { font-weight:700; color:var(--brand); font-size:14px; }
+.recipeSelect { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); font-size:13px; font-family:var(--font-body); color:var(--text-primary); outline:none; min-width:0; }
+.recipeSelect:focus { border-color:var(--brand); }
+
+/* category manage */
+.catList { display:flex; flex-direction:column; gap:4px; }
+.catManageRow { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--surface); border-radius:6px; font-size:13px; color:var(--text-primary); }
+
+/* "detail" button in item rows */
+.detailBtn { font-size:11px; color:var(--brand); background:none; border:1px solid var(--border); border-radius:5px; padding:4px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.detailBtn:hover { background:var(--surface-raised); }
+
+/* new category button */
+.newCatBtn { padding:7px 12px; font-size:12px; font-weight:600; font-family:var(--font-body); color:var(--brand); background:none; border:1px solid var(--brand); border-radius:6px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.newCatBtn:hover { background:var(--brand); color:white; }
+
+/* item row — add 4th column */
+.itemsHeader { grid-template-columns: 1fr 120px 100px 120px !important; }
+.itemRow { grid-template-columns: 1fr 120px 100px 120px !important; }
+
+/* modal shared */
+.modal { background:var(--bg); border-radius:12px; width:100%; max-width:480px; box-shadow:0 8px 40px rgba(0,0,0,0.2); overflow:hidden; }
+.modalHeader { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border); }
+.modalTitle { font-family:var(--font-display); font-size:17px; font-weight:600; color:var(--text-primary); }
+.modalBody { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.formRow { display:flex; flex-direction:column; gap:5px; }
+.flabel { font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+.errorMsg { font-size:13px; color:#d94040; background:#fef2f2; border-radius:6px; padding:8px 12px; }
+.modalFooter { display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--border); background:var(--surface); }
+.cancelBtn { padding:7px 14px; background:none; border:1px solid var(--border); border-radius:7px; font-size:13px; font-family:var(--font-body); cursor:pointer; color:var(--text-secondary); }
+.cancelBtn:hover { background:var(--surface-raised); }
+.saveBtn { padding:7px 16px; background:var(--brand); color:white; border:none; border-radius:7px; font-size:13px; font-weight:600; font-family:var(--font-body); cursor:pointer; }
+.saveBtn:disabled { opacity:0.6; cursor:not-allowed; }

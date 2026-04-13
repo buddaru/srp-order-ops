@@ -1,0 +1,489 @@
+.page {
+  padding: 0 0 80px;
+  max-width: 860px;
+}
+
+/* Stats */
+.statsRow {
+  display: flex;
+  gap: 16px;
+  padding: 16px 28px 0;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statNum {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.statLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Sync banner */
+.syncBanner {
+  margin: 12px 28px 0;
+  padding: 10px 14px;
+  background: #f0f7ed;
+  border: 1px solid #bddbb4;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.syncBannerClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Hint */
+.hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 12px 28px 0;
+}
+
+/* Search */
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 28px 0;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+.searchInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+.searchClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 0;
+}
+
+/* Sections */
+.section {
+  margin-top: 20px;
+  padding: 0 28px;
+}
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+.sectionCount {
+  font-size: 11px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 1px 6px;
+}
+
+/* Ingredient list */
+.ingredientList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 28px;
+  margin-top: 4px;
+}
+.section .ingredientList {
+  padding: 0;
+  margin-top: 0;
+}
+
+/* Row */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 46px;
+}
+.rowPriced {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.rowPriced:hover {
+  background: var(--surface-raised);
+  border-color: var(--brand);
+}
+.rowUnpriced {
+  background: #fffbf2;
+  border-color: #e8d5a3;
+}
+.rowUnpriced:hover {
+  background: #fff8e8;
+  border-color: #c47b1a;
+}
+.rowEditing {
+  background: var(--surface);
+  border-color: var(--brand);
+  flex-direction: column;
+  align-items: stretch;
+  cursor: default;
+  gap: 10px;
+}
+
+.rowName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.ingredientName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unpricedBadge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #c47b1a;
+  background: #fdefd4;
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.metaVal {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.metaSep {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.yieldBadge {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.supplierTag {
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.editBtn {
+  font-size: 12px;
+  color: var(--brand);
+  background: none;
+  border: 1px solid var(--brand);
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.editBtn:hover {
+  background: var(--brand);
+  color: white;
+}
+.deleteBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.deleteBtn:hover {
+  border-color: #d94040;
+  color: #d94040;
+}
+
+/* Editing fields */
+.editFields {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+}
+.editFieldWide {
+  flex: 1;
+  min-width: 160px;
+}
+.editLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.editSelect,
+.editInput {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  outline: none;
+}
+.editSelect:focus,
+.editInput:focus {
+  border-color: var(--brand);
+}
+.priceInputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.priceDollar {
+  position: absolute;
+  left: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.priceInputWrap .editInput {
+  padding-left: 20px;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Buttons */
+.saveBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cancelBtn {
+  padding: 7px 14px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.cancelBtn:hover { background: var(--surface-raised); }
+.deleteConfirmBtn {
+  padding: 7px 16px;
+  background: #d94040;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* Empty state */
+.emptyState {
+  padding: 60px 28px;
+  text-align: center;
+}
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.emptyMsg {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 420px;
+  margin: 0 auto 24px;
+  line-height: 1.55;
+}
+.seedBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.seedBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.noResults {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--bg);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.modalTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+}
+.modalBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.flabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.errorMsg {
+  font-size: 13px;
+  color: #d94040;
+  background: #fef2f2;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+@media (max-width: 600px) {
+  .page { padding-bottom: 100px; }
+  .statsRow, .hint { padding-left: 16px; padding-right: 16px; }
+  .syncBanner { margin-left: 16px; margin-right: 16px; }
+  .searchWrap { margin-left: 16px; margin-right: 16px; }
+  .section { padding-left: 16px; padding-right: 16px; }
+  .ingredientList { padding-left: 16px; padding-right: 16px; }
+  .editFields { flex-direction: column; }
+  .formRow2 { grid-template-columns: 1fr; }
+}
