@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { fmt$ } from '../utils/helpers'
 import {
-  MENU, CATEGORIES, CUPCAKE_FLAVORS,
+  CUPCAKE_FLAVORS,
   CAKE_CATEGORIES, CUSTOM_ONLY_CATEGORIES,
   SIZES, CAKE_ADDONS, LAYER_PRICE
 } from '../data/menuData'
+import { useMenuItems } from '../hooks/useMenuItems'
 import styles from './MenuBuilder.module.css'
 
 const blankAddonState = () => ({
@@ -72,6 +73,7 @@ function buildAddonSummary(item, addons) {
 const itemKey = (item) => `${item.category}::${item.name}`
 
 export default function MenuBuilder({ cartItems, onChange }) {
+  const { menuItems, categories } = useMenuItems()
   const [selectedItem, setSelectedItem] = useState(null)
   const [size, setSize]                 = useState('round')
   const [addons, setAddons]             = useState(blankAddonState())
@@ -118,7 +120,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     }
     const [cat, ...rest] = val.split('::')
     const name = rest.join('::')
-    const item = MENU.find(m => m.category === cat && m.name === name)
+    const item = menuItems.find(m => m.category === cat && m.name === name)
     if (item) selectItem(item)
   }
 
@@ -183,7 +185,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
       return
     }
 
-    const menuItem = MENU.find(m =>
+    const menuItem = menuItems.find(m =>
       (ci._itemKey && ci._itemKey === itemKey(m)) ||
       (ci.name && ci.name.startsWith(m.name)) ||
       (ci.name && ci.name.includes(m.name))
@@ -239,8 +241,8 @@ export default function MenuBuilder({ cartItems, onChange }) {
     setShowCustomForm(false)
   }
 
-  const menuByCategory = CATEGORIES.reduce((acc, cat) => {
-    acc[cat] = MENU.filter(m => m.category === cat)
+  const menuByCategory = categories.reduce((acc, cat) => {
+    acc[cat] = menuItems.filter(m => m.category === cat)
     return acc
   }, {})
 
@@ -258,7 +260,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
             onChange={handleSelectChange}
           >
             <option value="">Select an item...</option>
-            {CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <optgroup key={cat} label={cat}>
                 {menuByCategory[cat]?.map(item => (
                   <option key={itemKey(item)} value={itemKey(item)}>

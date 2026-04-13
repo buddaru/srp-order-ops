@@ -5,75 +5,66 @@ import styles from './Admin.module.css'
 import PageHeader from './PageHeader'
 
 function CreateUserModal({ onClose, onCreated }) {
-  const [name, setName]     = useState('')
-  const [email, setEmail]   = useState('')
-  const [role, setRole]     = useState('employee')
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
-  const [step, setStep]     = useState(1) // 1=fill form, 2=show SQL
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole]         = useState('employee')
+  const [saving, setSaving]     = useState(false)
+  const [error, setError]       = useState('')
 
-  const sql = `insert into profiles (id, email, full_name, role)
-select id, email, '${name}', '${role}'
-from auth.users
-where email = '${email}';`
-
-  const handleNext = () => {
-    if (!name.trim() || !email.trim()) { setError('Name and email required'); return }
+  const handleSave = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) { setError('All fields are required'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
+    setSaving(true)
     setError('')
-    setStep(2)
+    try {
+      const res = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create account')
+      onCreated()
+      onClose()
+    } catch (err) {
+      setError(err.message)
+      setSaving(false)
+    }
   }
 
   return (
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
-          <div className={styles.modalTitle}>{step === 1 ? 'Add team member' : 'Complete setup'}</div>
+          <div className={styles.modalTitle}>Add team member</div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.modalBody}>
-          {step === 1 ? (
-            <>
-              <div className={styles.formRow}>
-                <label className={styles.flabel}>Full name</label>
-                <input className="modal-input" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.flabel}>Email</label>
-                <input className="modal-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.flabel}>Role</label>
-                <div className={styles.roleToggle}>
-                  <button className={`${styles.roleBtn} ${role==='employee' ? styles.roleActive : ''}`} onClick={() => setRole('employee')}>Employee</button>
-                  <button className={`${styles.roleBtn} ${role==='admin' ? styles.roleActiveAdmin : ''}`} onClick={() => setRole('admin')}>Admin</button>
-                </div>
-              </div>
-              {error && <div className={styles.errorMsg}>{error}</div>}
-            </>
-          ) : (
-            <>
-              <div className={styles.stepInstructions}>
-                <div className={styles.stepNum}>Step 1</div>
-                <div className={styles.stepText}>Go to <strong>Supabase → Authentication → Users → Add user</strong> and create a user with email <strong>{email}</strong> and a password. Check <em>Auto Confirm User</em>.</div>
-              </div>
-              <div className={styles.stepInstructions}>
-                <div className={styles.stepNum}>Step 2</div>
-                <div className={styles.stepText}>Then run this in <strong>Supabase → SQL Editor</strong>:</div>
-              </div>
-              <pre className={styles.sqlBlock}>{sql}</pre>
-              <div className={styles.stepInstructions}>
-                <div className={styles.stepNum}>Step 3</div>
-                <div className={styles.stepText}>Click <strong>Done</strong> to refresh the team list.</div>
-              </div>
-            </>
-          )}
+          <div className={styles.formRow}>
+            <label className={styles.flabel}>Full name</label>
+            <input className="modal-input" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoFocus />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.flabel}>Email</label>
+            <input className="modal-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jane@example.com" />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.flabel}>Temporary password</label>
+            <input className="modal-input" type="text" value={password} onChange={e => setPassword(e.target.value)} placeholder="They can change this in Settings" />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.flabel}>Role</label>
+            <div className={styles.roleToggle}>
+              <button className={`${styles.roleBtn} ${role==='employee' ? styles.roleActive : ''}`} onClick={() => setRole('employee')}>Employee</button>
+              <button className={`${styles.roleBtn} ${role==='admin' ? styles.roleActiveAdmin : ''}`} onClick={() => setRole('admin')}>Admin</button>
+            </div>
+          </div>
+          {error && <div className={styles.errorMsg}>{error}</div>}
         </div>
         <div className={styles.modalFooter}>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-          {step === 1
-            ? <button className={styles.saveBtn} onClick={handleNext}>Next →</button>
-            : <button className={styles.saveBtn} onClick={() => { onCreated(); onClose() }}>Done</button>
-          }
+          <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
         </div>
       </div>
     </div>
@@ -83,7 +74,6 @@ where email = '${email}';`
 function EditUserModal({ user, onClose, onSaved }) {
   const [name, setName]         = useState(user.full_name || '')
   const [role, setRole]         = useState(user.role || 'employee')
-  const [password, setPassword] = useState('')
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
 
@@ -94,12 +84,6 @@ function EditUserModal({ user, onClose, onSaved }) {
       const updates = { full_name: name.trim(), role }
       const { error: profileErr } = await supabase.from('profiles').update(updates).eq('id', user.id)
       if (profileErr) throw profileErr
-      // Password changes require admin API — skip for now, admin can reset via Supabase dashboard
-      if (password.trim()) {
-        // Note: password updates for other users require Supabase service role key
-        // This can be done in Supabase Dashboard → Authentication → Users
-        console.log('Password update not supported from client — use Supabase dashboard')
-      }
       onSaved()
       onClose()
     } catch (err) {
@@ -125,10 +109,6 @@ function EditUserModal({ user, onClose, onSaved }) {
             <div className={styles.emailReadOnly}>{user.email}</div>
           </div>
           <div className={styles.formRow}>
-            <label className={styles.flabel}>New password (leave blank to keep current)</label>
-            <input className="modal-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="New password…" />
-          </div>
-          <div className={styles.formRow}>
             <label className={styles.flabel}>Role</label>
             <div className={styles.roleToggle}>
               <button className={`${styles.roleBtn} ${role==='employee' ? styles.roleActive : ''}`} onClick={() => setRole('employee')}>Employee</button>
@@ -147,12 +127,12 @@ function EditUserModal({ user, onClose, onSaved }) {
 }
 
 export default function Admin() {
-  const { isAdmin, signOut } = useAuth()
-  const [users, setUsers]         = useState([])
-  const [loading, setLoading]     = useState(true)
+  const { isAdmin } = useAuth()
+  const [users, setUsers]           = useState([])
+  const [loading, setLoading]       = useState(true)
   const [showCreate, setShowCreate] = useState(false)
-  const [editUser, setEditUser]   = useState(null)
-  const [deleteId, setDeleteId]   = useState(null)
+  const [editUser, setEditUser]     = useState(null)
+  const [deleteId, setDeleteId]     = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -171,7 +151,6 @@ export default function Admin() {
   )
 
   const handleDelete = async () => {
-    // Delete profile — auth user remains but loses access
     await supabase.from('profiles').delete().eq('id', deleteId)
     setDeleteId(null)
     load()
