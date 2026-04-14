@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
+import Ingredients from './Ingredients'
 import styles from './Recipes.module.css'
 
 function fmtTimeAgo(ts) {
@@ -404,7 +405,7 @@ export default function Recipes() {
 
       <div className={styles.tabRow}>
         <div className={styles.tabs}>
-          {[{ id: 'recipes', label: 'Recipes' }, { id: 'groups', label: 'Recipe Groups' }, { id: 'docs', label: 'Docs' }].map(t => (
+          {[{ id: 'recipes', label: 'Recipes' }, { id: 'groups', label: 'Recipe Groups' }, { id: 'ingredients', label: 'Ingredients' }].map(t => (
             <button key={t.id} className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
           ))}
         </div>
@@ -531,12 +532,10 @@ export default function Recipes() {
         )
       )}
 
-      {/* ── Docs tab ── */}
-      {tab === 'docs' && (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>📄</div>
-          <div className={styles.emptyTitle}>No docs yet</div>
-          <div className={styles.emptySub}>Docs coming soon.</div>
+      {/* ── Ingredients tab ── */}
+      {tab === 'ingredients' && (
+        <div className={styles.ingredientsTab}>
+          <Ingredients embedded />
         </div>
       )}
 

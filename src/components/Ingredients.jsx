@@ -37,24 +37,51 @@ const TrashIcon = () => (
 
 // ── Single ingredient row (inline edit) ──
 function IngredientRow({ ing, onSave, onDelete }) {
-  const [editing, setEditing]  = useState(false)
-  const [saving,  setSaving]   = useState(false)
-  const [draft,   setDraft]    = useState({
-    purchase_unit:  ing.purchase_unit  || 'oz',
-    purchase_price: ing.purchase_price != null ? String(ing.purchase_price) : '',
-    yield_pct:      ing.yield_pct      != null ? String(ing.yield_pct)      : '100',
-    supplier:       ing.supplier       || '',
+  const [editing,   setEditing]   = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [rdLoading, setRdLoading] = useState(false)
+  const [rdResult,  setRdResult]  = useState(null)
+
+  const [draft, setDraft] = useState({
+    purchase_unit: ing.purchase_unit || 'oz',
+    total_price:   '',
+    total_qty:     '',
+    yield_pct:     ing.yield_pct != null ? String(ing.yield_pct) : '100',
+    supplier:      ing.supplier || '',
   })
 
-  const isDraft     = draft.purchase_price !== ''
-  const isUnpriced  = !ing.purchase_price || parseFloat(ing.purchase_price) === 0
+  const isUnpriced = !ing.purchase_price || parseFloat(ing.purchase_price) === 0
+
+  const perUnit = (() => {
+    const t = parseFloat(draft.total_price)
+    const q = parseFloat(draft.total_qty)
+    if (t > 0 && q > 0) return (t / q).toFixed(4)
+    return null
+  })()
+
+  const openEdit = () => {
+    const price = parseFloat(ing.purchase_price)
+    setDraft({
+      purchase_unit: ing.purchase_unit || 'oz',
+      total_price:   price > 0 ? String(price) : '',
+      total_qty:     price > 0 ? '1' : '',
+      yield_pct:     ing.yield_pct != null ? String(ing.yield_pct) : '100',
+      supplier:      ing.supplier || '',
+    })
+    setRdResult(null)
+    setEditing(true)
+  }
 
   const handleSave = async () => {
+    if (!draft.total_price || !draft.total_qty) return
+    const totalP = parseFloat(draft.total_price)
+    const totalQ = parseFloat(draft.total_qty)
+    if (!totalP || !totalQ || totalQ <= 0) return
     setSaving(true)
     await onSave(ing.id, {
       purchase_unit:  draft.purchase_unit,
-      purchase_price: parseFloat(draft.purchase_price) || 0,
-      yield_pct:      parseFloat(draft.yield_pct)      || 100,
+      purchase_price: parseFloat((totalP / totalQ).toFixed(6)),
+      yield_pct:      parseFloat(draft.yield_pct) || 100,
       supplier:       draft.supplier.trim() || null,
       updated_at:     new Date().toISOString(),
     }, ing.name)
@@ -62,14 +89,20 @@ function IngredientRow({ ing, onSave, onDelete }) {
     setEditing(false)
   }
 
-  const handleCancel = () => {
-    setDraft({
-      purchase_unit:  ing.purchase_unit  || 'oz',
-      purchase_price: ing.purchase_price != null ? String(ing.purchase_price) : '',
-      yield_pct:      ing.yield_pct      != null ? String(ing.yield_pct)      : '100',
-      supplier:       ing.supplier       || '',
-    })
-    setEditing(false)
+  const fetchRDPrice = async () => {
+    setRdLoading(true)
+    setRdResult(null)
+    try {
+      const res  = await fetch(`/api/fetch-rd-price?q=${encodeURIComponent(ing.name)}`)
+      const data = await res.json()
+      setRdResult(data)
+      if (data.price && data.unit) {
+        setDraft(p => ({ ...p, total_price: String(data.price), total_qty: '1', purchase_unit: data.unit }))
+      }
+    } catch {
+      setRdResult({ error: 'Could not reach Restaurant Depot.' })
+    }
+    setRdLoading(false)
   }
 
   if (editing) {
@@ -78,6 +111,23 @@ function IngredientRow({ ing, onSave, onDelete }) {
         <div className={styles.rowName}>
           <span className={styles.ingredientName}>{ing.name}</span>
         </div>
+
+        <div className={styles.rdRow}>
+          <button className={styles.rdBtn} onClick={fetchRDPrice} disabled={rdLoading} type="button">
+            {rdLoading ? '⟳ Looking up…' : '🏪 Fetch price from Restaurant Depot'}
+          </button>
+          {rdResult?.error && <span className={styles.rdError}>{rdResult.error}</span>}
+          {rdResult?.name  && <span className={styles.rdFound}>Found: {rdResult.name} — pre-filled below</span>}
+          {rdResult?.notFound && (
+            <span className={styles.rdError}>
+              Not found automatically —{' '}
+              <a href={rdResult.searchUrl} target="_blank" rel="noreferrer" className={styles.rdLink}>
+                search on Restaurant Depot ↗
+              </a>
+            </span>
+          )}
+        </div>
+
         <div className={styles.editFields}>
           <div className={styles.editField}>
             <label className={styles.editLabel}>Unit</label>
@@ -92,27 +142,33 @@ function IngredientRow({ ing, onSave, onDelete }) {
             </select>
           </div>
           <div className={styles.editField}>
-            <label className={styles.editLabel}>Price / unit ($)</label>
+            <label className={styles.editLabel}>Total paid ($)</label>
             <div className={styles.priceInputWrap}>
               <span className={styles.priceDollar}>$</span>
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="number" min="0" step="0.01"
                 className={styles.editInput}
-                placeholder="0.00"
-                value={draft.purchase_price}
-                onChange={e => setDraft(p => ({ ...p, purchase_price: e.target.value }))}
+                placeholder="e.g. 91.00"
+                value={draft.total_price}
+                onChange={e => setDraft(p => ({ ...p, total_price: e.target.value }))}
                 autoFocus
               />
             </div>
           </div>
           <div className={styles.editField}>
+            <label className={styles.editLabel}>Qty purchased</label>
+            <input
+              type="number" min="0" step="any"
+              className={styles.editInput}
+              placeholder="e.g. 30"
+              value={draft.total_qty}
+              onChange={e => setDraft(p => ({ ...p, total_qty: e.target.value }))}
+            />
+          </div>
+          <div className={styles.editField}>
             <label className={styles.editLabel}>Yield %</label>
             <input
-              type="number"
-              min="1"
-              max="100"
+              type="number" min="1" max="100"
               className={styles.editInput}
               value={draft.yield_pct}
               onChange={e => setDraft(p => ({ ...p, yield_pct: e.target.value }))}
@@ -129,9 +185,20 @@ function IngredientRow({ ing, onSave, onDelete }) {
             />
           </div>
         </div>
+
+        {perUnit && (
+          <div className={styles.perUnitPreview}>
+            = <strong>${perUnit}</strong> per {draft.purchase_unit}
+          </div>
+        )}
+
         <div className={styles.editActions}>
-          <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
-          <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
+          <button className={styles.cancelBtn} onClick={() => { setRdResult(null); setEditing(false) }}>Cancel</button>
+          <button
+            className={styles.saveBtn}
+            onClick={handleSave}
+            disabled={saving || !draft.total_price || !draft.total_qty}
+          >
             {saving ? 'Saving…' : <><CheckIcon /> Save</>}
           </button>
         </div>
@@ -140,7 +207,7 @@ function IngredientRow({ ing, onSave, onDelete }) {
   }
 
   return (
-    <div className={`${styles.row} ${isUnpriced ? styles.rowUnpriced : styles.rowPriced}`} onClick={() => setEditing(true)}>
+    <div className={`${styles.row} ${isUnpriced ? styles.rowUnpriced : styles.rowPriced}`} onClick={openEdit}>
       <div className={styles.rowName}>
         <span className={styles.ingredientName}>{ing.name}</span>
         {isUnpriced && <span className={styles.unpricedBadge}>unpriced</span>}
@@ -148,7 +215,7 @@ function IngredientRow({ ing, onSave, onDelete }) {
       <div className={styles.rowMeta}>
         {!isUnpriced && (
           <>
-            <span className={styles.metaVal}>${parseFloat(ing.purchase_price).toFixed(2)}</span>
+            <span className={styles.metaVal}>${parseFloat(ing.purchase_price).toFixed(4)}</span>
             <span className={styles.metaSep}>per</span>
             <span className={styles.metaVal}>{ing.purchase_unit}</span>
           </>
@@ -159,15 +226,8 @@ function IngredientRow({ ing, onSave, onDelete }) {
         {ing.supplier && <span className={styles.supplierTag}>{ing.supplier}</span>}
       </div>
       <div className={styles.rowActions}>
-        <button
-          className={styles.editBtn}
-          onClick={e => { e.stopPropagation(); setEditing(true) }}
-        >Edit</button>
-        <button
-          className={styles.deleteBtn}
-          onClick={e => { e.stopPropagation(); onDelete(ing.id, ing.name) }}
-          title="Remove from library"
-        >
+        <button className={styles.editBtn} onClick={e => { e.stopPropagation(); openEdit() }}>Edit</button>
+        <button className={styles.deleteBtn} onClick={e => { e.stopPropagation(); onDelete(ing.id, ing.name) }} title="Remove from library">
           <TrashIcon />
         </button>
       </div>
@@ -177,21 +237,32 @@ function IngredientRow({ ing, onSave, onDelete }) {
 
 // ── Add ingredient modal ──
 function AddIngredientModal({ onClose, onSaved }) {
-  const [name,  setName]  = useState('')
-  const [unit,  setUnit]  = useState('oz')
-  const [price, setPrice] = useState('')
-  const [yield_pct, setYield] = useState('100')
-  const [supplier, setSupplier] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [name,       setName]       = useState('')
+  const [unit,       setUnit]       = useState('oz')
+  const [totalPrice, setTotalPrice] = useState('')
+  const [totalQty,   setTotalQty]   = useState('')
+  const [yield_pct,  setYield]      = useState('100')
+  const [supplier,   setSupplier]   = useState('')
+  const [saving,     setSaving]     = useState(false)
+  const [error,      setError]      = useState('')
+
+  const perUnit = (() => {
+    const t = parseFloat(totalPrice)
+    const q = parseFloat(totalQty)
+    if (t > 0 && q > 0) return (t / q).toFixed(4)
+    return null
+  })()
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Name is required'); return }
+    const t = parseFloat(totalPrice)
+    const q = parseFloat(totalQty)
+    const computedPrice = (t > 0 && q > 0) ? parseFloat((t / q).toFixed(6)) : 0
     setSaving(true)
     const { error: err } = await supabase.from('ingredients').insert({
       name:           name.trim(),
       purchase_unit:  unit,
-      purchase_price: parseFloat(price) || 0,
+      purchase_price: computedPrice,
       yield_pct:      parseFloat(yield_pct) || 100,
       supplier:       supplier.trim() || null,
     })
@@ -231,18 +302,33 @@ function AddIngredientModal({ onClose, onSaved }) {
               </select>
             </div>
             <div className={styles.formRow}>
-              <label className={styles.flabel}>Price per unit ($)</label>
+              <label className={styles.flabel}>Total paid ($)</label>
               <div className={styles.priceInputWrap}>
                 <span className={styles.priceDollar}>$</span>
                 <input
                   className="modal-input"
                   type="number" min="0" step="0.01"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  placeholder="0.00"
+                  value={totalPrice}
+                  onChange={e => setTotalPrice(e.target.value)}
+                  placeholder="e.g. 91.00"
                 />
               </div>
             </div>
+            <div className={styles.formRow}>
+              <label className={styles.flabel}>Qty purchased</label>
+              <input
+                className="modal-input"
+                type="number" min="0" step="any"
+                value={totalQty}
+                onChange={e => setTotalQty(e.target.value)}
+                placeholder="e.g. 30"
+              />
+            </div>
+            {perUnit && (
+              <div className={styles.perUnitPreview} style={{padding:'4px 0'}}>
+                = <strong>${perUnit}</strong> per {unit}
+              </div>
+            )}
           </div>
           <div className={styles.formRow2}>
             <div className={styles.formRow}>
@@ -278,7 +364,7 @@ function AddIngredientModal({ onClose, onSaved }) {
 }
 
 // ── Main page ──
-export default function Ingredients() {
+export default function Ingredients({ embedded = false }) {
   const [ingredients, setIngredients] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [syncing,     setSyncing]     = useState(false)
@@ -363,13 +449,26 @@ export default function Ingredients() {
   const pricedCount   = ingredients.length - unpricedCount
 
   return (
-    <div className={styles.page}>
-      <PageHeader title="Ingredients">
-        <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
-          <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
-        </button>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add ingredient</button>
-      </PageHeader>
+    <div className={embedded ? styles.embeddedWrap : styles.page}>
+      {!embedded && (
+        <PageHeader title="Ingredients">
+          <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
+            <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add ingredient</button>
+        </PageHeader>
+      )}
+      {embedded && (
+        <div className={styles.embeddedHeader}>
+          <div className={styles.embeddedTitle}>Ingredient Library</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
+              <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
+            </button>
+            <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add ingredient</button>
+          </div>
+        </div>
+      )}
 
       {syncMsg && (
         <div className={styles.syncBanner}>

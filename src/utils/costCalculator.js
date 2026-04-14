@@ -21,6 +21,87 @@ const VOL_TO_ML = {
 // Count units — just pass through numerically
 const COUNT_UNITS = new Set(['each', 'piece', 'pieces', 'whole', 'unit', 'units', ''])
 
+// ── Ingredient densities (grams per cup) ─────────────────────
+// Used for cross-category conversions (volume ↔ weight), like Meez.
+// Keys are lowercase, partial-match friendly.
+const DENSITY_MAP = [
+  // Flours
+  { keys: ['all-purpose flour', 'all purpose flour', 'ap flour'],         gPerCup: 120 },
+  { keys: ['bread flour'],                                                  gPerCup: 120 },
+  { keys: ['cake flour'],                                                   gPerCup: 100 },
+  { keys: ['whole wheat flour', 'wheat flour'],                             gPerCup: 120 },
+  { keys: ['almond flour', 'almond meal'],                                  gPerCup: 96  },
+  { keys: ['coconut flour'],                                                gPerCup: 112 },
+  { keys: ['semolina'],                                                     gPerCup: 167 },
+  { keys: ['flour'],                                                        gPerCup: 120 }, // fallback
+  // Sugars
+  { keys: ['granulated sugar', 'white sugar', 'cane sugar'],               gPerCup: 200 },
+  { keys: ['powdered sugar', 'confectioners sugar', "confectioners' sugar", 'icing sugar'], gPerCup: 120 },
+  { keys: ['light brown sugar', 'dark brown sugar', 'brown sugar'],        gPerCup: 220 },
+  { keys: ['raw sugar', 'turbinado sugar'],                                 gPerCup: 200 },
+  { keys: ['sugar'],                                                        gPerCup: 200 }, // fallback
+  // Fats
+  { keys: ['butter', 'unsalted butter', 'salted butter'],                  gPerCup: 227 },
+  { keys: ['shortening', 'vegetable shortening'],                          gPerCup: 200 },
+  { keys: ['vegetable oil', 'canola oil', 'sunflower oil', 'oil'],         gPerCup: 218 },
+  { keys: ['coconut oil'],                                                  gPerCup: 218 },
+  { keys: ['olive oil'],                                                    gPerCup: 216 },
+  { keys: ['lard'],                                                         gPerCup: 205 },
+  // Dairy
+  { keys: ['whole milk', 'milk'],                                           gPerCup: 240 },
+  { keys: ['buttermilk'],                                                   gPerCup: 240 },
+  { keys: ['heavy cream', 'heavy whipping cream', 'whipping cream'],       gPerCup: 238 },
+  { keys: ['half and half', 'half & half'],                                 gPerCup: 242 },
+  { keys: ['sour cream'],                                                   gPerCup: 230 },
+  { keys: ['cream cheese'],                                                 gPerCup: 232 },
+  { keys: ['yogurt', 'plain yogurt'],                                       gPerCup: 245 },
+  { keys: ['condensed milk', 'sweetened condensed milk'],                  gPerCup: 306 },
+  { keys: ['evaporated milk'],                                              gPerCup: 252 },
+  // Dry goods
+  { keys: ['cocoa powder', 'unsweetened cocoa', 'cocoa'],                  gPerCup: 100 },
+  { keys: ['baking powder'],                                                gPerCup: 230 },
+  { keys: ['baking soda'],                                                  gPerCup: 230 },
+  { keys: ['salt', 'table salt'],                                           gPerCup: 273 },
+  { keys: ['kosher salt'],                                                  gPerCup: 130 },
+  { keys: ['cornstarch', 'corn starch'],                                   gPerCup: 128 },
+  { keys: ['rolled oats', 'oats', 'old-fashioned oats'],                  gPerCup: 90  },
+  { keys: ['rice', 'white rice'],                                           gPerCup: 185 },
+  { keys: ['breadcrumbs', 'bread crumbs'],                                 gPerCup: 108 },
+  // Liquids
+  { keys: ['water'],                                                        gPerCup: 240 },
+  { keys: ['vanilla extract', 'vanilla'],                                  gPerCup: 208 },
+  { keys: ['honey'],                                                        gPerCup: 340 },
+  { keys: ['maple syrup', 'maple'],                                        gPerCup: 315 },
+  { keys: ['corn syrup'],                                                   gPerCup: 328 },
+  { keys: ['molasses'],                                                     gPerCup: 340 },
+  { keys: ['lemon juice', 'lime juice', 'orange juice', 'juice'],          gPerCup: 240 },
+  // Nuts & chips
+  { keys: ['chocolate chips', 'mini chocolate chips'],                     gPerCup: 170 },
+  { keys: ['chopped nuts', 'walnuts', 'pecans', 'almonds', 'nuts'],        gPerCup: 120 },
+  { keys: ['shredded coconut', 'coconut flakes'],                          gPerCup: 93  },
+  { keys: ['peanut butter'],                                                gPerCup: 258 },
+]
+
+function getDensityGPerCup(ingredientName) {
+  const name = (ingredientName || '').toLowerCase().trim()
+  if (!name) return null
+  // Exact key match first
+  for (const entry of DENSITY_MAP) {
+    if (entry.keys.includes(name)) return entry.gPerCup
+  }
+  // Substring match (longest key wins)
+  let best = null, bestLen = 0
+  for (const entry of DENSITY_MAP) {
+    for (const k of entry.keys) {
+      if ((name.includes(k) || k.includes(name)) && k.length > bestLen) {
+        best = entry.gPerCup
+        bestLen = k.length
+      }
+    }
+  }
+  return best
+}
+
 function getCategory(unit) {
   const u = (unit || '').toLowerCase().trim()
   if (WEIGHT_TO_G[u] !== undefined) return 'weight'
@@ -45,16 +126,50 @@ function fromBase(baseQty, unit, cat) {
   return null
 }
 
-// Convert qty from fromUnit to toUnit. Returns null on mismatch/unknown.
-export function convertUnits(qty, fromUnit, toUnit) {
+const CUP_IN_ML = 236.588
+
+// Convert qty from fromUnit to toUnit.
+// Pass ingredientName for cross-category (volume ↔ weight) conversions via density.
+// Returns null on incompatible/unknown units.
+export function convertUnits(qty, fromUnit, toUnit, ingredientName = '') {
   const from = toBase(qty, fromUnit)
   if (!from) return null
-  return fromBase(from.base, toUnit, from.cat)
+
+  // Same-category conversion (weight↔weight, volume↔volume, count↔count)
+  const direct = fromBase(from.base, toUnit, from.cat)
+  if (direct !== null) return direct
+
+  // Cross-category: volume ↔ weight via ingredient density
+  const density = getDensityGPerCup(ingredientName)
+  if (density !== null) {
+    if (from.cat === 'volume') {
+      // volume → weight: ml → cups → grams
+      const grams = (from.base / CUP_IN_ML) * density
+      const result = fromBase(grams, toUnit, 'weight')
+      if (result !== null) return result
+    }
+    if (from.cat === 'weight') {
+      // weight → volume: grams → cups → ml
+      const ml = (from.base / density) * CUP_IN_ML
+      const result = fromBase(ml, toUnit, 'volume')
+      if (result !== null) return result
+    }
+  }
+
+  return null
 }
 
-// Check if two units are compatible (same category)
-export function unitsCompatible(unitA, unitB) {
-  return getCategory(unitA) !== null && getCategory(unitA) === getCategory(unitB)
+// Check if two units are compatible (same category, or cross-category via known density)
+export function unitsCompatible(unitA, unitB, ingredientName = '') {
+  const catA = getCategory(unitA)
+  const catB = getCategory(unitB)
+  if (catA === null || catB === null) return false
+  if (catA === catB) return true
+  // Cross-category ok if we have density data for this ingredient
+  if ((catA === 'weight' && catB === 'volume') || (catA === 'volume' && catB === 'weight')) {
+    return getDensityGPerCup(ingredientName) !== null
+  }
+  return false
 }
 
 // ── Normalize ingredient name for matching ──
@@ -94,7 +209,7 @@ export function calcIngredientCost(row, ingredientMap) {
   if (recipeUnit === purchaseUnit) {
     convertedQty = qty
   } else {
-    convertedQty = convertUnits(qty, recipeUnit, purchaseUnit)
+    convertedQty = convertUnits(qty, recipeUnit, purchaseUnit, row.name)
     if (convertedQty === null) return { cost: null, reason: 'unit_mismatch' }
   }
 

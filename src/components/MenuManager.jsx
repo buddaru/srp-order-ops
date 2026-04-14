@@ -316,9 +316,7 @@ function ItemModal({ item, onClose, onUpdated }) {
 
   const TABS = [
     { id: 'details', label: 'Details' },
-    { id: 'variants', label: 'Variants' },
-    { id: 'addons', label: 'Add-ons' },
-    { id: 'cost', label: 'Cost' },
+    { id: 'cost',    label: 'Cost' },
   ]
 
   return (
@@ -355,9 +353,7 @@ function ItemModal({ item, onClose, onUpdated }) {
               </div>
             </div>
           )}
-          {tab === 'variants' && <VariantsTab itemId={item.id} />}
-          {tab === 'addons'   && <AddonsTab   itemId={item.id} />}
-          {tab === 'cost'     && <CostTab     itemId={item.id} itemPrice={price} />}
+          {tab === 'cost'    && <CostTab     itemId={item.id} itemPrice={price} />}
         </div>
       </div>
     </div>
@@ -479,6 +475,124 @@ function ManageCategoriesModal({ categories, onClose, onUpdated }) {
   )
 }
 
+// ── Category-level add-ons (stored with menu_item_id = null, category = catName) ──
+function CategoryAddonsSection({ catName }) {
+  const [open,     setOpen]    = useState(false)
+  const [addons,   setAddons]  = useState([])
+  const [loading,  setLoading] = useState(false)
+  const [newName,  setNewName] = useState('')
+  const [newPrice, setNewPrice]= useState('')
+  const [adding,   setAdding]  = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    supabase
+      .from('menu_item_addons')
+      .select('*')
+      .is('menu_item_id', null)
+      .eq('category', catName)
+      .order('sort_order')
+      .then(({ data }) => { setAddons(data || []); setLoading(false) })
+  }, [open, catName])
+
+  const addAddon = async () => {
+    if (!newName.trim()) return
+    setAdding(true)
+    const { data } = await supabase.from('menu_item_addons').insert({
+      menu_item_id: null,
+      name:         newName.trim(),
+      price:        parseFloat(newPrice) || 0,
+      category:     catName,
+      sort_order:   addons.length,
+    }).select().single()
+    if (data) setAddons(a => [...a, data])
+    setNewName(''); setNewPrice(''); setAdding(false)
+  }
+
+  const removeAddon = async (id) => {
+    await supabase.from('menu_item_addons').delete().eq('id', id)
+    setAddons(a => a.filter(x => x.id !== id))
+  }
+
+  const updateAddon = async (id, field, val) => {
+    await supabase.from('menu_item_addons').update({ [field]: val }).eq('id', id)
+    setAddons(a => a.map(x => x.id === id ? { ...x, [field]: val } : x))
+  }
+
+  return (
+    <div className={styles.catAddonsWrap}>
+      <button className={styles.catAddonsToggle} onClick={() => setOpen(o => !o)}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <span>Add-ons for {catName}</span>
+        {addons.length > 0 && !open && <span className={styles.addonCount}>{addons.length}</span>}
+      </button>
+
+      {open && (
+        <div className={styles.catAddonsBody}>
+          {loading ? (
+            <div className={styles.tabLoading}>Loading…</div>
+          ) : (
+            <>
+              <div className={styles.catAddonsHint}>
+                Add-ons apply to all items in this category — e.g. Edible Glitter, Frosting Color, Printed Image.
+              </div>
+              {addons.length > 0 && (
+                <div className={styles.variantList}>
+                  <div className={styles.addonHeader}><span>Add-on name</span><span>Price</span><span/></div>
+                  {addons.map(a => (
+                    <div key={a.id} className={styles.addonRow}>
+                      <input
+                        className={styles.inlineInput}
+                        value={a.name}
+                        onChange={e => updateAddon(a.id, 'name', e.target.value)}
+                      />
+                      <div className={styles.deltaWrap}>
+                        <span className={styles.deltaSign}>+$</span>
+                        <input
+                          className={styles.inlineInputSm}
+                          type="number" step="0.01"
+                          value={a.price}
+                          onChange={e => updateAddon(a.id, 'price', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <button className={styles.removeBtn} onClick={() => removeAddon(a.id)}><TrashIcon /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className={styles.addRow}>
+                <input
+                  className={styles.inlineInput}
+                  placeholder="Add-on name (e.g. Edible Glitter)"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addAddon()}
+                />
+                <div className={styles.deltaWrap}>
+                  <span className={styles.deltaSign}>+$</span>
+                  <input
+                    className={styles.inlineInputSm}
+                    type="number" step="0.01" placeholder="0"
+                    value={newPrice}
+                    onChange={e => setNewPrice(e.target.value)}
+                  />
+                </div>
+                <button className={styles.addSmBtn} onClick={addAddon} disabled={adding || !newName.trim()}>
+                  <PlusIcon /> Add
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ItemRow({ item, onOpen, onToggle, onPriceChange }) {
   return (
     <div className={`${styles.itemRow} ${!item.active ? styles.itemInactive : ''}`}>
@@ -493,7 +607,7 @@ function ItemRow({ item, onOpen, onToggle, onPriceChange }) {
         </button>
         <span className={styles.toggleLabel}>{item.active ? 'Active' : 'Off'}</span>
       </div>
-      <button className={styles.detailBtn} onClick={() => onOpen(item)}>Variants / Add-ons ›</button>
+      <button className={styles.detailBtn} onClick={() => onOpen(item)}>Details / Cost ›</button>
     </div>
   )
 }
@@ -616,6 +730,7 @@ export default function MenuManager() {
                         <ItemRow key={item.id} item={item} onOpen={setOpenItem}
                           onToggle={handleToggle} onPriceChange={handlePriceChange} />
                       ))}
+                      <CategoryAddonsSection catName={cat} />
                     </div>
                   )}
                 </div>

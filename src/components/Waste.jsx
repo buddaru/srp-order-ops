@@ -309,10 +309,10 @@ export default function Waste() {
   const totalCost = filtered.reduce((s, e) => s + (e.total_cost || 0), 0)
 
   const topReason = (() => {
-    const counts = {}
-    filtered.forEach(e => { if (e.reason) counts[e.reason] = (counts[e.reason] || 0) + 1 })
-    const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0]
-    return top ? { reason: top[0], count: top[1] } : null
+    const costs = {}
+    filtered.forEach(e => { if (e.reason) costs[e.reason] = (costs[e.reason] || 0) + (e.total_cost || 0) })
+    const top = Object.entries(costs).sort((a,b) => b[1]-a[1])[0]
+    return top ? { reason: top[0], totalCost: top[1] } : null
   })()
 
   const handlePeriodChange = (p) => {
@@ -392,7 +392,7 @@ export default function Waste() {
                 <div className={styles.reasonCardPill} style={{background: REASON_COLORS[topReason.reason]?.bg, color: REASON_COLORS[topReason.reason]?.text}}>
                   {topReason.reason}
                 </div>
-                <div className={styles.reasonCardCount}>{topReason.count} {topReason.count === 1 ? 'time' : 'times'}</div>
+                <div className={styles.reasonCardCount}>{fmt$(topReason.totalCost)} total</div>
               </div>
             </>
           )}

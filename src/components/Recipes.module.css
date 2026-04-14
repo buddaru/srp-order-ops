@@ -620,3 +620,6 @@
   cursor: pointer; transition: background 0.12s, color 0.12s;
 }
 .loadMore:hover { background: var(--bg-2); color: var(--text); }
+
+/* ── Ingredients nested tab ── */
+.ingredientsTab { padding-top: 4px; }
