@@ -164,7 +164,8 @@ export default function RecipeView() {
   const [activeImg,  setActiveImg]  = useState(0)
   const [auditLog,   setAuditLog]   = useState(null)
   const [auditOpen,  setAuditOpen]  = useState(false)
-  const [liveCost,   setLiveCost]   = useState(null)
+  const [liveCost,       setLiveCost]       = useState(null)
+  const [breakdownOpen,  setBreakdownOpen]  = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -366,9 +367,18 @@ export default function RecipeView() {
           const costPerServing = liveCost ? liveCost.partialCostPerServing  : parseFloat(recipe.cost_per_serving)
           const unpricedCount  = liveCost ? liveCost.unpricedCount          : 0
           const pricedCount    = liveCost ? liveCost.pricedCount            : 1
+          const breakdown      = liveCost ? liveCost.breakdown              : []
           const isPartial      = unpricedCount > 0
           const hasAnyCost     = pricedCount > 0 && totalCost > 0
           if (!hasAnyCost) return null
+
+          const REASON_LABELS = {
+            not_in_library: 'Not in ingredient library',
+            unpriced:        'No price set',
+            no_qty:          'Missing quantity',
+            unit_mismatch:   'Unit mismatch',
+          }
+
           return (
             <div className={styles.costPanel}>
               <div className={styles.costPanelHeader}>
@@ -399,6 +409,51 @@ export default function RecipeView() {
                   </span>
                 </div>
               </div>
+
+              {/* ── Breakdown toggle ── */}
+              {breakdown.length > 0 && (
+                <>
+                  <button
+                    className={styles.breakdownToggle}
+                    onClick={() => setBreakdownOpen(o => !o)}
+                  >
+                    <span>View cost breakdown</span>
+                    <span className={`${styles.breakdownChevron} ${breakdownOpen ? styles.breakdownChevronOpen : ''}`}>
+                      <ChevronIcon />
+                    </span>
+                  </button>
+
+                  {breakdownOpen && (
+                    <div className={styles.breakdownBody}>
+                      {breakdown.map((row, i) => (
+                        <div
+                          key={i}
+                          className={`${styles.breakdownRow} ${row.cost === null ? styles.breakdownRowUnpriced : ''}`}
+                        >
+                          <div className={styles.breakdownName}>
+                            {row.cost === null && <span className={styles.unpricedDot} />}
+                            <span>{row.name}</span>
+                            {row.qty && row.unit && (
+                              <span className={styles.breakdownQty}>{row.qty} {row.unit}</span>
+                            )}
+                          </div>
+                          <div className={styles.breakdownCost}>
+                            {row.cost !== null
+                              ? `$${row.cost.toFixed(4)}`
+                              : <span className={styles.unpricedLabel}>{REASON_LABELS[row.reason] || 'Unpriced'}</span>
+                            }
+                          </div>
+                        </div>
+                      ))}
+                      <div className={styles.breakdownTotal}>
+                        <span>{isPartial ? 'Partial total' : 'Total'}</span>
+                        <span>${totalCost.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
               {recipe.cost_updated_at && (
                 <div className={styles.costUpdated}>
                   Last updated {new Date(recipe.cost_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
