@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
-import Ingredients from './Ingredients'
+import Ingredients, { AddIngredientModal } from './Ingredients'
 import styles from './Recipes.module.css'
 
 function fmtTimeAgo(ts) {
@@ -46,6 +46,12 @@ const RecipeFileIcon = () => (
 const FolderIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+  </svg>
+)
+const IngredientIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/>
+    <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
   </svg>
 )
 const GridIcon = () => (
@@ -221,12 +227,13 @@ export default function Recipes() {
   const [step, setStep]         = useState(null)
   const [recipeData, setRecipeData] = useState(null)
   const [showGroupModal, setShowGroupModal] = useState(false)
+  const [showAddIngredient, setShowAddIngredient] = useState(false)
   const [recipes, setRecipes]   = useState([])
   const [groups, setGroups]     = useState([])
   const [loadingRecipes, setLoadingRecipes] = useState(true)
   const [syncing, setSyncing]   = useState(false)
   const [syncMsg, setSyncMsg]   = useState(null)
-  const PAGE_SIZE = 20
+  const [ingredientRefresh, setIngredientRefresh] = useState(0)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const dropRef = useRef(null)
@@ -390,6 +397,9 @@ export default function Recipes() {
                 <button className={styles.dropItem} onClick={() => { setDropOpen(false); setShowGroupModal(true) }}>
                   <FolderIcon /> New Recipe Group
                 </button>
+                <button className={styles.dropItem} onClick={() => { setDropOpen(false); setShowAddIngredient(true) }}>
+                  <IngredientIcon /> Add Ingredient
+                </button>
               </div>
             )}
           </div>
@@ -535,13 +545,19 @@ export default function Recipes() {
       {/* ── Ingredients tab ── */}
       {tab === 'ingredients' && (
         <div className={styles.ingredientsTab}>
-          <Ingredients embedded />
+          <Ingredients key={ingredientRefresh} externalSearch={query} />
         </div>
       )}
 
       {step === 1 && <NewRecipeStep1 onClose={closeModal} onNext={data => { setRecipeData(data); setStep(2) }} />}
       {step === 2 && <NewRecipeStep2 recipeData={recipeData} onClose={closeModal} onBack={() => setStep(1)} onSave={handleSaveRecipe} />}
       {showGroupModal && <NewGroupModal onClose={() => setShowGroupModal(false)} onCreate={handleGroupCreated} />}
+      {showAddIngredient && (
+        <AddIngredientModal
+          onClose={() => setShowAddIngredient(false)}
+          onSaved={() => { setIngredientRefresh(v => v + 1); setTab('ingredients') }}
+        />
+      )}
     </div>
   )
 }

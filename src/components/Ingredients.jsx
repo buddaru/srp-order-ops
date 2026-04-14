@@ -1,26 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { PURCHASE_UNITS, recalculateAffectedRecipes, fmtCost } from '../utils/costCalculator'
-import PageHeader from './PageHeader'
+import { PURCHASE_UNITS, recalculateAffectedRecipes } from '../utils/costCalculator'
 import styles from './Ingredients.module.css'
 
-// ── Icons ──
-const SearchIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-  </svg>
-)
-const SyncIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-  </svg>
-)
-const ChevronIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <path d="m6 9 6 6 6-6"/>
-  </svg>
-)
 const CheckIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <path d="M20 6 9 17l-5-5"/>
@@ -35,12 +17,9 @@ const TrashIcon = () => (
   </svg>
 )
 
-// ── Single ingredient row (inline edit) ──
 function IngredientRow({ ing, onSave, onDelete }) {
-  const [editing,   setEditing]   = useState(false)
-  const [saving,    setSaving]    = useState(false)
-  const [rdLoading, setRdLoading] = useState(false)
-  const [rdResult,  setRdResult]  = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [saving,  setSaving]  = useState(false)
 
   const [draft, setDraft] = useState({
     purchase_unit: ing.purchase_unit || 'oz',
@@ -68,7 +47,6 @@ function IngredientRow({ ing, onSave, onDelete }) {
       yield_pct:     ing.yield_pct != null ? String(ing.yield_pct) : '100',
       supplier:      ing.supplier || '',
     })
-    setRdResult(null)
     setEditing(true)
   }
 
@@ -89,22 +67,6 @@ function IngredientRow({ ing, onSave, onDelete }) {
     setEditing(false)
   }
 
-  const fetchRDPrice = async () => {
-    setRdLoading(true)
-    setRdResult(null)
-    try {
-      const res  = await fetch(`/api/fetch-rd-price?q=${encodeURIComponent(ing.name)}`)
-      const data = await res.json()
-      setRdResult(data)
-      if (data.price && data.unit) {
-        setDraft(p => ({ ...p, total_price: String(data.price), total_qty: '1', purchase_unit: data.unit }))
-      }
-    } catch {
-      setRdResult({ error: 'Could not reach Restaurant Depot.' })
-    }
-    setRdLoading(false)
-  }
-
   if (editing) {
     return (
       <div className={`${styles.row} ${styles.rowEditing}`}>
@@ -112,37 +74,13 @@ function IngredientRow({ ing, onSave, onDelete }) {
           <span className={styles.ingredientName}>{ing.name}</span>
         </div>
 
-        <div className={styles.rdRow}>
-          <button className={styles.rdBtn} onClick={fetchRDPrice} disabled={rdLoading} type="button">
-            {rdLoading ? '⟳ Looking up…' : '🏪 Fetch price from Restaurant Depot'}
-          </button>
-          {rdResult?.error && <span className={styles.rdError}>{rdResult.error}</span>}
-          {rdResult?.name  && <span className={styles.rdFound}>Found: {rdResult.name} — pre-filled below</span>}
-          {rdResult?.notFound && (
-            <span className={styles.rdError}>
-              Not found automatically —{' '}
-              <a href={rdResult.searchUrl} target="_blank" rel="noreferrer" className={styles.rdLink}>
-                search on Restaurant Depot ↗
-              </a>
-            </span>
-          )}
+        <div className={styles.pricingExplainer}>
+          Enter what you paid and how many you bought — we'll calculate the cost per unit automatically.
         </div>
 
         <div className={styles.editFields}>
           <div className={styles.editField}>
-            <label className={styles.editLabel}>Unit</label>
-            <select
-              className={styles.editSelect}
-              value={draft.purchase_unit}
-              onChange={e => setDraft(p => ({ ...p, purchase_unit: e.target.value }))}
-            >
-              {PURCHASE_UNITS.map(u => (
-                <option key={u.value} value={u.value}>{u.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.editField}>
-            <label className={styles.editLabel}>Total paid ($)</label>
+            <label className={styles.editLabel}>Total amount paid</label>
             <div className={styles.priceInputWrap}>
               <span className={styles.priceDollar}>$</span>
               <input
@@ -156,7 +94,19 @@ function IngredientRow({ ing, onSave, onDelete }) {
             </div>
           </div>
           <div className={styles.editField}>
-            <label className={styles.editLabel}>Qty purchased</label>
+            <label className={styles.editLabel}>Unit</label>
+            <select
+              className={styles.editSelect}
+              value={draft.purchase_unit}
+              onChange={e => setDraft(p => ({ ...p, purchase_unit: e.target.value }))}
+            >
+              {PURCHASE_UNITS.map(u => (
+                <option key={u.value} value={u.value}>{u.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.editField}>
+            <label className={styles.editLabel}>How many {draft.purchase_unit} did you buy?</label>
             <input
               type="number" min="0" step="any"
               className={styles.editInput}
@@ -179,7 +129,7 @@ function IngredientRow({ ing, onSave, onDelete }) {
             <input
               type="text"
               className={styles.editInput}
-              placeholder="e.g. Restaurant Depot"
+              placeholder="e.g. Restaurant Depot, Costco…"
               value={draft.supplier}
               onChange={e => setDraft(p => ({ ...p, supplier: e.target.value }))}
             />
@@ -193,7 +143,7 @@ function IngredientRow({ ing, onSave, onDelete }) {
         )}
 
         <div className={styles.editActions}>
-          <button className={styles.cancelBtn} onClick={() => { setRdResult(null); setEditing(false) }}>Cancel</button>
+          <button className={styles.cancelBtn} onClick={() => setEditing(false)}>Cancel</button>
           <button
             className={styles.saveBtn}
             onClick={handleSave}
@@ -227,7 +177,7 @@ function IngredientRow({ ing, onSave, onDelete }) {
       </div>
       <div className={styles.rowActions}>
         <button className={styles.editBtn} onClick={e => { e.stopPropagation(); openEdit() }}>Edit</button>
-        <button className={styles.deleteBtn} onClick={e => { e.stopPropagation(); onDelete(ing.id, ing.name) }} title="Remove from library">
+        <button className={styles.deleteBtn} onClick={e => { e.stopPropagation(); onDelete(ing.id, ing.name) }} title="Remove ingredient">
           <TrashIcon />
         </button>
       </div>
@@ -235,8 +185,8 @@ function IngredientRow({ ing, onSave, onDelete }) {
   )
 }
 
-// ── Add ingredient modal ──
-function AddIngredientModal({ onClose, onSaved }) {
+// Exported so Recipes.jsx New+ dropdown can open it
+export function AddIngredientModal({ onClose, onSaved }) {
   const [name,       setName]       = useState('')
   const [unit,       setUnit]       = useState('oz')
   const [totalPrice, setTotalPrice] = useState('')
@@ -280,12 +230,12 @@ function AddIngredientModal({ onClose, onSaved }) {
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
-          <div className={styles.modalTitle}>Add ingredient</div>
+          <div className={styles.modalTitle}>Add Ingredient</div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.modalBody}>
           <div className={styles.formRow}>
-            <label className={styles.flabel}>Name</label>
+            <label className={styles.flabel}>Ingredient Name</label>
             <input
               className="modal-input"
               value={name}
@@ -294,15 +244,14 @@ function AddIngredientModal({ onClose, onSaved }) {
               autoFocus
             />
           </div>
+
+          <div className={styles.pricingExplainer}>
+            Enter what you paid and how many you got — we'll calculate the cost per unit for you.
+          </div>
+
           <div className={styles.formRow2}>
             <div className={styles.formRow}>
-              <label className={styles.flabel}>Purchase unit</label>
-              <select className="modal-input" value={unit} onChange={e => setUnit(e.target.value)}>
-                {PURCHASE_UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-              </select>
-            </div>
-            <div className={styles.formRow}>
-              <label className={styles.flabel}>Total paid ($)</label>
+              <label className={styles.flabel}>Total amount paid</label>
               <div className={styles.priceInputWrap}>
                 <span className={styles.priceDollar}>$</span>
                 <input
@@ -315,7 +264,13 @@ function AddIngredientModal({ onClose, onSaved }) {
               </div>
             </div>
             <div className={styles.formRow}>
-              <label className={styles.flabel}>Qty purchased</label>
+              <label className={styles.flabel}>Purchase unit</label>
+              <select className="modal-input" value={unit} onChange={e => setUnit(e.target.value)}>
+                {PURCHASE_UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+              </select>
+            </div>
+            <div className={styles.formRow}>
+              <label className={styles.flabel}>How many {unit} did you buy?</label>
               <input
                 className="modal-input"
                 type="number" min="0" step="any"
@@ -325,7 +280,7 @@ function AddIngredientModal({ onClose, onSaved }) {
               />
             </div>
             {perUnit && (
-              <div className={styles.perUnitPreview} style={{padding:'4px 0'}}>
+              <div className={styles.perUnitPreview} style={{ padding: '4px 0' }}>
                 = <strong>${perUnit}</strong> per {unit}
               </div>
             )}
@@ -346,7 +301,7 @@ function AddIngredientModal({ onClose, onSaved }) {
                 className="modal-input"
                 value={supplier}
                 onChange={e => setSupplier(e.target.value)}
-                placeholder="e.g. Restaurant Depot"
+                placeholder="e.g. Restaurant Depot, Costco…"
               />
             </div>
           </div>
@@ -355,7 +310,7 @@ function AddIngredientModal({ onClose, onSaved }) {
         <div className={styles.modalFooter}>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            {saving ? 'Adding…' : 'Add ingredient'}
+            {saving ? 'Adding…' : 'Add Ingredient'}
           </button>
         </div>
       </div>
@@ -363,14 +318,11 @@ function AddIngredientModal({ onClose, onSaved }) {
   )
 }
 
-// ── Main page ──
-export default function Ingredients({ embedded = false }) {
+// Main embedded component — used inside Recipes.jsx ingredients tab
+// externalSearch: search string passed from parent's search bar
+export default function Ingredients({ externalSearch = '' }) {
   const [ingredients, setIngredients] = useState([])
   const [loading,     setLoading]     = useState(true)
-  const [syncing,     setSyncing]     = useState(false)
-  const [syncMsg,     setSyncMsg]     = useState('')
-  const [showAdd,     setShowAdd]     = useState(false)
-  const [search,      setSearch]      = useState('')
   const [delConfirm,  setDelConfirm]  = useState(null)
 
   const load = useCallback(async () => {
@@ -382,101 +334,55 @@ export default function Ingredients({ embedded = false }) {
 
   useEffect(() => { load() }, [load])
 
-  // ── Sync: scan all recipes, seed ingredient names not yet in library ──
-  const handleSync = async () => {
-    setSyncing(true)
-    setSyncMsg('')
-    try {
-      const { data: recipes } = await supabase.from('recipes').select('ingredients')
-      const namesFromRecipes  = new Set()
-
-      for (const r of (recipes || [])) {
-        for (const item of (r.ingredients || [])) {
-          if (item.type === 'item' && item.name?.trim()) {
-            namesFromRecipes.add(item.name.trim())
-          }
-        }
-      }
-
-      // Only insert names not already in library (case-insensitive check)
-      const existingNames = new Set(ingredients.map(i => i.name.toLowerCase()))
-      const toInsert = [...namesFromRecipes].filter(
-        n => !existingNames.has(n.toLowerCase())
-      )
-
-      if (toInsert.length === 0) {
-        setSyncMsg('Library is already up to date — no new ingredients found.')
-        setSyncing(false)
-        return
-      }
-
-      const rows = toInsert.map(name => ({
-        name,
-        purchase_unit:  'oz',
-        purchase_price: 0,
-        yield_pct:      100,
-      }))
-
-      const { error } = await supabase.from('ingredients').insert(rows)
-      if (error) { setSyncMsg('Error: ' + error.message) }
-      else {
-        setSyncMsg(`Added ${toInsert.length} ingredient${toInsert.length !== 1 ? 's' : ''} from your recipes. Set their prices below.`)
-        load()
-      }
-    } catch (e) {
-      setSyncMsg('Error: ' + e.message)
-    }
-    setSyncing(false)
-  }
-
   const handleSave = async (id, updates, ingredientName) => {
     await supabase.from('ingredients').update(updates).eq('id', id)
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-    // Reactively recalculate all recipes that use this ingredient
     await recalculateAffectedRecipes(supabase, ingredientName)
   }
 
-  const handleDelete = async (id, name) => {
+  const handleDelete = async (id) => {
     await supabase.from('ingredients').delete().eq('id', id)
     setIngredients(prev => prev.filter(i => i.id !== id))
     setDelConfirm(null)
   }
 
   const filtered = ingredients.filter(i =>
-    !search || i.name.toLowerCase().includes(search.toLowerCase())
+    !externalSearch || i.name.toLowerCase().includes(externalSearch.toLowerCase())
   )
   const unpricedCount = ingredients.filter(i => !i.purchase_price || parseFloat(i.purchase_price) === 0).length
   const pricedCount   = ingredients.length - unpricedCount
 
-  return (
-    <div className={embedded ? styles.embeddedWrap : styles.page}>
-      {!embedded && (
-        <PageHeader title="Ingredients">
-          <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
-            <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add ingredient</button>
-        </PageHeader>
-      )}
-      {embedded && (
-        <div className={styles.embeddedHeader}>
-          <div className={styles.embeddedTitle}>Ingredient Library</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-secondary" onClick={handleSync} disabled={syncing}>
-              <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
-            </button>
-            <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add ingredient</button>
+  if (loading) {
+    return (
+      <div className={styles.embeddedWrap}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="skeletonRow">
+            <div className="skeletonLine" style={{ width: `${45 + (i * 13) % 40}%` }} />
+            <div style={{ flex: 1 }} />
+            <div className="skeletonLine" style={{ width: 80 }} />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (ingredients.length === 0) {
+    return (
+      <div className={styles.embeddedWrap}>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyTitle}>No ingredients yet</div>
+          <div className={styles.emptyMsg}>
+            Use <strong>New → Add Ingredient</strong> to build your ingredient library and enable cost tracking across recipes.
           </div>
         </div>
-      )}
+      </div>
+    )
+  }
 
-      {syncMsg && (
-        <div className={styles.syncBanner}>
-          {syncMsg}
-          <button className={styles.syncBannerClose} onClick={() => setSyncMsg('')}>✕</button>
-        </div>
-      )}
+  const showSections = !externalSearch.trim()
 
+  return (
+    <div className={styles.embeddedWrap}>
       <div className={styles.statsRow}>
         <div className={styles.stat}>
           <span className={styles.statNum}>{ingredients.length}</span>
@@ -494,40 +400,32 @@ export default function Ingredients({ embedded = false }) {
         )}
       </div>
 
-      {ingredients.length === 0 && !loading && (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyTitle}>No ingredients yet</div>
-          <div className={styles.emptyMsg}>
-            Click <strong>Sync from recipes</strong> to automatically pull all ingredient names from your existing recipes.
-            Then set purchase prices for each one to enable cost tracking.
-          </div>
-          <button className={styles.seedBtn} onClick={handleSync} disabled={syncing}>
-            <SyncIcon /> {syncing ? 'Syncing…' : 'Sync from recipes'}
-          </button>
+      <div className={styles.hint}>
+        Click any ingredient to update its price. Recipe costs update automatically when prices change.
+      </div>
+
+      {/* Search results mode */}
+      {!showSections && (
+        <div className={styles.ingredientList}>
+          {filtered.length === 0 ? (
+            <div className={styles.noResults}>No ingredients match "{externalSearch}"</div>
+          ) : (
+            filtered.map(ing => (
+              <IngredientRow
+                key={ing.id}
+                ing={ing}
+                onSave={handleSave}
+                onDelete={(id, name) => setDelConfirm({ id, name })}
+              />
+            ))
+          )}
         </div>
       )}
 
-      {ingredients.length > 0 && (
+      {/* Sectioned view */}
+      {showSections && (
         <>
-          <div className={styles.hint}>
-            Click any ingredient to set its price and purchase unit. Costs on recipes update automatically when prices change.
-          </div>
-
-          <div className={styles.searchWrap}>
-            <SearchIcon />
-            <input
-              className={styles.searchInput}
-              placeholder="Search ingredients…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className={styles.searchClear} onClick={() => setSearch('')}>✕</button>
-            )}
-          </div>
-
-          {/* Unpriced section */}
-          {!search && unpricedCount > 0 && (
+          {unpricedCount > 0 && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
                 <span className={styles.sectionTitle}>Needs pricing</span>
@@ -549,8 +447,7 @@ export default function Ingredients({ embedded = false }) {
             </div>
           )}
 
-          {/* Priced section */}
-          {!search && pricedCount > 0 && (
+          {pricedCount > 0 && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
                 <span className={styles.sectionTitle}>Priced</span>
@@ -571,24 +468,6 @@ export default function Ingredients({ embedded = false }) {
               </div>
             </div>
           )}
-
-          {/* Search results */}
-          {search && (
-            <div className={styles.ingredientList}>
-              {filtered.length === 0 ? (
-                <div className={styles.noResults}>No ingredients match "{search}"</div>
-              ) : (
-                filtered.map(ing => (
-                  <IngredientRow
-                    key={ing.id}
-                    ing={ing}
-                    onSave={handleSave}
-                    onDelete={(id, name) => setDelConfirm({ id, name })}
-                  />
-                ))
-              )}
-            </div>
-          )}
         </>
       )}
 
@@ -601,8 +480,8 @@ export default function Ingredients({ embedded = false }) {
             </div>
             <div className={styles.modalBody}>
               <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: 0 }}>
-                Remove <strong>{delConfirm.name}</strong> from the ingredients library?
-                This won't affect your recipes — it just removes the pricing info.
+                Remove <strong>{delConfirm.name}</strong> from the ingredient library?
+                This won't affect your recipes — it just removes the pricing data.
               </p>
             </div>
             <div className={styles.modalFooter}>
@@ -614,13 +493,6 @@ export default function Ingredients({ embedded = false }) {
             </div>
           </div>
         </div>
-      )}
-
-      {showAdd && (
-        <AddIngredientModal
-          onClose={() => setShowAdd(false)}
-          onSaved={load}
-        />
       )}
     </div>
   )

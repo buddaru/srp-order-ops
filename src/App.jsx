@@ -19,7 +19,7 @@ import RecipeGroupPage from './components/RecipeGroupPage'
 import Settings        from './components/Settings'
 import Admin           from './components/Admin'
 import MenuManager     from './components/MenuManager'
-import Ingredients     from './components/Ingredients'
+import Reports         from './components/Reports'
 import Privacy    from './components/Privacy'
 import Terms      from './components/Terms'
 import Login      from './components/Login'
@@ -36,7 +36,7 @@ const IconRecipes  = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
 const IconAdmin    = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 const IconMenu     = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18M3 6h18M3 14h12M3 18h8"/></svg>
-const IconIngredients = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+const IconReports = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
 
 let orderSeq = 0
 
@@ -375,9 +375,9 @@ export default function App() {
             <span className={styles.sidebarIcon}><IconRecipes /></span>
             {sidebarOpen && <span>Recipes</span>}
           </NavLink>
-          <NavLink to="/ingredients" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Ingredients' : undefined}>
-            <span className={styles.sidebarIcon}><IconIngredients /></span>
-            {sidebarOpen && <span>Ingredients</span>}
+          <NavLink to="/reports" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Reports' : undefined}>
+            <span className={styles.sidebarIcon}><IconReports /></span>
+            {sidebarOpen && <span>Reports</span>}
           </NavLink>
 
           <div style={{flex: 1}} />
@@ -431,7 +431,7 @@ export default function App() {
         <Route path="/recipes/:id" element={<RecipeView />} />
         <Route path="/recipes/:id/edit" element={<RecipeEdit />} />
         <Route path="/recipe-groups/:id" element={<RecipeGroupPage />} />
-        <Route path="/ingredients" element={<Ingredients />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin" element={isAdmin ? <Admin /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
         <Route path="/menu" element={isAdmin ? <MenuManager /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
