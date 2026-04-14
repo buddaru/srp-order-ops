@@ -187,6 +187,30 @@ export function buildIngredientMap(ingredients) {
   return map
 }
 
+// ── Parse a combined amount string like "2 cups" or "1 1/2 lb" ──
+function parseAmountString(amount) {
+  if (!amount) return { qty: null, unit: '' }
+  const str = amount.trim()
+  // Match: "1 1/2", "1/2", "2.5", "2" optionally followed by a unit
+  const match = str.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.?\d+)\s*(.*)$/)
+  if (!match) return { qty: null, unit: str }
+  const qtyStr = match[1].trim()
+  const unit   = match[2].trim()
+  let qty
+  if (qtyStr.includes(' ')) {
+    // mixed number: "1 1/2"
+    const [whole, frac] = qtyStr.split(' ')
+    const [num, den] = frac.split('/')
+    qty = parseInt(whole) + parseInt(num) / parseInt(den)
+  } else if (qtyStr.includes('/')) {
+    const [num, den] = qtyStr.split('/')
+    qty = parseInt(num) / parseInt(den)
+  } else {
+    qty = parseFloat(qtyStr)
+  }
+  return { qty: isNaN(qty) ? null : qty, unit }
+}
+
 // ── Calculate cost for a single ingredient row ──
 // Returns { cost: number|null, reason: string }
 export function calcIngredientCost(row, ingredientMap) {
@@ -198,10 +222,18 @@ export function calcIngredientCost(row, ingredientMap) {
   const price = parseFloat(libraryEntry.purchase_price)
   if (!price || price <= 0) return { cost: null, reason: 'unpriced' }
 
-  const qty = parseFloat(row.qty)
+  // Support both Meez format (qty + unit separate) and RecipeEdit format (amount string)
+  let qty = parseFloat(row.qty)
+  let recipeUnit = (row.unit || '').toLowerCase().trim()
+
+  if ((isNaN(qty) || qty === 0) && row.amount) {
+    const parsed = parseAmountString(row.amount)
+    if (parsed.qty !== null) qty = parsed.qty
+    if (!recipeUnit) recipeUnit = parsed.unit.toLowerCase().trim()
+  }
+
   if (!qty || isNaN(qty)) return { cost: null, reason: 'no_qty' }
 
-  const recipeUnit   = (row.unit || '').toLowerCase().trim()
   const purchaseUnit = (libraryEntry.purchase_unit || '').toLowerCase().trim()
 
   // If same unit, no conversion needed
