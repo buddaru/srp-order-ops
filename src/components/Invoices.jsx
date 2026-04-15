@@ -77,20 +77,21 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
   const resolvedIngId = item.override_ingredient_id || item.matched_id
   const resolvedIng   = ingredients.find(i => i.id === resolvedIngId)
 
-  // Unit priority: user override > ingredient's stored unit > parsed from name
   const effectiveUnit = item.unit_override
     || resolvedIng?.purchase_unit
     || item.parsed_unit
     || 'lb'
 
-  // price per ingredient unit
-  const qtyOrdered   = parseFloat(item.qty_ordered)
-  const unitsPerPkg  = parseFloat(item.units_per_pkg)
-  const totalPaid    = parseFloat(item.total_price)
+  const qtyOrdered    = parseFloat(item.qty_ordered)
+  const unitsPerPkg   = parseFloat(item.units_per_pkg)
+  const totalPaid     = parseFloat(item.total_price)
   const totalIngUnits = (qtyOrdered > 0 && unitsPerPkg > 0) ? qtyOrdered * unitsPerPkg : 0
   const pricePerUnit  = (totalIngUnits > 0 && totalPaid > 0) ? totalPaid / totalIngUnits : null
 
-  // Price delta vs stored ingredient price
+  // Supply item (non-ingredient) price
+  const supplyQty          = parseFloat(item.supply_qty)
+  const supplyPricePerUnit = (supplyQty > 0 && totalPaid > 0) ? totalPaid / supplyQty : null
+
   const priceDelta = (() => {
     if (!pricePerUnit || !resolvedIng?.purchase_price) return null
     const prev = parseFloat(resolvedIng.purchase_price)
@@ -103,8 +104,8 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
   const rowConfClass = item.confidence === 'medium' ? styles.reviewRowMedium
     : item.confidence === 'low' ? styles.reviewRowLow : ''
 
-  // Is anything pre-parsed?
   const pkgSizeParsed = item.pkg_size_parsed && item.units_per_pkg
+  const isSupply      = !resolvedIngId && item.track_supply
 
   return (
     <div
@@ -144,52 +145,49 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
                   override_ingredient_id:   e.target.value || null,
                   override_ingredient_name: ing?.name || null,
                   override_ingredient_unit: ing?.purchase_unit || null,
-                  unit_override: ing?.purchase_unit || null,
+                  unit_override:            ing?.purchase_unit || null,
+                  track_supply:             false,
                 })
               }}
             >
-              <option value="">— Skip this item —</option>
+              <option value="">— No ingredient match —</option>
               {ingredients.map(ing => (
                 <option key={ing.id} value={ing.id}>{ing.name}</option>
               ))}
             </select>
           </div>
 
+          {/* ── INGREDIENT MODE ── */}
           {resolvedIngId && (
             <>
-              {/* ── 3 input fields in a row ── */}
-              <div className={styles.reviewFieldRow3}>
-
-                {/* Qty ordered (packages/cases) */}
+              {/* 2-column: Qty + Size */}
+              <div className={styles.reviewFieldRow2}>
                 <div className={styles.reviewFieldGroup}>
                   <label className={styles.reviewLabel}>
-                    Qty ordered
+                    Packages ordered
                     {item.qty_parsed && item.qty_ordered
-                      ? <span className={styles.parsedTag}>parsed</span>
-                      : null
-                    }
+                      ? <span className={styles.parsedTag}>from invoice</span>
+                      : null}
                   </label>
                   <input
                     type="number" min="0" step="1"
                     className={`${styles.reviewInput} ${!item.qty_ordered ? styles.inputEmpty : ''}`}
-                    placeholder="e.g. 3"
+                    placeholder="e.g. 2"
                     value={item.qty_ordered || ''}
                     onChange={e => onChange(index, { qty_ordered: e.target.value, qty_parsed: false })}
                   />
-                  <div className={styles.fieldHint}>packages</div>
                 </div>
 
-                {/* Package size + unit */}
                 <div className={styles.reviewFieldGroup}>
                   <label className={styles.reviewLabel}>
                     Size per package
-                    {pkgSizeParsed ? <span className={styles.parsedTag}>parsed</span> : null}
+                    {pkgSizeParsed ? <span className={styles.parsedTag}>from invoice</span> : null}
                   </label>
                   <div className={styles.sizeUnitRow}>
                     <input
                       type="number" min="0" step="any"
                       className={`${styles.reviewInput} ${styles.sizeInput} ${!item.units_per_pkg ? styles.inputEmpty : ''}`}
-                      placeholder="e.g. 50"
+                      placeholder="50"
                       value={item.units_per_pkg || ''}
                       onChange={e => onChange(index, { units_per_pkg: e.target.value, pkg_size_parsed: false })}
                     />
@@ -205,49 +203,104 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
                       <option value="each">each</option>
                     </select>
                   </div>
-                  <div className={styles.fieldHint}>per package</div>
-                </div>
-
-                {/* Total paid */}
-                <div className={styles.reviewFieldGroup}>
-                  <label className={styles.reviewLabel}>Total paid</label>
-                  <div className={styles.reviewPriceWrap}>
-                    <span className={styles.reviewDollar}>$</span>
-                    <input
-                      type="number" min="0" step="0.01"
-                      className={styles.reviewInput}
-                      value={item.total_price || ''}
-                      onChange={e => onChange(index, { total_price: parseFloat(e.target.value) || 0 })}
-                    />
-                  </div>
-                  {qtyOrdered > 0 && totalPaid > 0 && (
-                    <div className={styles.fieldHint}>${(totalPaid / qtyOrdered).toFixed(2)} each</div>
-                  )}
                 </div>
               </div>
 
-              {/* Calculation summary */}
-              {totalIngUnits > 0 && pricePerUnit && (
-                <div className={styles.calcSummary}>
-                  <span className={styles.calcFormula}>
-                    {qtyOrdered} × {unitsPerPkg} {effectiveUnit} = {totalIngUnits} {effectiveUnit} total
-                  </span>
-                  <span className={styles.calcSep}>→</span>
-                  <span className={styles.calcPrice}>
-                    <strong>${pricePerUnit.toFixed(2)}</strong> / {effectiveUnit}
-                  </span>
-                  {priceDelta !== null && (
-                    <span className={priceDelta > 0 ? styles.deltaUp : styles.deltaDown}>
-                      {priceDelta > 0 ? '↑' : '↓'} {Math.abs(priceDelta).toFixed(0)}% vs last
+              {/* Price result — the hero */}
+              {pricePerUnit ? (
+                <div className={styles.priceResult}>
+                  <div className={styles.priceResultTop}>
+                    <span className={styles.priceResultValue}>
+                      ${pricePerUnit.toFixed(2)}
+                      <span className={styles.priceResultUnit}> / {effectiveUnit}</span>
                     </span>
-                  )}
+                    {priceDelta !== null && (
+                      <span className={priceDelta > 0 ? styles.deltaUp : styles.deltaDown}>
+                        {priceDelta > 0 ? '↑' : '↓'} {Math.abs(priceDelta).toFixed(0)}% vs last receipt
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles.priceResultSub}>
+                    {qtyOrdered} pkg × {unitsPerPkg} {effectiveUnit} = {totalIngUnits} {effectiveUnit} total
+                    {' · '}Total paid: ${totalPaid.toFixed(2)}
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.missingHint}>
+                  Fill in packages ordered and size per package to see your cost per {effectiveUnit}
                 </div>
               )}
+            </>
+          )}
 
-              {/* Prompt if fields missing */}
-              {resolvedIngId && (!item.qty_ordered || !item.units_per_pkg) && (
-                <div className={styles.missingHint}>
-                  Fill in qty ordered and package size to calculate price per {effectiveUnit}
+          {/* ── NO MATCH: offer supply tracking ── */}
+          {!resolvedIngId && (
+            <>
+              <label className={styles.supplyToggle}>
+                <input
+                  type="checkbox"
+                  checked={!!item.track_supply}
+                  onChange={e => onChange(index, {
+                    track_supply: e.target.checked,
+                    supply_name:  item.supply_name || item.invoice_name,
+                    supply_unit:  item.supply_unit || 'each',
+                    supply_qty:   item.supply_qty  || (item.qty ? String(item.qty) : ''),
+                  })}
+                  className={styles.reviewCheck}
+                />
+                <span>Track price for this item over time</span>
+              </label>
+
+              {isSupply && (
+                <div className={styles.supplyFields}>
+                  <div className={styles.reviewFieldGroup}>
+                    <label className={styles.reviewLabel}>Item name</label>
+                    <input
+                      type="text"
+                      className={styles.reviewInput}
+                      value={item.supply_name || ''}
+                      onChange={e => onChange(index, { supply_name: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.reviewFieldRow2}>
+                    <div className={styles.reviewFieldGroup}>
+                      <label className={styles.reviewLabel}>Qty ordered</label>
+                      <input
+                        type="number" min="0" step="1"
+                        className={`${styles.reviewInput} ${!item.supply_qty ? styles.inputEmpty : ''}`}
+                        placeholder="e.g. 2"
+                        value={item.supply_qty || ''}
+                        onChange={e => onChange(index, { supply_qty: e.target.value })}
+                      />
+                    </div>
+                    <div className={styles.reviewFieldGroup}>
+                      <label className={styles.reviewLabel}>Unit</label>
+                      <select
+                        className={styles.reviewSelect}
+                        value={item.supply_unit || 'each'}
+                        onChange={e => onChange(index, { supply_unit: e.target.value })}
+                      >
+                        {['each','case','box','bag','roll','pack','pair','set','gallon','lb'].map(u => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {supplyPricePerUnit ? (
+                    <div className={styles.priceResult}>
+                      <div className={styles.priceResultTop}>
+                        <span className={styles.priceResultValue}>
+                          ${supplyPricePerUnit.toFixed(2)}
+                          <span className={styles.priceResultUnit}> / {item.supply_unit || 'each'}</span>
+                        </span>
+                      </div>
+                      <div className={styles.priceResultSub}>
+                        Total paid: ${totalPaid.toFixed(2)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.missingHint}>Fill in qty ordered to see price per {item.supply_unit || 'each'}</div>
+                  )}
                 </div>
               )}
             </>
@@ -512,6 +565,18 @@ export default function Invoices() {
         }
       })
 
+    // Collect supply items (non-ingredient tracked items)
+    const supplyItems = reviewItems
+      .filter(item => item.enabled && item.track_supply && parseFloat(item.supply_qty) > 0 && item.supply_name)
+      .map(item => ({
+        item_name:      item.supply_name,
+        total_paid:     parseFloat(item.total_price),
+        qty:            parseFloat(item.supply_qty),
+        unit:           item.supply_unit || 'each',
+        price_per_unit: parseFloat(item.total_price) / parseFloat(item.supply_qty),
+        invoice_name:   item.invoice_name,
+      }))
+
     try {
       const res = await fetch('/api/apply-invoice', {
         method: 'POST',
@@ -524,12 +589,13 @@ export default function Invoices() {
           total_amount:      parseResult.total_amount,
           line_items:        parseResult.line_items,
           confirmed_matches: confirmed,
+          supply_items:      supplyItems,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Apply failed')
       clearDraft()
-      setSuccessInfo({ count: data.updated_count, supplier: parseResult.supplier })
+      setSuccessInfo({ count: data.updated_count + (data.supply_count || 0), supplier: parseResult.supplier })
       setView('success')
       loadData()
     } catch (err) {
@@ -548,17 +614,19 @@ export default function Invoices() {
     setError('')
   }
 
-  // Ready = has both qty_ordered and units_per_pkg
+  // Ready = ingredient items fully filled, or supply items with qty+name
   const enabledWithQty = reviewItems.filter(item => {
     const ingId = item.override_ingredient_id || item.matched_id
-    return item.enabled && ingId
-      && parseFloat(item.qty_ordered)  > 0
-      && parseFloat(item.units_per_pkg) > 0
+    if (item.enabled && ingId)
+      return parseFloat(item.qty_ordered) > 0 && parseFloat(item.units_per_pkg) > 0
+    if (item.enabled && item.track_supply)
+      return parseFloat(item.supply_qty) > 0 && !!item.supply_name
+    return false
   }).length
 
   const enabledCount = reviewItems.filter(item => {
     const ingId = item.override_ingredient_id || item.matched_id
-    return item.enabled && ingId
+    return item.enabled && (ingId || item.track_supply)
   }).length
 
   const needsQtyCount = enabledCount - enabledWithQty

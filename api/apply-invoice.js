@@ -22,7 +22,8 @@ export default async function handler(req, res) {
     delivery_date,
     total_amount,
     line_items,       // full extracted line items for record-keeping
-    confirmed_matches // [{ ingredient_id, ingredient_name, new_price, purchase_unit, invoice_item_name }]
+    confirmed_matches, // [{ ingredient_id, ingredient_name, new_price, purchase_unit, invoice_item_name }]
+    supply_items,     // [{ item_name, total_paid, qty, unit, price_per_unit, invoice_name }]
   } = req.body
 
   if (!confirmed_matches || !Array.isArray(confirmed_matches)) {
@@ -80,10 +81,35 @@ export default async function handler(req, res) {
         })
     }
 
+    // 3. Save supply item price history (non-ingredient tracked items)
+    let supplyCount = 0
+    if (supply_items && supply_items.length > 0) {
+      for (const s of supply_items) {
+        const { error: sErr } = await supabase
+          .from('supply_price_history')
+          .insert({
+            invoice_id:    invoiceId,
+            item_name:     s.item_name,
+            total_paid:    s.total_paid,
+            qty:           s.qty,
+            unit:          s.unit,
+            price_per_unit: parseFloat(s.price_per_unit.toFixed(6)),
+            supplier:      supplier || null,
+            recorded_at:   order_date ? new Date(order_date).toISOString() : new Date().toISOString(),
+          })
+        if (sErr) {
+          console.error('supply_price_history insert error:', sErr.message)
+        } else {
+          supplyCount++
+        }
+      }
+    }
+
     return res.status(200).json({
       success: true,
       invoice_id: invoiceId,
       updated_count: updates.length,
+      supply_count: supplyCount,
     })
   } catch (err) {
     console.error('apply-invoice error:', err)
