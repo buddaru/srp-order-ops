@@ -31,13 +31,42 @@ const FileIcon = () => (
   </svg>
 )
 
+// ── Helpers ──────────────────────────────────────────────────
+// Try to extract package size and unit from product name or qty_unit
+// e.g. "50 lb Bag" → { size: 50, unit: 'lb' }
+// e.g. "C&H Powdered Sugar 50lb" → { size: 50, unit: 'lb' }
+function parsePackageInfo(item) {
+  const UNIT_ALIASES = {
+    lb: 'lb', lbs: 'lb', pound: 'lb', pounds: 'lb',
+    oz: 'oz', ounce: 'oz', ounces: 'oz',
+    g: 'g', gram: 'g', grams: 'g',
+    kg: 'kg', kilogram: 'kg',
+    gal: 'l', gallon: 'l', gallons: 'l',
+    qt: 'l', quart: 'l',
+    l: 'l', liter: 'l', litre: 'l',
+    cup: 'cup', cups: 'cup',
+    fl_oz: 'fl oz', 'fl oz': 'fl oz',
+  }
+
+  const sources = [item.invoice_name || '', item.qty_unit || '']
+  for (const src of sources) {
+    const m = src.match(/(\d+\.?\d*)\s*(lb|lbs|oz|g|kg|gallon|gal|qt|quart|liter|litre|l|cup|cups|fl\s*oz|pound|ounce)/i)
+    if (m) {
+      const size = parseFloat(m[1])
+      const unit = UNIT_ALIASES[m[2].toLowerCase().replace(/\s+/g, '_')] || m[2].toLowerCase()
+      if (size > 0) return { size: String(size), unit }
+    }
+  }
+  return { size: '', unit: null }
+}
+
 // Confidence badge
 function ConfBadge({ level }) {
   const map = {
-    high:   { label: 'High match',   cls: styles.confHigh   },
-    medium: { label: 'Likely match', cls: styles.confMed    },
-    low:    { label: 'Low match',    cls: styles.confLow    },
-    none:   { label: 'No match',     cls: styles.confNone   },
+    high:   { label: 'High match',   cls: styles.confHigh },
+    medium: { label: 'Likely match', cls: styles.confMed  },
+    low:    { label: 'Low match',    cls: styles.confLow  },
+    none:   { label: 'No match',     cls: styles.confNone },
   }
   const { label, cls } = map[level] || map.none
   return <span className={`${styles.confBadge} ${cls}`}>{label}</span>
@@ -48,30 +77,34 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
   const resolvedIngId = item.override_ingredient_id || item.matched_id
   const resolvedIng   = ingredients.find(i => i.id === resolvedIngId)
 
+  // Unit priority: user override > ingredient's stored unit > parsed from name
   const effectiveUnit = item.unit_override
     || resolvedIng?.purchase_unit
-    || item.matched_unit
-    || 'unit'
+    || item.parsed_unit
+    || 'lb'
 
-  const perUnit = (() => {
-    const p = parseFloat(item.total_price)
-    const q = parseFloat(item.total_qty)
-    if (p > 0 && q > 0) return p / q
-    return null
-  })()
+  // price per ingredient unit
+  const qtyOrdered   = parseFloat(item.qty_ordered)
+  const unitsPerPkg  = parseFloat(item.units_per_pkg)
+  const totalPaid    = parseFloat(item.total_price)
+  const totalIngUnits = (qtyOrdered > 0 && unitsPerPkg > 0) ? qtyOrdered * unitsPerPkg : 0
+  const pricePerUnit  = (totalIngUnits > 0 && totalPaid > 0) ? totalPaid / totalIngUnits : null
 
+  // Price delta vs stored ingredient price
   const priceDelta = (() => {
-    if (!perUnit || !resolvedIng?.purchase_price) return null
+    if (!pricePerUnit || !resolvedIng?.purchase_price) return null
     const prev = parseFloat(resolvedIng.purchase_price)
     if (!prev || prev <= 0) return null
-    const pct = ((perUnit - prev) / prev) * 100
+    const pct = ((pricePerUnit - prev) / prev) * 100
     if (Math.abs(pct) < 3) return null
     return pct
   })()
 
   const rowConfClass = item.confidence === 'medium' ? styles.reviewRowMedium
-    : item.confidence === 'low'    ? styles.reviewRowLow
-    : ''
+    : item.confidence === 'low' ? styles.reviewRowLow : ''
+
+  // Is anything pre-parsed?
+  const pkgSizeParsed = item.pkg_size_parsed && item.units_per_pkg
 
   return (
     <div
@@ -79,6 +112,7 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
       id={`review-row-${index}`}
       className={`${styles.reviewRow} ${!item.enabled ? styles.reviewRowSkipped : rowConfClass}`}
     >
+      {/* Header */}
       <div className={styles.reviewRowHeader}>
         <label className={styles.reviewCheckLabel}>
           <input
@@ -97,6 +131,8 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
 
       {item.enabled && (
         <div className={styles.reviewFields}>
+
+          {/* Maps to ingredient */}
           <div className={styles.reviewFieldGroup}>
             <label className={styles.reviewLabel}>Maps to ingredient</label>
             <select
@@ -121,9 +157,60 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
 
           {resolvedIngId && (
             <>
-              <div className={styles.reviewFieldRow}>
+              {/* ── 3 input fields in a row ── */}
+              <div className={styles.reviewFieldRow3}>
+
+                {/* Qty ordered (packages/cases) */}
                 <div className={styles.reviewFieldGroup}>
-                  <label className={styles.reviewLabel}>Total paid (from receipt)</label>
+                  <label className={styles.reviewLabel}>
+                    Qty ordered
+                    {item.qty_parsed && item.qty_ordered
+                      ? <span className={styles.parsedTag}>parsed</span>
+                      : null
+                    }
+                  </label>
+                  <input
+                    type="number" min="0" step="1"
+                    className={`${styles.reviewInput} ${!item.qty_ordered ? styles.inputEmpty : ''}`}
+                    placeholder="e.g. 3"
+                    value={item.qty_ordered || ''}
+                    onChange={e => onChange(index, { qty_ordered: e.target.value, qty_parsed: false })}
+                  />
+                  <div className={styles.fieldHint}>packages</div>
+                </div>
+
+                {/* Package size + unit */}
+                <div className={styles.reviewFieldGroup}>
+                  <label className={styles.reviewLabel}>
+                    Size per package
+                    {pkgSizeParsed ? <span className={styles.parsedTag}>parsed</span> : null}
+                  </label>
+                  <div className={styles.sizeUnitRow}>
+                    <input
+                      type="number" min="0" step="any"
+                      className={`${styles.reviewInput} ${styles.sizeInput} ${!item.units_per_pkg ? styles.inputEmpty : ''}`}
+                      placeholder="e.g. 50"
+                      value={item.units_per_pkg || ''}
+                      onChange={e => onChange(index, { units_per_pkg: e.target.value, pkg_size_parsed: false })}
+                    />
+                    <select
+                      className={styles.unitSelect}
+                      value={effectiveUnit}
+                      onChange={e => onChange(index, { unit_override: e.target.value })}
+                    >
+                      {PURCHASE_UNITS.map(u => (
+                        <option key={u.value} value={u.value}>{u.value}</option>
+                      ))}
+                      <option value="can">can</option>
+                      <option value="each">each</option>
+                    </select>
+                  </div>
+                  <div className={styles.fieldHint}>per package</div>
+                </div>
+
+                {/* Total paid */}
+                <div className={styles.reviewFieldGroup}>
+                  <label className={styles.reviewLabel}>Total paid</label>
                   <div className={styles.reviewPriceWrap}>
                     <span className={styles.reviewDollar}>$</span>
                     <input
@@ -133,47 +220,34 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
                       onChange={e => onChange(index, { total_price: parseFloat(e.target.value) || 0 })}
                     />
                   </div>
-                </div>
-                <div className={styles.reviewFieldGroup}>
-                  <label className={styles.reviewLabel}>Total received</label>
-                  <div className={styles.reviewQtyWrap}>
-                    <input
-                      type="number" min="0" step="any"
-                      className={`${styles.reviewInput} ${styles.reviewQtyInput} ${!item.total_qty ? styles.reviewQtyEmpty : ''}`}
-                      placeholder="qty"
-                      value={item.total_qty || ''}
-                      onChange={e => onChange(index, { total_qty: e.target.value, qty_parsed: false })}
-                    />
-                    <select
-                      className={styles.reviewUnitSelect}
-                      value={effectiveUnit}
-                      onChange={e => onChange(index, { unit_override: e.target.value })}
-                    >
-                      {PURCHASE_UNITS.map(u => (
-                        <option key={u.value} value={u.value}>{u.value}</option>
-                      ))}
-                      <option value="can">can</option>
-                    </select>
-                  </div>
-                  {item.qty_parsed && item.total_qty && (
-                    <div className={styles.parsedIndicator}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      parsed from receipt
-                    </div>
+                  {qtyOrdered > 0 && totalPaid > 0 && (
+                    <div className={styles.fieldHint}>${(totalPaid / qtyOrdered).toFixed(2)} each</div>
                   )}
                 </div>
               </div>
 
-              {perUnit && (
-                <div className={styles.reviewPerUnitRow}>
-                  <span className={styles.reviewPerUnit}>
-                    = <strong>${perUnit.toFixed(2)}</strong> per {effectiveUnit}
+              {/* Calculation summary */}
+              {totalIngUnits > 0 && pricePerUnit && (
+                <div className={styles.calcSummary}>
+                  <span className={styles.calcFormula}>
+                    {qtyOrdered} × {unitsPerPkg} {effectiveUnit} = {totalIngUnits} {effectiveUnit} total
+                  </span>
+                  <span className={styles.calcSep}>→</span>
+                  <span className={styles.calcPrice}>
+                    <strong>${pricePerUnit.toFixed(2)}</strong> / {effectiveUnit}
                   </span>
                   {priceDelta !== null && (
                     <span className={priceDelta > 0 ? styles.deltaUp : styles.deltaDown}>
-                      {priceDelta > 0 ? '↑' : '↓'} {Math.abs(priceDelta).toFixed(0)}% vs last receipt
+                      {priceDelta > 0 ? '↑' : '↓'} {Math.abs(priceDelta).toFixed(0)}% vs last
                     </span>
                   )}
+                </div>
+              )}
+
+              {/* Prompt if fields missing */}
+              {resolvedIngId && (!item.qty_ordered || !item.units_per_pkg) && (
+                <div className={styles.missingHint}>
+                  Fill in qty ordered and package size to calculate price per {effectiveUnit}
                 </div>
               )}
             </>
@@ -229,7 +303,9 @@ function ReceiptDetail({ inv, onClose }) {
         </div>
         <div className={styles.detailBody}>
           <div className={styles.detailSection}>
-            <div className={styles.detailSectionTitle}>Price Updates ({(inv.matches || []).filter(m => m.ingredient_id).length})</div>
+            <div className={styles.detailSectionTitle}>
+              Price Updates ({(inv.matches || []).filter(m => m.ingredient_id).length})
+            </div>
             {(inv.matches || []).filter(m => m.ingredient_id).length === 0 ? (
               <p className={styles.detailEmpty}>No price updates were applied from this receipt.</p>
             ) : (
@@ -274,19 +350,19 @@ function ReceiptDetail({ inv, onClose }) {
 
 // ── Main Component ───────────────────────────────────────────
 export default function Invoices() {
-  const [view,           setView]           = useState('list')
-  const [invoices,       setInvoices]       = useState([])
-  const [loading,        setLoading]        = useState(true)
-  const [ingredients,    setIngredients]    = useState([])
-  const [dragOver,       setDragOver]       = useState(false)
-  const [fileName,       setFileName]       = useState('')
-  const [parseResult,    setParseResult]    = useState(null)
-  const [reviewItems,    setReviewItems]    = useState([])
-  const [applying,       setApplying]       = useState(false)
-  const [successInfo,    setSuccessInfo]    = useState(null)
-  const [selectedInv,    setSelectedInv]    = useState(null)
-  const [error,          setError]          = useState('')
-  const [draftSaved,     setDraftSaved]     = useState(false)
+  const [view,        setView]        = useState('list')
+  const [invoices,    setInvoices]    = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [ingredients, setIngredients] = useState([])
+  const [dragOver,    setDragOver]    = useState(false)
+  const [fileName,    setFileName]    = useState('')
+  const [parseResult, setParseResult] = useState(null)
+  const [reviewItems, setReviewItems] = useState([])
+  const [applying,    setApplying]    = useState(false)
+  const [successInfo, setSuccessInfo] = useState(null)
+  const [selectedInv, setSelectedInv] = useState(null)
+  const [error,       setError]       = useState('')
+  const [draftSaved,  setDraftSaved]  = useState(false)
   const fileRef     = useRef()
   const rowRefs     = useRef([])
   const skipSaveRef = useRef(false)
@@ -304,7 +380,7 @@ export default function Invoices() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // Draft restore
+  // ── Draft restore ──
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY)
@@ -321,7 +397,7 @@ export default function Invoices() {
     } catch (_) {}
   }, [])
 
-  // Auto-save draft
+  // ── Auto-save draft ──
   useEffect(() => {
     if (view !== 'review' || !parseResult || reviewItems.length === 0) return
     if (skipSaveRef.current) { skipSaveRef.current = false; return }
@@ -337,7 +413,7 @@ export default function Invoices() {
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(reader.result.split(',')[1])
+    reader.onload  = () => resolve(reader.result.split(',')[1])
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
@@ -357,17 +433,28 @@ export default function Invoices() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Parsing failed')
       setParseResult(data)
+
       const items = (data.line_items || []).map(item => {
+        // Find matched ingredient for unit default
         const matchedIng = ingredients.find(ing =>
           ing.name?.toLowerCase() === item.matched_ingredient?.toLowerCase()
         )
-        const parsedQty = item.qty && parseFloat(item.qty) > 0
+        // Try to parse package size + unit from product name
+        const { size: parsedSize, unit: parsedUnit } = parsePackageInfo(item)
+
         return {
           ...item,
           enabled:                  item.confidence !== 'none',
-          total_qty:                parsedQty ? String(item.qty) : '',
-          qty_parsed:               parsedQty,
-          unit_override:            matchedIng?.purchase_unit || item.qty_unit || null,
+          // Qty ordered = number of cases/packages from invoice
+          qty_ordered:              item.qty && parseFloat(item.qty) > 0 ? String(item.qty) : '',
+          qty_parsed:               !!(item.qty && parseFloat(item.qty) > 0),
+          // Package size parsed from product name
+          units_per_pkg:            parsedSize,
+          pkg_size_parsed:          !!parsedSize,
+          // Unit: ingredient's stored unit > parsed from name
+          unit_override:            matchedIng?.purchase_unit || parsedUnit || null,
+          parsed_unit:              parsedUnit,
+          // Keep total_price from invoice
           override_ingredient_id:   null,
           override_ingredient_name: null,
           override_ingredient_unit: null,
@@ -390,7 +477,7 @@ export default function Invoices() {
   const scrollToFirstEmpty = () => {
     const idx = reviewItems.findIndex(item => {
       const ingId = item.override_ingredient_id || item.matched_id
-      return item.enabled && ingId && (!item.total_qty || parseFloat(item.total_qty) <= 0)
+      return item.enabled && ingId && (!item.qty_ordered || !item.units_per_pkg)
     })
     if (idx >= 0 && rowRefs.current[idx]) {
       rowRefs.current[idx].scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -402,16 +489,20 @@ export default function Invoices() {
   const handleApply = async () => {
     setApplying(true)
     setError('')
+
     const confirmed = reviewItems
       .filter(item => {
         const ingId = item.override_ingredient_id || item.matched_id
-        return item.enabled && ingId && item.total_qty && parseFloat(item.total_qty) > 0
+        const qo = parseFloat(item.qty_ordered)
+        const up = parseFloat(item.units_per_pkg)
+        return item.enabled && ingId && qo > 0 && up > 0
       })
       .map(item => {
         const ingId   = item.override_ingredient_id || item.matched_id
         const ingName = item.override_ingredient_name || item.matched_ingredient
         const ingUnit = item.unit_override || item.override_ingredient_unit || item.matched_unit
-        const price   = parseFloat(item.total_price) / parseFloat(item.total_qty)
+        const totalIngUnits = parseFloat(item.qty_ordered) * parseFloat(item.units_per_pkg)
+        const price   = parseFloat(item.total_price) / totalIngUnits
         return {
           ingredient_id:     ingId,
           ingredient_name:   ingName,
@@ -420,6 +511,7 @@ export default function Invoices() {
           invoice_item_name: item.invoice_name,
         }
       })
+
     try {
       const res = await fetch('/api/apply-invoice', {
         method: 'POST',
@@ -456,16 +548,22 @@ export default function Invoices() {
     setError('')
   }
 
+  // Ready = has both qty_ordered and units_per_pkg
   const enabledWithQty = reviewItems.filter(item => {
     const ingId = item.override_ingredient_id || item.matched_id
-    return item.enabled && ingId && item.total_qty && parseFloat(item.total_qty) > 0
+    return item.enabled && ingId
+      && parseFloat(item.qty_ordered)  > 0
+      && parseFloat(item.units_per_pkg) > 0
   }).length
+
   const enabledCount = reviewItems.filter(item => {
     const ingId = item.override_ingredient_id || item.matched_id
     return item.enabled && ingId
   }).length
+
   const needsQtyCount = enabledCount - enabledWithQty
 
+  // ── Render ──────────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -501,6 +599,7 @@ export default function Invoices() {
         )}
       </div>
 
+      {/* LIST */}
       {view === 'list' && (
         <div className={styles.listWrap}>
           {loading ? (
@@ -522,6 +621,7 @@ export default function Invoices() {
         </div>
       )}
 
+      {/* UPLOAD */}
       {view === 'upload' && (
         <div className={styles.uploadWrap}>
           <div
@@ -531,7 +631,8 @@ export default function Invoices() {
             onDrop={handleDrop}
             onClick={() => fileRef.current?.click()}
           >
-            <input ref={fileRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="application/pdf" style={{ display: 'none' }}
+              onChange={e => handleFile(e.target.files[0])} />
             <div className={styles.dropIcon}><UploadIcon /></div>
             <div className={styles.dropTitle}>Drop your receipt PDF here</div>
             <div className={styles.dropSub}>or click to browse files</div>
@@ -541,6 +642,7 @@ export default function Invoices() {
         </div>
       )}
 
+      {/* PROCESSING */}
       {view === 'processing' && (
         <div className={styles.processingWrap}>
           <div className={styles.processingSpinner} />
@@ -550,6 +652,7 @@ export default function Invoices() {
         </div>
       )}
 
+      {/* REVIEW */}
       {view === 'review' && (
         <div className={styles.reviewWrap}>
           {error && <div className={styles.errorMsg} style={{ margin: '0 0 16px' }}>{error}</div>}
@@ -569,14 +672,14 @@ export default function Invoices() {
               <>
                 <span>·</span>
                 <button className={styles.reviewNeedsQtyBtn} onClick={scrollToFirstEmpty}>
-                  {needsQtyCount} need quantity — fill in ↓
+                  {needsQtyCount} need info — fill in ↓
                 </button>
               </>
             )}
           </div>
 
           <div className={styles.reviewHelp}>
-            For each matched ingredient, confirm the quantity received and unit so we can calculate the correct price per unit.
+            Enter how many packages you ordered and the size of each package — Cadro will calculate your per-unit cost automatically.
           </div>
 
           <div className={styles.reviewList}>
@@ -605,6 +708,7 @@ export default function Invoices() {
         </div>
       )}
 
+      {/* SUCCESS */}
       {view === 'success' && successInfo && (
         <div className={styles.successWrap}>
           <div className={styles.successIcon}><CheckCircleIcon /></div>
@@ -613,11 +717,14 @@ export default function Invoices() {
           <div className={styles.successNote}>Price history has been recorded. You can view past prices from the Ingredients tab.</div>
           <div className={styles.successActions}>
             <button className={styles.cancelBtn} onClick={() => { setView('list'); setSuccessInfo(null) }}>View Receipts</button>
-            <button className={styles.applyBtn} onClick={() => { setView('upload'); setSuccessInfo(null); setFileName(''); setParseResult(null); setReviewItems([]) }}>Upload Another</button>
+            <button className={styles.applyBtn} onClick={() => {
+              setView('upload'); setSuccessInfo(null); setFileName(''); setParseResult(null); setReviewItems([])
+            }}>Upload Another</button>
           </div>
         </div>
       )}
 
+      {/* DETAIL MODAL */}
       {view === 'detail' && selectedInv && (
         <ReceiptDetail inv={selectedInv} onClose={() => { setSelectedInv(null); setView('list') }} />
       )}
