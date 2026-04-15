@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { PURCHASE_UNITS } from '../utils/costCalculator'
 import styles from './Invoices.module.css'
 
+const DRAFT_KEY = 'cadro_receipt_draft'
+
 // ── Icons ───────────────────────────────────────────────────
 const UploadIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -42,19 +44,41 @@ function ConfBadge({ level }) {
 }
 
 // ── Review Item Row ──────────────────────────────────────────
-function ReviewRow({ item, index, ingredients, onChange }) {
-  const [expanded, setExpanded] = useState(item.enabled && item.confidence !== 'none')
-  const isFood = item.confidence !== 'none'
+function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
+  const resolvedIngId = item.override_ingredient_id || item.matched_id
+  const resolvedIng   = ingredients.find(i => i.id === resolvedIngId)
+
+  const effectiveUnit = item.unit_override
+    || resolvedIng?.purchase_unit
+    || item.matched_unit
+    || 'unit'
 
   const perUnit = (() => {
     const p = parseFloat(item.total_price)
     const q = parseFloat(item.total_qty)
-    if (p > 0 && q > 0) return (p / q).toFixed(4)
+    if (p > 0 && q > 0) return p / q
     return null
   })()
 
+  const priceDelta = (() => {
+    if (!perUnit || !resolvedIng?.purchase_price) return null
+    const prev = parseFloat(resolvedIng.purchase_price)
+    if (!prev || prev <= 0) return null
+    const pct = ((perUnit - prev) / prev) * 100
+    if (Math.abs(pct) < 3) return null
+    return pct
+  })()
+
+  const rowConfClass = item.confidence === 'medium' ? styles.reviewRowMedium
+    : item.confidence === 'low'    ? styles.reviewRowLow
+    : ''
+
   return (
-    <div className={`${styles.reviewRow} ${!item.enabled ? styles.reviewRowSkipped : ''}`}>
+    <div
+      ref={rowRef}
+      id={`review-row-${index}`}
+      className={`${styles.reviewRow} ${!item.enabled ? styles.reviewRowSkipped : rowConfClass}`}
+    >
       <div className={styles.reviewRowHeader}>
         <label className={styles.reviewCheckLabel}>
           <input
@@ -81,9 +105,10 @@ function ReviewRow({ item, index, ingredients, onChange }) {
               onChange={e => {
                 const ing = ingredients.find(i => i.id === e.target.value)
                 onChange(index, {
-                  override_ingredient_id: e.target.value || null,
+                  override_ingredient_id:   e.target.value || null,
                   override_ingredient_name: ing?.name || null,
                   override_ingredient_unit: ing?.purchase_unit || null,
+                  unit_override: ing?.purchase_unit || null,
                 })
               }}
             >
@@ -94,11 +119,11 @@ function ReviewRow({ item, index, ingredients, onChange }) {
             </select>
           </div>
 
-          {(item.override_ingredient_id || item.matched_id) && (
+          {resolvedIngId && (
             <>
               <div className={styles.reviewFieldRow}>
                 <div className={styles.reviewFieldGroup}>
-                  <label className={styles.reviewLabel}>Total paid (from invoice)</label>
+                  <label className={styles.reviewLabel}>Total paid (from receipt)</label>
                   <div className={styles.reviewPriceWrap}>
                     <span className={styles.reviewDollar}>$</span>
                     <input
@@ -110,21 +135,45 @@ function ReviewRow({ item, index, ingredients, onChange }) {
                   </div>
                 </div>
                 <div className={styles.reviewFieldGroup}>
-                  <label className={styles.reviewLabel}>
-                    Total {item.override_ingredient_unit || item.matched_unit || 'units'} received
-                  </label>
-                  <input
-                    type="number" min="0" step="any"
-                    className={styles.reviewInput}
-                    placeholder="e.g. 50"
-                    value={item.total_qty || ''}
-                    onChange={e => onChange(index, { total_qty: e.target.value })}
-                  />
+                  <label className={styles.reviewLabel}>Total received</label>
+                  <div className={styles.reviewQtyWrap}>
+                    <input
+                      type="number" min="0" step="any"
+                      className={`${styles.reviewInput} ${styles.reviewQtyInput} ${!item.total_qty ? styles.reviewQtyEmpty : ''}`}
+                      placeholder="qty"
+                      value={item.total_qty || ''}
+                      onChange={e => onChange(index, { total_qty: e.target.value, qty_parsed: false })}
+                    />
+                    <select
+                      className={styles.reviewUnitSelect}
+                      value={effectiveUnit}
+                      onChange={e => onChange(index, { unit_override: e.target.value })}
+                    >
+                      {PURCHASE_UNITS.map(u => (
+                        <option key={u.value} value={u.value}>{u.value}</option>
+                      ))}
+                      <option value="can">can</option>
+                    </select>
+                  </div>
+                  {item.qty_parsed && item.total_qty && (
+                    <div className={styles.parsedIndicator}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      parsed from receipt
+                    </div>
+                  )}
                 </div>
               </div>
+
               {perUnit && (
-                <div className={styles.reviewPerUnit}>
-                  = <strong>${perUnit}</strong> per {item.override_ingredient_unit || item.matched_unit || 'unit'}
+                <div className={styles.reviewPerUnitRow}>
+                  <span className={styles.reviewPerUnit}>
+                    = <strong>${perUnit.toFixed(2)}</strong> per {effectiveUnit}
+                  </span>
+                  {priceDelta !== null && (
+                    <span className={priceDelta > 0 ? styles.deltaUp : styles.deltaDown}>
+                      {priceDelta > 0 ? '↑' : '↓'} {Math.abs(priceDelta).toFixed(0)}% vs last receipt
+                    </span>
+                  )}
                 </div>
               )}
             </>
@@ -139,8 +188,8 @@ function ReviewRow({ item, index, ingredients, onChange }) {
   )
 }
 
-// ── Invoice List Card ────────────────────────────────────────
-function InvoiceCard({ inv, onClick }) {
+// ── Receipt List Card ────────────────────────────────────────
+function ReceiptCard({ inv, onClick }) {
   const date = inv.order_date
     ? new Date(inv.order_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : new Date(inv.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -151,25 +200,19 @@ function InvoiceCard({ inv, onClick }) {
       <div className={styles.invoiceCardLeft}>
         <div className={styles.invoiceDate}>{date}</div>
         <div className={styles.invoiceSupplier}>{inv.supplier || 'Unknown Supplier'}</div>
-        {inv.invoice_number && (
-          <div className={styles.invoiceNum}>#{inv.invoice_number}</div>
-        )}
+        {inv.invoice_number && <div className={styles.invoiceNum}>#{inv.invoice_number}</div>}
       </div>
       <div className={styles.invoiceCardRight}>
-        {inv.total_amount && (
-          <div className={styles.invoiceTotal}>${parseFloat(inv.total_amount).toFixed(2)}</div>
-        )}
+        {inv.total_amount && <div className={styles.invoiceTotal}>${parseFloat(inv.total_amount).toFixed(2)}</div>}
         <div className={styles.invoiceMeta}>{inv.item_count || 0} items</div>
-        {matchCount > 0 && (
-          <div className={styles.invoicePricesUpdated}>{matchCount} prices updated</div>
-        )}
+        {matchCount > 0 && <div className={styles.invoicePricesUpdated}>{matchCount} prices updated</div>}
       </div>
     </div>
   )
 }
 
-// ── Invoice Detail Modal ─────────────────────────────────────
-function InvoiceDetail({ inv, onClose }) {
+// ── Receipt Detail Modal ─────────────────────────────────────
+function ReceiptDetail({ inv, onClose }) {
   const date = inv.order_date
     ? new Date(inv.order_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : new Date(inv.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -179,7 +222,7 @@ function InvoiceDetail({ inv, onClose }) {
       <div className={styles.detailModal}>
         <div className={styles.detailHeader}>
           <div>
-            <div className={styles.detailTitle}>{inv.supplier || 'Invoice'}</div>
+            <div className={styles.detailTitle}>{inv.supplier || 'Receipt'}</div>
             <div className={styles.detailSub}>{date}{inv.invoice_number ? ` · #${inv.invoice_number}` : ''}</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
@@ -188,22 +231,16 @@ function InvoiceDetail({ inv, onClose }) {
           <div className={styles.detailSection}>
             <div className={styles.detailSectionTitle}>Price Updates ({(inv.matches || []).filter(m => m.ingredient_id).length})</div>
             {(inv.matches || []).filter(m => m.ingredient_id).length === 0 ? (
-              <p className={styles.detailEmpty}>No price updates were applied from this invoice.</p>
+              <p className={styles.detailEmpty}>No price updates were applied from this receipt.</p>
             ) : (
               <table className={styles.detailTable}>
-                <thead>
-                  <tr>
-                    <th>Ingredient</th>
-                    <th>Invoice Item</th>
-                    <th>New Price</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Ingredient</th><th>Receipt Item</th><th>New Price</th></tr></thead>
                 <tbody>
                   {(inv.matches || []).filter(m => m.ingredient_id).map((m, i) => (
                     <tr key={i}>
                       <td className={styles.detailIngName}>{m.ingredient_name}</td>
                       <td className={styles.detailInvName}>{m.invoice_item_name}</td>
-                      <td className={styles.detailPrice}>${parseFloat(m.new_price).toFixed(4)}/{m.purchase_unit}</td>
+                      <td className={styles.detailPrice}>${parseFloat(m.new_price).toFixed(2)}/{m.purchase_unit}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -215,14 +252,7 @@ function InvoiceDetail({ inv, onClose }) {
             <div className={styles.detailSection}>
               <div className={styles.detailSectionTitle}>All Line Items ({inv.line_items.length})</div>
               <table className={styles.detailTable}>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
                 <tbody>
                   {inv.line_items.map((li, i) => (
                     <tr key={i}>
@@ -244,7 +274,7 @@ function InvoiceDetail({ inv, onClose }) {
 
 // ── Main Component ───────────────────────────────────────────
 export default function Invoices() {
-  const [view,           setView]           = useState('list') // list | upload | processing | review | success | detail
+  const [view,           setView]           = useState('list')
   const [invoices,       setInvoices]       = useState([])
   const [loading,        setLoading]        = useState(true)
   const [ingredients,    setIngredients]    = useState([])
@@ -256,7 +286,10 @@ export default function Invoices() {
   const [successInfo,    setSuccessInfo]    = useState(null)
   const [selectedInv,    setSelectedInv]    = useState(null)
   const [error,          setError]          = useState('')
-  const fileRef = useRef()
+  const [draftSaved,     setDraftSaved]     = useState(false)
+  const fileRef     = useRef()
+  const rowRefs     = useRef([])
+  const skipSaveRef = useRef(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -271,7 +304,37 @@ export default function Invoices() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // Convert file to base64
+  // Draft restore
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const draft = JSON.parse(raw)
+        if (draft.reviewItems?.length && draft.parseResult) {
+          skipSaveRef.current = true
+          setParseResult(draft.parseResult)
+          setReviewItems(draft.reviewItems)
+          setFileName(draft.fileName || '')
+          setView('review')
+        }
+      }
+    } catch (_) {}
+  }, [])
+
+  // Auto-save draft
+  useEffect(() => {
+    if (view !== 'review' || !parseResult || reviewItems.length === 0) return
+    if (skipSaveRef.current) { skipSaveRef.current = false; return }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ reviewItems, parseResult, fileName }))
+      setDraftSaved(true)
+      const t = setTimeout(() => setDraftSaved(false), 2000)
+      return () => clearTimeout(t)
+    } catch (_) {}
+  }, [reviewItems]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch (_) {} }
+
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result.split(',')[1])
@@ -280,14 +343,10 @@ export default function Invoices() {
   })
 
   const handleFile = async (file) => {
-    if (!file || file.type !== 'application/pdf') {
-      setError('Please upload a PDF file.')
-      return
-    }
+    if (!file || file.type !== 'application/pdf') { setError('Please upload a PDF file.'); return }
     setError('')
     setFileName(file.name)
     setView('processing')
-
     try {
       const base64 = await fileToBase64(file)
       const res = await fetch('/api/parse-invoice', {
@@ -297,18 +356,24 @@ export default function Invoices() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Parsing failed')
-
       setParseResult(data)
-
-      // Build reviewItems — default enable food items, skip non-food
-      const items = (data.line_items || []).map(item => ({
-        ...item,
-        enabled:                    item.confidence !== 'none',
-        total_qty:                  '',
-        override_ingredient_id:     null,
-        override_ingredient_name:   null,
-        override_ingredient_unit:   null,
-      }))
+      const items = (data.line_items || []).map(item => {
+        const matchedIng = ingredients.find(ing =>
+          ing.name?.toLowerCase() === item.matched_ingredient?.toLowerCase()
+        )
+        const parsedQty = item.qty && parseFloat(item.qty) > 0
+        return {
+          ...item,
+          enabled:                  item.confidence !== 'none',
+          total_qty:                parsedQty ? String(item.qty) : '',
+          qty_parsed:               parsedQty,
+          unit_override:            matchedIng?.purchase_unit || item.qty_unit || null,
+          override_ingredient_id:   null,
+          override_ingredient_name: null,
+          override_ingredient_unit: null,
+        }
+      })
+      skipSaveRef.current = false
       setReviewItems(items)
       setView('review')
     } catch (err) {
@@ -317,22 +382,26 @@ export default function Invoices() {
     }
   }
 
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragOver(false)
-    const file = e.dataTransfer.files[0]
-    handleFile(file)
-  }
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]) }
 
-  const updateReviewItem = (index, updates) => {
+  const updateReviewItem = (index, updates) =>
     setReviewItems(prev => prev.map((item, i) => i === index ? { ...item, ...updates } : item))
+
+  const scrollToFirstEmpty = () => {
+    const idx = reviewItems.findIndex(item => {
+      const ingId = item.override_ingredient_id || item.matched_id
+      return item.enabled && ingId && (!item.total_qty || parseFloat(item.total_qty) <= 0)
+    })
+    if (idx >= 0 && rowRefs.current[idx]) {
+      rowRefs.current[idx].scrollIntoView({ behavior: 'smooth', block: 'center' })
+      rowRefs.current[idx].classList.add(styles.reviewRowHighlight)
+      setTimeout(() => rowRefs.current[idx]?.classList.remove(styles.reviewRowHighlight), 1500)
+    }
   }
 
   const handleApply = async () => {
     setApplying(true)
     setError('')
-
-    // Build confirmed matches — only enabled items with a matched ingredient and a qty
     const confirmed = reviewItems
       .filter(item => {
         const ingId = item.override_ingredient_id || item.matched_id
@@ -341,34 +410,33 @@ export default function Invoices() {
       .map(item => {
         const ingId   = item.override_ingredient_id || item.matched_id
         const ingName = item.override_ingredient_name || item.matched_ingredient
-        const ingUnit = item.override_ingredient_unit || item.matched_unit
+        const ingUnit = item.unit_override || item.override_ingredient_unit || item.matched_unit
         const price   = parseFloat(item.total_price) / parseFloat(item.total_qty)
         return {
-          ingredient_id:   ingId,
-          ingredient_name: ingName,
-          new_price:       parseFloat(price.toFixed(6)),
-          purchase_unit:   ingUnit,
+          ingredient_id:     ingId,
+          ingredient_name:   ingName,
+          new_price:         parseFloat(price.toFixed(6)),
+          purchase_unit:     ingUnit,
           invoice_item_name: item.invoice_name,
         }
       })
-
     try {
       const res = await fetch('/api/apply-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoice_number: parseResult.invoice_number,
-          supplier:       parseResult.supplier,
-          order_date:     parseResult.order_date,
-          delivery_date:  parseResult.delivery_date,
-          total_amount:   parseResult.total_amount,
-          line_items:     parseResult.line_items,
+          invoice_number:    parseResult.invoice_number,
+          supplier:          parseResult.supplier,
+          order_date:        parseResult.order_date,
+          delivery_date:     parseResult.delivery_date,
+          total_amount:      parseResult.total_amount,
+          line_items:        parseResult.line_items,
           confirmed_matches: confirmed,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Apply failed')
-
+      clearDraft()
       setSuccessInfo({ count: data.updated_count, supplier: parseResult.supplier })
       setView('success')
       loadData()
@@ -380,6 +448,7 @@ export default function Invoices() {
   }
 
   const resetUpload = () => {
+    clearDraft()
     setView('upload')
     setFileName('')
     setParseResult(null)
@@ -391,13 +460,12 @@ export default function Invoices() {
     const ingId = item.override_ingredient_id || item.matched_id
     return item.enabled && ingId && item.total_qty && parseFloat(item.total_qty) > 0
   }).length
-
   const enabledCount = reviewItems.filter(item => {
     const ingId = item.override_ingredient_id || item.matched_id
     return item.enabled && ingId
   }).length
+  const needsQtyCount = enabledCount - enabledWithQty
 
-  // ── Render ──────────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -409,53 +477,51 @@ export default function Invoices() {
         {view === 'list' && (
           <>
             <div>
-              <h1 className={styles.pageTitle}>Invoices</h1>
-              <p className={styles.pageSubtitle}>Upload supplier invoices to track ingredient price history</p>
+              <h1 className={styles.pageTitle}>Receipts</h1>
+              <p className={styles.pageSubtitle}>Upload supplier receipts to track ingredient price history</p>
             </div>
             <button className={styles.uploadBtn} onClick={() => setView('upload')}>
-              <UploadIcon /> Upload Invoice
+              <UploadIcon /> Upload Receipt
             </button>
           </>
         )}
         {view === 'upload' && (
           <div>
-            <h1 className={styles.pageTitle}>Upload Invoice</h1>
-            <p className={styles.pageSubtitle}>PDF invoices from any supplier</p>
+            <h1 className={styles.pageTitle}>Upload Receipt</h1>
+            <p className={styles.pageSubtitle}>PDF receipts from any supplier</p>
           </div>
         )}
         {view === 'review' && (
           <div>
             <h1 className={styles.pageTitle}>Review Matches</h1>
             <p className={styles.pageSubtitle}>
-              {parseResult?.supplier || 'Invoice'} · {parseResult?.order_date || ''} · {reviewItems.length} items found
+              {parseResult?.supplier || 'Receipt'} · {parseResult?.order_date || ''} · {reviewItems.length} items found
             </p>
           </div>
         )}
       </div>
 
-      {/* ── LIST VIEW ── */}
       {view === 'list' && (
         <div className={styles.listWrap}>
           {loading ? (
-            <div className={styles.loadingMsg}>Loading invoices…</div>
+            <div className={styles.loadingMsg}>Loading receipts…</div>
           ) : invoices.length === 0 ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyIcon}><FileIcon /></div>
-              <div className={styles.emptyTitle}>No invoices yet</div>
-              <div className={styles.emptyMsg}>Upload your first supplier invoice to start tracking ingredient price history.</div>
+              <div className={styles.emptyTitle}>No receipts yet</div>
+              <div className={styles.emptyMsg}>Upload your first supplier receipt to start tracking ingredient price history.</div>
               <button className={styles.uploadBtn} style={{ marginTop: 16 }} onClick={() => setView('upload')}>
-                <UploadIcon /> Upload Invoice
+                <UploadIcon /> Upload Receipt
               </button>
             </div>
           ) : (
             invoices.map(inv => (
-              <InvoiceCard key={inv.id} inv={inv} onClick={() => { setSelectedInv(inv); setView('detail') }} />
+              <ReceiptCard key={inv.id} inv={inv} onClick={() => { setSelectedInv(inv); setView('detail') }} />
             ))
           )}
         </div>
       )}
 
-      {/* ── UPLOAD VIEW ── */}
       {view === 'upload' && (
         <div className={styles.uploadWrap}>
           <div
@@ -465,51 +531,52 @@ export default function Invoices() {
             onDrop={handleDrop}
             onClick={() => fileRef.current?.click()}
           >
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf"
-              style={{ display: 'none' }}
-              onChange={e => handleFile(e.target.files[0])}
-            />
+            <input ref={fileRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
             <div className={styles.dropIcon}><UploadIcon /></div>
-            <div className={styles.dropTitle}>Drop your invoice PDF here</div>
+            <div className={styles.dropTitle}>Drop your receipt PDF here</div>
             <div className={styles.dropSub}>or click to browse files</div>
-            <div className={styles.dropNote}>Works with RD Delivery, Sysco, and other supplier invoices</div>
+            <div className={styles.dropNote}>Works with RD Delivery, Sysco, and other supplier receipts</div>
           </div>
           {error && <div className={styles.errorMsg}>{error}</div>}
         </div>
       )}
 
-      {/* ── PROCESSING VIEW ── */}
       {view === 'processing' && (
         <div className={styles.processingWrap}>
           <div className={styles.processingSpinner} />
-          <div className={styles.processingTitle}>Analyzing invoice…</div>
+          <div className={styles.processingTitle}>Analyzing receipt…</div>
           <div className={styles.processingFile}>{fileName}</div>
           <div className={styles.processingSub}>AI is extracting line items and matching to your ingredients</div>
         </div>
       )}
 
-      {/* ── REVIEW VIEW ── */}
       {view === 'review' && (
         <div className={styles.reviewWrap}>
           {error && <div className={styles.errorMsg} style={{ margin: '0 0 16px' }}>{error}</div>}
+
+          {draftSaved && (
+            <div className={styles.draftBanner}>
+              <svg width="8" height="8" viewBox="0 0 8 8" style={{ marginRight: 5 }}><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+              Draft auto-saved
+            </div>
+          )}
 
           <div className={styles.reviewSummary}>
             <span>{reviewItems.filter(i => i.enabled).length} of {reviewItems.length} items selected</span>
             <span>·</span>
             <span>{enabledWithQty} ready to apply</span>
-            {enabledCount > enabledWithQty && (
+            {needsQtyCount > 0 && (
               <>
                 <span>·</span>
-                <span className={styles.reviewNeedsQty}>{enabledCount - enabledWithQty} need quantity filled in</span>
+                <button className={styles.reviewNeedsQtyBtn} onClick={scrollToFirstEmpty}>
+                  {needsQtyCount} need quantity — fill in ↓
+                </button>
               </>
             )}
           </div>
 
           <div className={styles.reviewHelp}>
-            For each matched ingredient, enter the total quantity you received in the ingredient's storage unit (oz, lb, cup, etc.) so we can calculate the correct price per unit.
+            For each matched ingredient, confirm the quantity received and unit so we can calculate the correct price per unit.
           </div>
 
           <div className={styles.reviewList}>
@@ -520,6 +587,7 @@ export default function Invoices() {
                 index={i}
                 ingredients={ingredients}
                 onChange={updateReviewItem}
+                rowRef={el => rowRefs.current[i] = el}
               />
             ))}
           </div>
@@ -537,27 +605,21 @@ export default function Invoices() {
         </div>
       )}
 
-      {/* ── SUCCESS VIEW ── */}
       {view === 'success' && successInfo && (
         <div className={styles.successWrap}>
           <div className={styles.successIcon}><CheckCircleIcon /></div>
           <div className={styles.successTitle}>{successInfo.count} ingredient price{successInfo.count !== 1 ? 's' : ''} updated</div>
-          {successInfo.supplier && (
-            <div className={styles.successSub}>From {successInfo.supplier} invoice</div>
-          )}
-          <div className={styles.successNote}>
-            Price history has been recorded. You can view past prices from the Ingredients tab.
-          </div>
+          {successInfo.supplier && <div className={styles.successSub}>From {successInfo.supplier} receipt</div>}
+          <div className={styles.successNote}>Price history has been recorded. You can view past prices from the Ingredients tab.</div>
           <div className={styles.successActions}>
-            <button className={styles.cancelBtn} onClick={() => { setView('list'); setSuccessInfo(null) }}>View Invoices</button>
+            <button className={styles.cancelBtn} onClick={() => { setView('list'); setSuccessInfo(null) }}>View Receipts</button>
             <button className={styles.applyBtn} onClick={() => { setView('upload'); setSuccessInfo(null); setFileName(''); setParseResult(null); setReviewItems([]) }}>Upload Another</button>
           </div>
         </div>
       )}
 
-      {/* ── DETAIL MODAL ── */}
       {view === 'detail' && selectedInv && (
-        <InvoiceDetail inv={selectedInv} onClose={() => { setSelectedInv(null); setView('list') }} />
+        <ReceiptDetail inv={selectedInv} onClose={() => { setSelectedInv(null); setView('list') }} />
       )}
     </div>
   )

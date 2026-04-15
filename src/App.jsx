@@ -381,9 +381,9 @@ export default function App() {
             <span className={styles.sidebarIcon}><IconReports /></span>
             {sidebarOpen && <span>Reports</span>}
           </NavLink>
-          <NavLink to="/invoices" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Invoices' : undefined}>
+          <NavLink to="/invoices" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Receipts' : undefined}>
             <span className={styles.sidebarIcon}><IconInvoices /></span>
-            {sidebarOpen && <span>Invoices</span>}
+            {sidebarOpen && <span>Receipts</span>}
           </NavLink>
 
           <div style={{flex: 1}} />

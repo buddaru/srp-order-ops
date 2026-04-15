@@ -74,7 +74,7 @@ function PriceHistoryModal({ ing, onClose }) {
                     <tr key={h.id}>
                       <td>{date}</td>
                       <td style={{ fontWeight: isFirst ? 600 : 400 }}>
-                        ${parseFloat(h.purchase_price).toFixed(4)}/{h.purchase_unit || ing.purchase_unit}
+                        ${parseFloat(h.purchase_price).toFixed(2)}/{h.purchase_unit || ing.purchase_unit}
                         {isFirst && <span className={styles.currentBadge}> current</span>}
                       </td>
                       <td style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>
@@ -113,7 +113,7 @@ function IngredientRow({ ing, onSave, onDelete, onShowHistory }) {
   const perUnit = (() => {
     const t = parseFloat(draft.total_price)
     const q = parseFloat(draft.total_qty)
-    if (t > 0 && q > 0) return (t / q).toFixed(4)
+    if (t > 0 && q > 0) return (t / q).toFixed(2)
     return null
   })()
 
@@ -244,7 +244,7 @@ function IngredientRow({ ing, onSave, onDelete, onShowHistory }) {
       <div className={styles.rowMeta}>
         {!isUnpriced && (
           <>
-            <span className={styles.metaVal}>${parseFloat(ing.purchase_price).toFixed(4)}</span>
+            <span className={styles.metaVal}>${parseFloat(ing.purchase_price).toFixed(2)}</span>
             <span className={styles.metaSep}>per</span>
             <span className={styles.metaVal}>{ing.purchase_unit}</span>
           </>
@@ -283,7 +283,7 @@ export function AddIngredientModal({ onClose, onSaved }) {
   const perUnit = (() => {
     const t = parseFloat(totalPrice)
     const q = parseFloat(totalQty)
-    if (t > 0 && q > 0) return (t / q).toFixed(4)
+    if (t > 0 && q > 0) return (t / q).toFixed(2)
     return null
   })()
 

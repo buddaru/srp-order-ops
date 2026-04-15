@@ -83,7 +83,7 @@
 }
 .emptyMsg { font-size: 13px; color: var(--text-muted); max-width: 320px; }
 
-/* Invoice Cards */
+/* Receipt Cards */
 .invoiceCard {
   background: var(--card, #fff);
   border: 1px solid var(--border);
@@ -116,9 +116,7 @@
 }
 
 /* ── Upload ── */
-.uploadWrap {
-  padding: 24px 28px 0;
-}
+.uploadWrap { padding: 24px 28px 0; }
 .dropZone {
   border: 2px dashed var(--border-2);
   border-radius: 12px;
@@ -180,9 +178,7 @@
 .processingSub { font-size: 13px; color: var(--text-muted); max-width: 300px; }
 
 /* ── Review ── */
-.reviewWrap {
-  padding: 20px 28px 0;
-}
+.reviewWrap { padding: 20px 28px 0; }
 .reviewSummary {
   display: flex;
   gap: 8px;
@@ -190,8 +186,40 @@
   font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
-.reviewNeedsQty { color: #C47B1A; font-weight: 500; }
+.reviewNeedsQtyBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #B45309;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.reviewNeedsQtyBtn:hover { color: #92400E; }
+
+/* Draft saved toast */
+.draftBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--brand);
+  background: var(--brand-faint, rgba(36,90,31,0.08));
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
 .reviewHelp {
   font-size: 12px;
   color: var(--text-muted);
@@ -214,14 +242,29 @@
   border: 1px solid var(--border);
   border-radius: var(--radius, 10px);
   padding: 12px 14px;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.3s;
 }
 .reviewRow:has(.reviewCheck:checked) {
   border-color: var(--border-2);
 }
-.reviewRowSkipped {
-  opacity: 0.5;
+/* Likely match — amber tint */
+.reviewRowMedium {
+  background: #FFFBEB;
+  border-color: #FDE68A;
 }
+/* Low match — red tint */
+.reviewRowLow {
+  background: #FFF8F8;
+  border-color: #FECACA;
+}
+.reviewRowSkipped { opacity: 0.45; }
+
+/* Highlight pulse when scrolled to */
+.reviewRowHighlight {
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.5);
+  border-color: #FBBF24 !important;
+}
+
 .reviewRowHeader {
   display: flex;
   align-items: flex-start;
@@ -348,11 +391,95 @@
   border: none;
   box-shadow: none;
 }
+
+/* Qty + unit inline */
+.reviewQtyWrap {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm, 7px);
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.reviewQtyWrap:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(36,90,31,0.1);
+}
+.reviewQtyInput {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.reviewQtyInput:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+.reviewQtyEmpty {
+  background: #FFFBEB;
+}
+.reviewUnitSelect {
+  border: none;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0 6px 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg, #F8F9F6);
+  cursor: pointer;
+  outline: none;
+  min-width: 52px;
+  height: 36px;
+  font-family: inherit;
+}
+.reviewUnitSelect:focus { outline: none; }
+
+/* Parsed indicator */
+.parsedIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #059669;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Per-unit row */
+.reviewPerUnitRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .reviewPerUnit {
   font-size: 13px;
   color: var(--brand);
   padding: 2px 0;
 }
+
+/* Price delta */
+.deltaUp {
+  font-size: 11px;
+  font-weight: 600;
+  background: #FEF2F2;
+  color: #DC2626;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.deltaDown {
+  font-size: 11px;
+  font-weight: 600;
+  background: #D1FAE5;
+  color: #065F46;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
 .reviewNote {
   font-size: 11px;
   color: var(--text-muted);

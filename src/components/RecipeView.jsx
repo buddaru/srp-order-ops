@@ -439,7 +439,7 @@ export default function RecipeView() {
                           </div>
                           <div className={styles.breakdownCost}>
                             {row.cost !== null
-                              ? `$${row.cost.toFixed(4)}`
+                              ? `$${row.cost.toFixed(2)}`
                               : <span className={styles.unpricedLabel}>{REASON_LABELS[row.reason] || 'Unpriced'}</span>
                             }
                           </div>
