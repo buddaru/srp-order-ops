@@ -207,12 +207,12 @@
 
 /* Size + unit side by side */
 .sizeUnitRow { display: flex; gap: 6px; align-items: center; }
-.sizeInput { flex: 1; min-width: 0; }
+.sizeInput { flex: 1; min-width: 90px; }
 .unitSelect {
   border: 1.5px solid var(--border-2); border-radius: var(--radius-sm, 7px);
   padding: 0 12px; font-size: 14px; font-weight: 500;
   color: var(--text); background: #fff; cursor: pointer; outline: none;
-  height: 46px; font-family: inherit; flex-shrink: 0; min-width: 72px;
+  height: 46px; font-family: inherit; flex-shrink: 0; width: 82px;
 }
 .unitSelect:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(36,90,31,0.1); }
 
@@ -246,6 +246,14 @@
   font-size: 12px; color: var(--text-muted); line-height: 1.4;
 }
 .priceResultTotal { font-weight: 600; color: var(--text); }
+.priceResultConvert {
+  font-size: 12px; color: var(--brand); opacity: 0.8; margin-top: 1px;
+}
+.canInfo {
+  font-size: 11px; color: var(--text-muted); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 9px; margin-top: 2px;
+}
 
 /* Price delta pills */
 .deltaUp   { font-size: 12px; font-weight: 600; background: #FEF2F2; color: #DC2626; padding: 3px 10px; border-radius: 20px; }

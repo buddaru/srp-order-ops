@@ -50,6 +50,10 @@ function parsePackageInfo(item) {
 
   const sources = [item.invoice_name || '', item.qty_unit || '']
   for (const src of sources) {
+    // Detect #10 can (standard commercial can)
+    if (/(?:#|no\.?\s*)10\s*can/i.test(src)) {
+      return { size: '', unit: '#10can' }
+    }
     const m = src.match(/(\d+\.?\d*)\s*(lb|lbs|oz|g|kg|gallon|gal|qt|quart|liter|litre|l|cup|cups|fl\s*oz|pound|ounce)/i)
     if (m) {
       const size = parseFloat(m[1])
@@ -58,6 +62,11 @@ function parsePackageInfo(item) {
     }
   }
   return { size: '', unit: null }
+}
+
+// Standard can sizes
+const CAN_INFO = {
+  '#10can': { oz: 104, cups: 13, label: '#10 can' },
 }
 
 // Confidence badge
@@ -91,6 +100,11 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
   // Supply item (non-ingredient) price
   const supplyQty          = parseFloat(item.supply_qty)
   const supplyPricePerUnit = (supplyQty > 0 && totalPaid > 0) ? totalPaid / supplyQty : null
+
+  // For #10 can: show $/oz and $/cup conversions
+  const canInfo     = CAN_INFO[effectiveUnit] || null
+  const pricePerOz  = (canInfo && pricePerUnit) ? pricePerUnit / canInfo.oz  : null
+  const pricePerCup = (canInfo && pricePerUnit) ? pricePerUnit / canInfo.cups : null
 
   const priceDelta = (() => {
     if (!pricePerUnit || !resolvedIng?.purchase_price) return null
@@ -180,14 +194,14 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
 
                 <div className={styles.reviewFieldGroup}>
                   <label className={styles.reviewLabel}>
-                    Size per package
+                    {effectiveUnit === '#10can' ? 'Cans per package' : 'Size per package'}
                     {pkgSizeParsed ? <span className={styles.parsedTag}>from invoice</span> : null}
                   </label>
                   <div className={styles.sizeUnitRow}>
                     <input
                       type="number" min="0" step="any"
                       className={`${styles.reviewInput} ${styles.sizeInput} ${!item.units_per_pkg ? styles.inputEmpty : ''}`}
-                      placeholder="50"
+                      placeholder={effectiveUnit === '#10can' ? 'e.g. 6' : '50'}
                       value={item.units_per_pkg || ''}
                       onChange={e => onChange(index, { units_per_pkg: e.target.value, pkg_size_parsed: false })}
                     />
@@ -199,10 +213,14 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
                       {PURCHASE_UNITS.map(u => (
                         <option key={u.value} value={u.value}>{u.value}</option>
                       ))}
+                      <option value="#10can">#10 can</option>
                       <option value="can">can</option>
                       <option value="each">each</option>
                     </select>
                   </div>
+                  {effectiveUnit === '#10can' && (
+                    <div className={styles.canInfo}>1 #10 can ≈ 104 oz · 13 cups</div>
+                  )}
                 </div>
               </div>
 
@@ -221,9 +239,17 @@ function ReviewRow({ item, index, ingredients, onChange, rowRef }) {
                     )}
                   </div>
                   <div className={styles.priceResultSub}>
-                    {qtyOrdered} pkg × {unitsPerPkg} {effectiveUnit} = {totalIngUnits} {effectiveUnit} total
+                    {effectiveUnit === '#10can'
+                      ? `${qtyOrdered} pkg × ${unitsPerPkg} cans = ${totalIngUnits} #10 cans total`
+                      : `${qtyOrdered} pkg × ${unitsPerPkg} ${effectiveUnit} = ${totalIngUnits} ${effectiveUnit} total`
+                    }
                     {' · '}Total paid: ${totalPaid.toFixed(2)}
                   </div>
+                  {pricePerOz && (
+                    <div className={styles.priceResultConvert}>
+                      = ${pricePerOz.toFixed(3)} / oz · ${pricePerCup.toFixed(2)} / cup
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className={styles.missingHint}>
@@ -495,9 +521,10 @@ export default function Invoices() {
         // Try to parse package size + unit from product name
         const { size: parsedSize, unit: parsedUnit } = parsePackageInfo(item)
 
+        const hasMatch = item.confidence !== 'none'
         return {
           ...item,
-          enabled:                  item.confidence !== 'none',
+          enabled:                  hasMatch,
           // Qty ordered = number of cases/packages from invoice
           qty_ordered:              item.qty && parseFloat(item.qty) > 0 ? String(item.qty) : '',
           qty_parsed:               !!(item.qty && parseFloat(item.qty) > 0),
@@ -511,6 +538,11 @@ export default function Invoices() {
           override_ingredient_id:   null,
           override_ingredient_name: null,
           override_ingredient_unit: null,
+          // Default: track non-matched items as supply items
+          track_supply:             !hasMatch,
+          supply_name:              !hasMatch ? (item.invoice_name || '') : '',
+          supply_unit:              !hasMatch ? 'each' : '',
+          supply_qty:               !hasMatch && item.qty ? String(item.qty) : '',
         }
       })
       skipSaveRef.current = false
