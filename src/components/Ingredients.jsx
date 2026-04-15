@@ -16,8 +16,87 @@ const TrashIcon = () => (
     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
   </svg>
 )
+const HistoryIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <polyline points="1 4 1 10 7 10"/>
+    <path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
+  </svg>
+)
 
-function IngredientRow({ ing, onSave, onDelete }) {
+// ── Price History Modal ──────────────────────────────────────
+function PriceHistoryModal({ ing, onClose }) {
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('ingredient_price_history')
+        .select('*')
+        .eq('ingredient_id', ing.id)
+        .order('recorded_at', { ascending: false })
+        .limit(50)
+      setHistory(data || [])
+      setLoading(false)
+    }
+    load()
+  }, [ing.id])
+
+  return (
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <div className={styles.modalTitle}>Price History — {ing.name}</div>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.modalBody}>
+          {loading ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Loading…</p>
+          ) : history.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+              No price history yet. History is recorded each time a price is saved manually or updated via an invoice.
+            </p>
+          ) : (
+            <table className={styles.historyTable}>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Price</th>
+                  <th>Source</th>
+                  <th>Supplier</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((h, i) => {
+                  const date = new Date(h.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  const isFirst = i === 0
+                  return (
+                    <tr key={h.id}>
+                      <td>{date}</td>
+                      <td style={{ fontWeight: isFirst ? 600 : 400 }}>
+                        ${parseFloat(h.purchase_price).toFixed(4)}/{h.purchase_unit || ing.purchase_unit}
+                        {isFirst && <span className={styles.currentBadge}> current</span>}
+                      </td>
+                      <td style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>
+                        {h.source === 'invoice' ? `Invoice${h.invoice_number ? ` #${h.invoice_number}` : ''}` : 'Manual'}
+                      </td>
+                      <td style={{ color: 'var(--text-muted)' }}>{h.supplier || '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className={styles.modalFooter}>
+          <button className={styles.cancelBtn} onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function IngredientRow({ ing, onSave, onDelete, onShowHistory }) {
   const [editing, setEditing] = useState(false)
   const [saving,  setSaving]  = useState(false)
 
@@ -177,6 +256,11 @@ function IngredientRow({ ing, onSave, onDelete }) {
       </div>
       <div className={styles.rowActions}>
         <button className={styles.editBtn} onClick={e => { e.stopPropagation(); openEdit() }}>Edit</button>
+        {!isUnpriced && (
+          <button className={styles.historyBtn} onClick={e => { e.stopPropagation(); onShowHistory(ing) }} title="Price history">
+            <HistoryIcon />
+          </button>
+        )}
         <button className={styles.deleteBtn} onClick={e => { e.stopPropagation(); onDelete(ing.id, ing.name) }} title="Remove ingredient">
           <TrashIcon />
         </button>
@@ -324,6 +408,7 @@ export default function Ingredients({ externalSearch = '' }) {
   const [ingredients, setIngredients] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [delConfirm,  setDelConfirm]  = useState(null)
+  const [historyIng,  setHistoryIng]  = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -337,6 +422,16 @@ export default function Ingredients({ externalSearch = '' }) {
   const handleSave = async (id, updates, ingredientName) => {
     await supabase.from('ingredients').update(updates).eq('id', id)
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
+    // Log to price history
+    await supabase.from('ingredient_price_history').insert({
+      ingredient_id:   id,
+      ingredient_name: ingredientName,
+      purchase_price:  updates.purchase_price,
+      purchase_unit:   updates.purchase_unit,
+      supplier:        updates.supplier || null,
+      source:          'manual',
+      recorded_at:     new Date().toISOString(),
+    })
     await recalculateAffectedRecipes(supabase, ingredientName)
   }
 
@@ -416,6 +511,7 @@ export default function Ingredients({ externalSearch = '' }) {
                 ing={ing}
                 onSave={handleSave}
                 onDelete={(id, name) => setDelConfirm({ id, name })}
+                onShowHistory={setHistoryIng}
               />
             ))
           )}
@@ -440,6 +536,7 @@ export default function Ingredients({ externalSearch = '' }) {
                       ing={ing}
                       onSave={handleSave}
                       onDelete={(id, name) => setDelConfirm({ id, name })}
+                      onShowHistory={setHistoryIng}
                     />
                   ))
                 }
@@ -462,6 +559,7 @@ export default function Ingredients({ externalSearch = '' }) {
                       ing={ing}
                       onSave={handleSave}
                       onDelete={(id, name) => setDelConfirm({ id, name })}
+                      onShowHistory={setHistoryIng}
                     />
                   ))
                 }
@@ -493,6 +591,11 @@ export default function Ingredients({ externalSearch = '' }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Price history modal */}
+      {historyIng && (
+        <PriceHistoryModal ing={historyIng} onClose={() => setHistoryIng(null)} />
       )}
     </div>
   )

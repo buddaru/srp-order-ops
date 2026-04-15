@@ -546,3 +546,56 @@
   margin-bottom: 12px;
   line-height: 1.5;
 }
+
+/* ── History button ── */
+.historyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.historyBtn:hover {
+  background: var(--bg-2, #EEF4EC);
+  color: var(--brand);
+  border-color: var(--border-2);
+}
+
+/* ── Price history table ── */
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.historyTable th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 8px 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.historyTable td {
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+.historyTable tr:last-child td { border-bottom: none; }
+.currentBadge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--brand-faint, rgba(36,90,31,0.08));
+  color: var(--brand);
+  padding: 1px 6px;
+  border-radius: 20px;
+}

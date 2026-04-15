@@ -20,6 +20,7 @@ import Settings        from './components/Settings'
 import Admin           from './components/Admin'
 import MenuManager     from './components/MenuManager'
 import Reports         from './components/Reports'
+import Invoices        from './components/Invoices'
 import Privacy    from './components/Privacy'
 import Terms      from './components/Terms'
 import Login      from './components/Login'
@@ -37,6 +38,7 @@ const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 const IconAdmin    = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 const IconMenu     = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18M3 6h18M3 14h12M3 18h8"/></svg>
 const IconReports = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+const IconInvoices = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
 
 let orderSeq = 0
 
@@ -379,6 +381,10 @@ export default function App() {
             <span className={styles.sidebarIcon}><IconReports /></span>
             {sidebarOpen && <span>Reports</span>}
           </NavLink>
+          <NavLink to="/invoices" onClick={() => setMobileSidebarOpen(false)} className={({isActive}) => `${styles.sidebarItem} ${isActive ? styles.sidebarItemActive : ''}`} title={!sidebarOpen ? 'Invoices' : undefined}>
+            <span className={styles.sidebarIcon}><IconInvoices /></span>
+            {sidebarOpen && <span>Invoices</span>}
+          </NavLink>
 
           <div style={{flex: 1}} />
 
@@ -432,6 +438,7 @@ export default function App() {
         <Route path="/recipes/:id/edit" element={<RecipeEdit />} />
         <Route path="/recipe-groups/:id" element={<RecipeGroupPage />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/invoices" element={<Invoices />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin" element={isAdmin ? <Admin /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
         <Route path="/menu" element={isAdmin ? <MenuManager /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
