@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { supabase, withTimeout } from './lib/supabase'
 import { seedOrders } from './data/orders'
@@ -93,6 +93,9 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 export default function App() {
   const [orders, setOrders]           = useState([])
   const [ordersLoaded, setOrdersLoaded] = useState(false)
+  const [searchResults, setSearchResults] = useState([])
+  const [isSearching, setIsSearching]     = useState(false)
+  const searchTimer = useRef(null)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [selectedStage, setSelectedStage] = useState('active')
@@ -123,11 +126,13 @@ export default function App() {
   const showToast   = useCallback(t => setToast(t), [])
 
   // ── Load orders from Supabase ──
+  // Only loads active (non-picked-up) orders — historical orders are found via search
   const loadOrders = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .neq('stage', 'picked-up')
         .order('created_at', { ascending: true })
 
       if (error) { console.error('Load orders error:', error); setOrdersLoaded(true); return }
@@ -149,6 +154,30 @@ export default function App() {
   useEffect(() => {
     loadOrders()
   }, [loadOrders])
+
+  // ── Server-side search across all orders ──
+  const handleSearch = useCallback((q) => {
+    clearTimeout(searchTimer.current)
+    if (!q.trim()) { setSearchResults([]); setIsSearching(false); return }
+    setIsSearching(true)
+    searchTimer.current = setTimeout(async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .or(`customer.ilike.%${q}%,id.ilike.%${q}%,phone.ilike.%${q}%`)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      setSearchResults(data ? data.map(fromDB) : [])
+      setIsSearching(false)
+    }, 300)
+  }, [])
+
+  // Ensures a searched historical order is in local state before opening drawer
+  const handleSearchDrawer = useCallback((order) => {
+    setOrders(prev => prev.some(o => o.id === order.id) ? prev : [...prev, order])
+    setDrawerOrderId(order.id)
+    setSearchResults([])
+  }, [])
 
   // ── Confirm picked-up (always jumps directly to picked-up regardless of current stage) ──
   const applyPickup = async (id) => {
@@ -460,6 +489,10 @@ export default function App() {
           onDelete={handleDelete}
           onSendSms={handleSendSms}
           onNewOrder={() => setShowNew(true)}
+          onSearch={handleSearch}
+          searchResults={searchResults}
+          isSearching={isSearching}
+          onSearchDrawer={handleSearchDrawer}
         />
       </div>
 

@@ -4,7 +4,7 @@ import OrderCard from './OrderCard'
 import ListView from './ListView'
 import styles from './Board.module.css'
 
-export default function Board({ orders, ordersLoaded, selectedDay, customDateSelected, dateRange, selectedStage, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder }) {
+export default function Board({ orders, ordersLoaded, selectedDay, customDateSelected, dateRange, selectedStage, isAdmin, onMove, onSetStage, onEdit, onDrawer, onDelete, onSendSms, onNewOrder, onSearch, searchResults, isSearching, onSearchDrawer }) {
   const [viewMode, setViewMode] = useState('list')
   const [query, setQuery]       = useState('')
   const [showRes, setShowRes]   = useState(false)
@@ -37,34 +37,27 @@ export default function Board({ orders, ordersLoaded, selectedDay, customDateSel
             type="text"
             placeholder="Search orders…"
             value={query}
-            onChange={e => { setQuery(e.target.value); setShowRes(true) }}
+            onChange={e => { setQuery(e.target.value); setShowRes(true); onSearch(e.target.value) }}
             onFocus={() => setShowRes(true)}
             onBlur={() => setShowRes(false)}
             autoComplete="off"
           />
         </div>
-        {showRes && query.trim() && (() => {
-          const q = query.toLowerCase()
-          const matches = orders.filter(o =>
-            o.customer.toLowerCase().includes(q) ||
-            (o.phone && o.phone.includes(q)) ||
-            o.id.toLowerCase().includes(q) ||
-            o.items.some(i => i.name.toLowerCase().includes(q))
-          ).slice(0, 6)
-          return (
-            <div className={styles.searchResults}>
-              {matches.length === 0
+        {showRes && query.trim() && (
+          <div className={styles.searchResults}>
+            {isSearching
+              ? <div className={styles.searchEmpty}>Searching…</div>
+              : searchResults.length === 0
                 ? <div className={styles.searchEmpty}>No orders found</div>
-                : matches.map(o => (
-                    <div key={o.id} className={styles.searchItem} onMouseDown={e => { e.preventDefault(); onDrawer(o.id); setQuery(''); setShowRes(false) }}>
+                : searchResults.map(o => (
+                    <div key={o.id} className={styles.searchItem} onMouseDown={e => { e.preventDefault(); onSearchDrawer(o); setQuery(''); setShowRes(false) }}>
                       <div className={styles.searchName}>{o.customer} <span className={styles.searchId}>{o.id}</span></div>
                       <div className={styles.searchMeta}>{fmtDate(o.pickupDate)} · {o.items[0]?.name || ''}</div>
                     </div>
                   ))
-              }
-            </div>
-          )
-        })()}
+            }
+          </div>
+        )}
       </div>
 
       {/* ── View toggle bar ── */}
