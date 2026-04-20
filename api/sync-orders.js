@@ -21,7 +21,7 @@ async function getAccessToken() {
     }),
   })
   const data = await res.json()
-  if (!data.access_token) throw new Error('Failed to get Gmail access token')
+  if (!data.access_token) throw new Error(`Failed to get Gmail access token: ${data.error} — ${data.error_description}`)
   return data.access_token
 }
 
