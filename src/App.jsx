@@ -96,6 +96,7 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching]     = useState(false)
   const searchTimer = useRef(null)
+  const pickedUpLoaded = useRef(false)
   const [selectedDay, setSelectedDay] = useState('all')
   const [customDate, setCustomDate]   = useState(false)
   const [selectedStage, setSelectedStage] = useState('active')
@@ -154,6 +155,26 @@ export default function App() {
   useEffect(() => {
     loadOrders()
   }, [loadOrders])
+
+  // ── Lazy-load picked-up orders when that stage is first viewed ──
+  useEffect(() => {
+    if (selectedStage !== 'picked-up' || pickedUpLoaded.current) return
+    pickedUpLoaded.current = true
+    supabase
+      .from('orders')
+      .select('*')
+      .eq('stage', 'picked-up')
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const mapped = data.map(fromDB)
+          setOrders(prev => {
+            const existingIds = new Set(prev.map(o => o.id))
+            return [...prev, ...mapped.filter(o => !existingIds.has(o.id))]
+          })
+        }
+      })
+  }, [selectedStage])
 
   // ── Server-side search across all orders ──
   const handleSearch = useCallback((q) => {
