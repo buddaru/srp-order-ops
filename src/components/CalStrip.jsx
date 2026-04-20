@@ -19,7 +19,7 @@ const fmtShort = (ds) => {
 }
 
 
-export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect, selectedStage, onStageChange }) {
+export default function CalStrip({ orders, selectedDay, customDateSelected, dateRange, onSelectDay, onRangeSelect, selectedStage, onStageChange, pickedUpCount = 0 }) {
   const [showCal, setShowCal]         = useState(false)
   const [showRangePicker, setShowRangePicker] = useState(false)
   const [stageOpen, setStageOpen]     = useState(false)
@@ -52,7 +52,7 @@ export default function CalStrip({ orders, selectedDay, customDateSelected, date
     received:        orders.filter(o => o.stage === 'received').length,
     'in-production': orders.filter(o => o.stage === 'in-production').length,
     ready:           orders.filter(o => o.stage === 'ready').length,
-    'picked-up':     orders.filter(o => o.stage === 'picked-up').length,
+    'picked-up':     pickedUpCount,
   }
 
   const stageFiltered = selectedStage === 'active'
