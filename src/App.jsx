@@ -95,6 +95,7 @@ export default function App() {
   const [ordersLoaded, setOrdersLoaded] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching]     = useState(false)
+  const [pickedUpCount, setPickedUpCount] = useState(0)
   const searchTimer = useRef(null)
   const pickedUpLoaded = useRef(false)
   const [selectedDay, setSelectedDay] = useState('all')
@@ -154,6 +155,11 @@ export default function App() {
 
   useEffect(() => {
     loadOrders()
+    supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('stage', 'picked-up')
+      .then(({ count }) => { if (count != null) setPickedUpCount(count) })
   }, [loadOrders])
 
   // ── Lazy-load picked-up orders when that stage is first viewed ──
@@ -170,7 +176,9 @@ export default function App() {
           const mapped = data.map(fromDB)
           setOrders(prev => {
             const existingIds = new Set(prev.map(o => o.id))
-            return [...prev, ...mapped.filter(o => !existingIds.has(o.id))]
+            const merged = [...prev, ...mapped.filter(o => !existingIds.has(o.id))]
+            setPickedUpCount(merged.filter(o => o.stage === 'picked-up').length)
+            return merged
           })
         }
       })
@@ -493,7 +501,7 @@ export default function App() {
         <Route path="/admin" element={isAdmin ? <Admin /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
         <Route path="/menu" element={isAdmin ? <MenuManager /> : <div style={{padding:'40px 28px'}}><p style={{color:'var(--text-muted)'}}>Access denied.</p></div>} />
         <Route path="/" element={<>
-      <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} selectedStage={selectedStage} onStageChange={setSelectedStage} />
+      <CalStrip orders={orders} selectedDay={selectedDay} customDateSelected={customDate} dateRange={dateRange} onSelectDay={handleSelectDay} onRangeSelect={setDateRange} selectedStage={selectedStage} onStageChange={setSelectedStage} pickedUpCount={pickedUpCount} />
       <div className={styles.boardWrapper}>
         <Board
           orders={orders}
