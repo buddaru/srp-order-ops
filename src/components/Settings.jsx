@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useBusiness } from '../context/BusinessContext'
 import { supabase } from '../lib/supabase'
 import { useLocation } from 'react-router-dom'
 import styles from './Settings.module.css'
 
 export default function Settings() {
-  const { profile, user, isAdmin } = useAuth()
-  const { settings, save: saveBusiness } = useBusiness()
+  const { profile, user } = useAuth()
   const location = useLocation()
 
   const [name, setName]           = useState(profile?.full_name || '')
@@ -15,29 +13,11 @@ export default function Settings() {
   const [nameMsg, setNameMsg]     = useState('')
   const [nameErr, setNameErr]     = useState('')
 
-  const [curPw, setCurPw]         = useState('')
   const [newPw, setNewPw]         = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [savingPw, setSavingPw]   = useState(false)
   const [pwMsg, setPwMsg]         = useState('')
   const [pwErr, setPwErr]         = useState('')
-
-  // Business settings (admin only)
-  const [bizName, setBizName]         = useState(settings.business_name || '')
-  const [bizCity, setBizCity]         = useState(settings.city || '')
-  const [smsReady, setSmsReady]       = useState(settings.sms_ready || '')
-  const [smsPickup, setSmsPickup]     = useState(settings.sms_pickup || '')
-  const [savingBiz, setSavingBiz]     = useState(false)
-  const [bizMsg, setBizMsg]           = useState('')
-  const [bizErr, setBizErr]           = useState('')
-
-  // Sync business fields when context loads
-  useEffect(() => {
-    setBizName(settings.business_name || '')
-    setBizCity(settings.city || '')
-    setSmsReady(settings.sms_ready || '')
-    setSmsPickup(settings.sms_pickup || '')
-  }, [settings])
 
   // If redirected from password reset email, focus the password section
   useEffect(() => {
@@ -47,7 +27,6 @@ export default function Settings() {
   }, [])
 
   const email = profile?.email || user?.email || '—'
-  const role  = profile?.role || '—'
 
   const handleSaveName = async () => {
     if (!name.trim()) { setNameErr('Name cannot be empty'); return }
@@ -61,25 +40,6 @@ export default function Settings() {
       setNameErr(err.message || 'Could not save name')
     } finally {
       setSavingName(false)
-    }
-  }
-
-  const handleSaveBusiness = async () => {
-    if (!bizName.trim()) { setBizErr('Business name is required'); return }
-    setSavingBiz(true); setBizErr(''); setBizMsg('')
-    try {
-      await saveBusiness({
-        business_name: bizName.trim(),
-        city: bizCity.trim(),
-        sms_ready: smsReady.trim(),
-        sms_pickup: smsPickup.trim(),
-      })
-      setBizMsg('Business settings saved.')
-      setTimeout(() => setBizMsg(''), 3000)
-    } catch (err) {
-      setBizErr(err.message || 'Could not save settings')
-    } finally {
-      setSavingBiz(false)
     }
   }
 
@@ -128,50 +88,8 @@ export default function Settings() {
             <span className={styles.rowLabel}>Email</span>
             <span className={styles.rowVal}>{email}</span>
           </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>Role</span>
-            <span className={styles.rowVal} style={{textTransform:'capitalize'}}>{role}</span>
-          </div>
         </div>
       </div>
-
-      {isAdmin && (
-        <div className={styles.section}>
-          <div className={styles.sectionLabel}>Business</div>
-          <div className={styles.card}>
-            <div className={styles.editRow}>
-              <div className={styles.editLabel}>Business name</div>
-              <div className={styles.editControl}>
-                <input className={styles.editInput} value={bizName} onChange={e => { setBizName(e.target.value); setBizErr(''); setBizMsg('') }} placeholder="e.g. Sweet Red Peach" />
-              </div>
-            </div>
-            <div className={styles.editRow}>
-              <div className={styles.editLabel}>City</div>
-              <div className={styles.editControl}>
-                <input className={styles.editInput} value={bizCity} onChange={e => { setBizCity(e.target.value); setBizErr(''); setBizMsg('') }} placeholder="e.g. Carson" />
-              </div>
-            </div>
-            <div className={styles.editRow} style={{borderBottom:'none'}}>
-              <div className={styles.editLabel}>SMS templates <span style={{fontWeight:400,textTransform:'none',letterSpacing:0,fontSize:11,color:'var(--text-muted)'}}>— use {'{name}'} for customer first name, {'{business}'} for your business + city</span></div>
-              <div className={styles.pwForm} style={{padding:0,gap:10,marginTop:8}}>
-                <div className={styles.pwField}>
-                  <label className={styles.pwLabel}>Order ready</label>
-                  <textarea className={styles.editInput} style={{height:64,resize:'vertical'}} value={smsReady} onChange={e => { setSmsReady(e.target.value); setBizErr(''); setBizMsg('') }} />
-                </div>
-                <div className={styles.pwField}>
-                  <label className={styles.pwLabel}>Order picked up</label>
-                  <textarea className={styles.editInput} style={{height:64,resize:'vertical'}} value={smsPickup} onChange={e => { setSmsPickup(e.target.value); setBizErr(''); setBizMsg('') }} />
-                </div>
-                {bizErr && <div className={styles.fieldErr}>{bizErr}</div>}
-                {bizMsg && <div className={styles.fieldOk}>{bizMsg}</div>}
-                <button className={styles.saveBtn} onClick={handleSaveBusiness} disabled={savingBiz} style={{alignSelf:'flex-start'}}>
-                  {savingBiz ? 'Saving…' : 'Save business settings'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className={styles.section} id="pw-section">        <div className={styles.card}>
           <div className={styles.pwForm}>

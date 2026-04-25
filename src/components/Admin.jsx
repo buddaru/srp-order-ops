@@ -137,13 +137,34 @@ export default function Admin() {
   const [deleteId, setDeleteId]     = useState(null)
 
   const load = async () => {
+    if (!currentLocation) return
     setLoading(true)
-    const { data } = await supabase.from('profiles').select('*').order('full_name')
-    setUsers(data || [])
+
+    const [{ data: locMembers }, { data: orgMembers }] = await Promise.all([
+      supabase.from('location_members').select('user_id, role').eq('location_id', currentLocation.id),
+      supabase.from('organization_members').select('user_id, role').eq('organization_id', currentLocation.organization_id),
+    ])
+
+    const userIds = [...new Set([
+      ...(locMembers || []).map(m => m.user_id),
+      ...(orgMembers || []).map(m => m.user_id),
+    ])]
+
+    if (userIds.length === 0) { setUsers([]); setLoading(false); return }
+
+    const { data: profiles } = await supabase.from('profiles').select('*').in('id', userIds).order('full_name')
+
+    const orgMap = Object.fromEntries((orgMembers || []).map(m => [m.user_id, m.role]))
+    const locMap = Object.fromEntries((locMembers || []).map(m => [m.user_id, m.role]))
+
+    setUsers((profiles || []).map(p => ({
+      ...p,
+      memberRole: orgMap[p.id] || locMap[p.id] || p.role,
+    })))
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [currentLocation?.id])
 
   if (!isAdmin) return (
     <div className={styles.denied}>
@@ -182,8 +203,8 @@ export default function Admin() {
               </div>
               <div className={styles.userEmail}>{u.email}</div>
               <div>
-                <span className={`${styles.roleBadge} ${u.role === 'admin' ? styles.roleAdmin : styles.roleEmployee}`}>
-                  {u.role || 'employee'}
+                <span className={`${styles.roleBadge} ${['org_admin','org_owner','admin'].includes(u.memberRole) ? styles.roleAdmin : styles.roleEmployee}`}>
+                  {['org_admin','org_owner'].includes(u.memberRole) ? 'Admin' : (u.memberRole || 'employee')}
                 </span>
               </div>
               <div className={styles.actions}>
