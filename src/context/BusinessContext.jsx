@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useCurrentLocation } from './LocationContext'
 
 const BusinessContext = createContext(null)
 
-// Defaults match the current hardcoded values so nothing breaks before the table is seeded
 const DEFAULTS = {
   business_name: 'Sweet Red Peach',
   city:          'Carson',
@@ -12,31 +12,44 @@ const DEFAULTS = {
 }
 
 export function BusinessProvider({ children }) {
+  const { currentLocation } = useCurrentLocation() || {}
   const [settings, setSettings] = useState(DEFAULTS)
   const [loading, setLoading]   = useState(true)
 
   const load = async () => {
-    const { data } = await supabase
-      .from('business_settings')
-      .select('*')
-      .limit(1)
-      .single()
+    let query = supabase.from('business_settings').select('*')
+
+    // Scope to the current location when available; fall back to id=1 for
+    // backward compat during the migration window (before backfill runs).
+    if (currentLocation?.id) {
+      query = query.eq('location_id', currentLocation.id)
+    } else {
+      query = query.eq('id', 1)
+    }
+
+    const { data } = await query.limit(1).maybeSingle()
     if (data) setSettings({ ...DEFAULTS, ...data })
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [currentLocation?.id])
 
   const save = async (updates) => {
     const merged = { ...settings, ...updates }
     setSettings(merged)
-    // Upsert — table always has a single row with id = 1
-    await supabase
-      .from('business_settings')
-      .upsert({ id: 1, ...merged })
+
+    if (currentLocation?.id) {
+      // Per-location row: upsert keyed on location_id
+      await supabase.from('business_settings').upsert({
+        ...merged,
+        location_id: currentLocation.id,
+      })
+    } else {
+      // Pre-migration fallback: single row with id=1
+      await supabase.from('business_settings').upsert({ id: 1, ...merged })
+    }
   }
 
-  // Interpolate a template: replace {name} and {business}
   const formatSms = (template, customerName) => {
     const firstName = customerName.split(' ')[0]
     const businessFull = settings.city
@@ -47,8 +60,8 @@ export function BusinessProvider({ children }) {
       .replace(/\{business\}/g, businessFull)
   }
 
-  const readySms   = (customerName) => formatSms(settings.sms_ready,   customerName)
-  const pickupSms  = (customerName) => formatSms(settings.sms_pickup,  customerName)
+  const readySms  = (customerName) => formatSms(settings.sms_ready,  customerName)
+  const pickupSms = (customerName) => formatSms(settings.sms_pickup, customerName)
 
   return (
     <BusinessContext.Provider value={{ settings, loading, save, readySms, pickupSms }}>

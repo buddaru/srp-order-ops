@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useCurrentLocation } from '../context/LocationContext'
 import styles from './Admin.module.css'
 import PageHeader from './PageHeader'
 
-function CreateUserModal({ onClose, onCreated }) {
+function CreateUserModal({ onClose, onCreated, locationId }) {
   const [name, setName]         = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -21,7 +22,7 @@ function CreateUserModal({ onClose, onCreated }) {
       const res = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role }),
+        body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role, location_id: locationId }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create account')
@@ -128,6 +129,7 @@ function EditUserModal({ user, onClose, onSaved }) {
 
 export default function Admin() {
   const { isAdmin } = useAuth()
+  const { currentLocation } = useCurrentLocation() || {}
   const [users, setUsers]           = useState([])
   const [loading, setLoading]       = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -193,7 +195,7 @@ export default function Admin() {
         </div>
       )}
 
-      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={load} />}
+      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={load} locationId={currentLocation?.id} />}
       {editUser   && <EditUserModal user={editUser} onClose={() => setEditUser(null)} onSaved={load} />}
 
       {deleteId && (

@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabase'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]                   = useState(null)
+  const [profile, setProfile]             = useState(null)
+  const [orgMemberRoles, setOrgMemberRoles] = useState([]) // ['org_owner', 'org_admin']
+  const [locMemberRoles, setLocMemberRoles] = useState([]) // ['manager', 'employee']
+  const [loading, setLoading]             = useState(true)
 
   async function loadProfile(userId) {
     try {
@@ -19,27 +21,41 @@ export function AuthProvider({ children }) {
       if (data) {
         setProfile(data)
       } else if (error?.code === 'PGRST116') {
-        // No profile row — genuine missing profile, sign out
         setProfile(null)
         await supabase.auth.signOut()
       }
-      // Any other error (network, timeout) — keep user logged in, profile stays null
     } catch (e) {
       console.warn('loadProfile error:', e.message)
-      // Don't sign out on network errors
+    }
+  }
+
+  // Load org and location roles for isAdmin computation.
+  // Runs in parallel with loadProfile; errors are non-fatal (new tables may not
+  // exist yet on staging before the migration SQL is run).
+  async function loadMemberRoles(userId) {
+    try {
+      const [orgRes, locRes] = await Promise.all([
+        supabase.from('organization_members').select('role').eq('user_id', userId),
+        supabase.from('location_members').select('role').eq('user_id', userId),
+      ])
+      setOrgMemberRoles((orgRes.data || []).map(m => m.role))
+      setLocMemberRoles((locRes.data || []).map(m => m.role))
+    } catch (e) {
+      // Tables don't exist yet pre-migration — silently ignore.
     }
   }
 
   useEffect(() => {
     let mounted = true
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       if (session?.user) {
         setUser(session.user)
-        loadProfile(session.user.id).finally(() => {
-          if (mounted) setLoading(false)
-        })
+        Promise.all([
+          loadProfile(session.user.id),
+          loadMemberRoles(session.user.id),
+        ]).finally(() => { if (mounted) setLoading(false) })
       } else {
         setLoading(false)
       }
@@ -47,32 +63,26 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
-      // Never auto-sign-out from a state change event — only from explicit signOut() call
-      // This prevents the blank screen when tabs wake from sleep
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user)
-        loadProfile(session.user.id).finally(() => {
-          if (mounted) setLoading(false)
-        })
+        Promise.all([
+          loadProfile(session.user.id),
+          loadMemberRoles(session.user.id),
+        ]).finally(() => { if (mounted) setLoading(false) })
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         setUser(session.user)
       } else if (event === 'TOKEN_REFRESH_ERROR') {
-        // Re-attempt session fetch — don't blank the screen
         supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (s?.user && mounted) setUser(s.user)
         })
       }
-      // SIGNED_OUT is intentionally ignored here — signOut() sets user to null directly
     })
 
-    // Re-check session when user comes back to the tab after idle
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (!mounted) return
-          if (session?.user) {
-            setUser(session.user)
-          }
+          if (session?.user) setUser(session.user)
         })
       }
     }
@@ -94,10 +104,17 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     setUser(null)
     setProfile(null)
+    setOrgMemberRoles([])
+    setLocMemberRoles([])
     await supabase.auth.signOut()
   }
 
-  const isAdmin = profile?.role === 'admin'
+  // isAdmin: true if user has any admin role in the new membership tables,
+  // OR has profile.role = 'admin' (backward compat during migration period).
+  const isAdmin =
+    profile?.role === 'admin' ||
+    orgMemberRoles.some(r => ['org_owner', 'org_admin'].includes(r)) ||
+    locMemberRoles.includes('manager')
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, isAdmin, signIn, signOut }}>

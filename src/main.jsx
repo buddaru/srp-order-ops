@@ -2,17 +2,17 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
-import { BusinessProvider } from './context/BusinessContext'
 import App from './App.jsx'
 import './index.css'
+
+// BusinessProvider is now mounted inside each location route (in App.jsx → LocationShell)
+// so it can read from LocationContext. It is no longer global.
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <BusinessProvider>
-          <App />
-        </BusinessProvider>
+        <App />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
