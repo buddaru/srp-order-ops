@@ -119,7 +119,7 @@ export default function Header({ orders, onJumpToOrder, profile, onSignOut, onMe
 
         {/* Right — sync button + counters */}
         <div className={styles.right}>
-          {isOrdersPage && (
+          {isOrdersPage && currentLocation?.slug === 'srp-carson' && (
             <button
               className={styles.syncBtn}
               onClick={handleSync}

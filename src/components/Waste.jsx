@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useAuth } from '../context/AuthContext'
 import { supabase, safeQuery } from '../lib/supabase'
+import { useCurrentLocation } from '../context/LocationContext'
 import { getCache, setCache } from '../lib/cache'
 import styles from './Waste.module.css'
 import PageHeader from './PageHeader'
@@ -81,7 +81,7 @@ function fmtTime(ts) {
 }
 
 // ── Log Modal ──
-function WasteModal({ entry, onSave, onClose }) {
+function WasteModal({ entry, onSave, onClose, locationId }) {
   const isEdit = !!entry?.id
   const [name, setName]       = useState(entry?.item_name || '')
   const [qty, setQty]         = useState(entry?.qty ?? '')
@@ -122,7 +122,7 @@ function WasteModal({ entry, onSave, onClose }) {
     if (isEdit) {
       await supabase.from('waste_log').update(row).eq('id', entry.id)
     } else {
-      await supabase.from('waste_log').insert([row])
+      await supabase.from('waste_log').insert([{ ...row, location_id: locationId }])
     }
     setSaving(false)
     onSave()
@@ -251,7 +251,7 @@ function ConfirmDelete({ onConfirm, onCancel }) {
 
 // ── Main page ──
 export default function Waste() {
-  const { isAdmin } = useAuth()
+  const { currentLocation } = useCurrentLocation() || {}
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(false)
   const [loadError, setLoadError]   = useState(false)
@@ -264,8 +264,10 @@ export default function Waste() {
   const [showCal, setShowCal]       = useState(false)
 
   const load = async () => {
+    if (!currentLocation) return
     setLoadError(false)
-    const cached = getCache('waste-log')
+    const cacheKey = `waste-log-${currentLocation.id}`
+    const cached = getCache(cacheKey)
     if (cached) {
       setEntries(cached)
       setLoading(false)
@@ -273,12 +275,14 @@ export default function Waste() {
       setLoading(true)
     }
     try {
-      const { data, error } = await safeQuery(() => supabase.from('waste_log').select('*').order('created_at', { ascending: false }))
+      const { data, error } = await safeQuery(() =>
+        supabase.from('waste_log').select('*').eq('location_id', currentLocation.id).order('created_at', { ascending: false })
+      )
       if (error?.message === 'timeout') { setLoadError(true) }
       else {
         const entries = data || []
         setEntries(entries)
-        setCache('waste-log', entries)
+        setCache(cacheKey, entries)
       }
     } finally {
       setLoading(false)
@@ -290,7 +294,7 @@ export default function Waste() {
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [])
+  }, [currentLocation?.id])
 
   const filtered = useMemo(() => {
     return entries.filter(e => inPeriod(e.logged_date, period, anchor))
@@ -437,18 +441,16 @@ export default function Waste() {
               <div className={styles.ecell}>{e.type === 'prepared' ? 'Prepared' : 'Unprepared'}</div>
               <div><span className={styles.reasonPill} style={{background: REASON_COLORS[e.reason]?.bg || '#F1F5F9', color: REASON_COLORS[e.reason]?.text || '#475569'}}>{e.reason}</span></div>
               <div className={styles.ecost}>{fmt$(e.total_cost)}</div>
-              {isAdmin && (
               <div className={styles.eActions}>
                 <button className={styles.ea} onClick={() => openEdit(e)}>Edit</button>
                 <button className={`${styles.ea} ${styles.eaDel}`} onClick={() => setDeleteId(e.id)}>Delete</button>
               </div>
-              )}
             </div>
           ))}
         </div>
       )}
 
-      {showModal && <WasteModal entry={editEntry} onSave={handleSave} onClose={() => { setShowModal(false); setEditEntry(null) }} />}
+      {showModal && <WasteModal entry={editEntry} onSave={handleSave} onClose={() => { setShowModal(false); setEditEntry(null) }} locationId={currentLocation?.id} />}
       {deleteId  && <ConfirmDelete onConfirm={handleDelete} onCancel={() => setDeleteId(null)} />}
     </div>
   )

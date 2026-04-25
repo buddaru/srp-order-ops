@@ -113,8 +113,7 @@ export function AuthProvider({ children }) {
   // OR has profile.role = 'admin' (backward compat during migration period).
   const isAdmin =
     profile?.role === 'admin' ||
-    orgMemberRoles.some(r => ['org_owner', 'org_admin'].includes(r)) ||
-    locMemberRoles.includes('manager')
+    orgMemberRoles.some(r => ['org_owner', 'org_admin'].includes(r))
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, isAdmin, signIn, signOut }}>

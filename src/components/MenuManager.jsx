@@ -593,19 +593,30 @@ function CategoryAddonsSection({ catName }) {
   )
 }
 
-function ItemRow({ item, onOpen, onToggle, onPriceChange }) {
+function ItemRow({ item, onOpen, onToggle, onPriceChange, canEdit }) {
   return (
     <div className={`${styles.itemRow} ${!item.active ? styles.itemInactive : ''}`}>
       <div className={styles.itemName} onClick={() => onOpen(item)} style={{ cursor:'pointer' }}>{item.name}</div>
       <div className={styles.itemPrice}>
-        <PriceCell price={item.price} onSave={p => onPriceChange(item.id, p)} />
+        {canEdit
+          ? <PriceCell price={item.price} onSave={p => onPriceChange(item.id, p)} />
+          : <span className={styles.priceBtn} style={{cursor:'default'}}>${item.price}</span>
+        }
       </div>
       <div className={styles.itemToggle}>
-        <button className={`${styles.toggle} ${item.active ? styles.toggleOn : ''}`}
-          onClick={() => onToggle(item.id, !item.active)}>
-          <span className={styles.toggleThumb} />
-        </button>
-        <span className={styles.toggleLabel}>{item.active ? 'Active' : 'Off'}</span>
+        {canEdit ? (
+          <>
+            <button className={`${styles.toggle} ${item.active ? styles.toggleOn : ''}`}
+              onClick={() => onToggle(item.id, !item.active)}>
+              <span className={styles.toggleThumb} />
+            </button>
+            <span className={styles.toggleLabel}>{item.active ? 'Active' : 'Off'}</span>
+          </>
+        ) : (
+          <span className={styles.toggleLabel} style={{color: item.active ? 'var(--brand)' : 'var(--text-muted)'}}>
+            {item.active ? 'Active' : 'Off'}
+          </span>
+        )}
       </div>
       <button className={styles.detailBtn} onClick={() => onOpen(item)}>Details / Cost ›</button>
     </div>
@@ -649,8 +660,6 @@ export default function MenuManager() {
 
   useEffect(() => { load() }, [load])
 
-  if (!isAdmin) return <div style={{ padding:'40px 28px', color:'var(--text-muted)' }}>Access denied.</div>
-
   const handleToggle = async (id, active) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, active } : i))
     await supabase.from('menu_items').update({ active }).eq('id', id)
@@ -681,8 +690,8 @@ export default function MenuManager() {
   return (
     <div className={styles.page}>
       <PageHeader title="Menu & Pricing">
-        <button className="btn btn-secondary" onClick={() => setShowCatMgr(true)}>Manage categories</button>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add item</button>
+        {isAdmin && <button className="btn btn-secondary" onClick={() => setShowCatMgr(true)}>Manage categories</button>}
+        {isAdmin && <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add item</button>}
       </PageHeader>
 
       <div className={styles.statsRow}>
@@ -728,7 +737,7 @@ export default function MenuManager() {
                       <div className={styles.itemsHeader}><span>Item</span><span>Base price</span><span>Status</span><span/></div>
                       {catItems.map(item => (
                         <ItemRow key={item.id} item={item} onOpen={setOpenItem}
-                          onToggle={handleToggle} onPriceChange={handlePriceChange} />
+                          onToggle={handleToggle} onPriceChange={handlePriceChange} canEdit={isAdmin} />
                       ))}
                       <CategoryAddonsSection catName={cat} />
                     </div>
