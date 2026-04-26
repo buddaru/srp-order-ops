@@ -203,8 +203,8 @@ export default function Admin() {
               </div>
               <div className={styles.userEmail}>{u.email}</div>
               <div>
-                <span className={`${styles.roleBadge} ${['org_admin','org_owner','admin'].includes(u.memberRole) ? styles.roleAdmin : styles.roleEmployee}`}>
-                  {['org_admin','org_owner'].includes(u.memberRole) ? 'Admin' : (u.memberRole || 'employee')}
+                <span className={`${styles.roleBadge} ${['org_admin','org_owner','admin','manager'].includes(u.memberRole) ? styles.roleAdmin : styles.roleEmployee}`}>
+                  {['org_admin','org_owner','admin','manager'].includes(u.memberRole) ? 'Admin' : 'Employee'}
                 </span>
               </div>
               <div className={styles.actions}>
