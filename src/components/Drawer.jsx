@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { fmtDate, fmtTime, orderTotal, fmt$ } from '../utils/helpers'
+import { useCurrentLocation } from '../context/LocationContext'
+import { buildInvoiceHtml } from '../utils/invoiceHtml'
 import styles from './Drawer.module.css'
 
 export default function Drawer({ order, onClose, onSmsLog, showToast }) {
@@ -7,6 +9,51 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   const [sent, setSent]         = useState(false)
   const [smsOpen, setSmsOpen]   = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [sendingReceipt, setSendingReceipt] = useState(false)
+
+  const { currentLocation } = useCurrentLocation()
+  const locationContact = currentLocation?.settings?.contact || {}
+  const locationName    = currentLocation?.name || 'Sweet Red Peach'
+
+  const openInvoice = async () => {
+    let logoSrc = ''
+    try {
+      const res = await fetch('/srp-logo.png')
+      const blob = await res.blob()
+      logoSrc = await new Promise(resolve => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.readAsDataURL(blob)
+      })
+    } catch { /* proceed without logo */ }
+    const html = buildInvoiceHtml({ order, locationName, locationContact, logoSrc })
+    const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
+    window.open(blobUrl, '_blank')
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
+  }
+
+  const sendReceipt = async () => {
+    if (!order.email) return
+    setSendingReceipt(true)
+    try {
+      const res = await fetch('/api/send-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order, locationName, locationContact }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast({ label: '⚠️ Receipt failed', customer: order.customer, msg: data.error || 'Could not send receipt.' })
+      } else {
+        showToast({ label: '✉️ Receipt sent!', customer: order.customer, msg: `Sent to ${order.email}` })
+        onSmsLog(order.id, `✉️ Receipt emailed to ${order.email}`)
+      }
+    } catch {
+      showToast({ label: '⚠️ Receipt error', customer: order.customer, msg: 'Network error — receipt not sent.' })
+    } finally {
+      setSendingReceipt(false)
+    }
+  }
 
   if (!order) return null
 
@@ -124,6 +171,21 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
           <div className={styles.createdRow}>
             <span className={styles.createdLabel}>Order created</span>
             <span className={styles.createdVal}>{createdLabel}</span>
+          </div>
+
+          {/* Invoice actions */}
+          <div className={styles.invoiceActions}>
+            <button className={styles.invoiceBtn} onClick={openInvoice}>
+              View Invoice
+            </button>
+            <button
+              className={styles.invoiceBtn}
+              onClick={sendReceipt}
+              disabled={!order.email || sendingReceipt}
+              title={!order.email ? 'No customer email on file' : undefined}
+            >
+              {sendingReceipt ? 'Sending…' : 'Send Receipt'}
+            </button>
           </div>
 
           {/* Notification log */}

@@ -75,6 +75,17 @@
 .notifTime { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .emptyNotif { font-size: 13px; color: var(--text-muted); font-style: italic; }
 
+/* ── Invoice actions ── */
+.invoiceActions { display: flex; gap: 8px; margin: 16px 0; }
+.invoiceBtn {
+  flex: 1; padding: 9px 0; font-size: 12px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; border-radius: 8px; cursor: pointer;
+  border: 1.5px solid var(--brand); color: var(--brand); background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.invoiceBtn:hover:not(:disabled) { background: var(--brand); color: #fff; }
+.invoiceBtn:disabled { opacity: 0.38; cursor: not-allowed; }
+
 /* ── Contact SMS ── */
 .contactSection { border-top: 1px solid var(--border); padding-top: 16px; }
 .contactTo { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
