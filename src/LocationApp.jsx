@@ -87,7 +87,7 @@ function ConfirmModal({ title, message, confirmLabel, confirmStyle, onConfirm, o
 
 export default function LocationApp() {
   const { locationSlug } = useParams()
-  const { currentLocation } = useCurrentLocation()
+  const { currentLocation, loading: locationLoading } = useCurrentLocation()
 
   const [orders, setOrders]               = useState([])
   const [ordersLoaded, setOrdersLoaded]   = useState(false)
@@ -158,7 +158,8 @@ export default function LocationApp() {
   }, [currentLocation])
 
   useEffect(() => {
-    if (!currentLocation) return
+    if (locationLoading) return
+    if (!currentLocation) { setOrdersLoaded(true); return }
     // Reset picked-up cache when location changes
     pickedUpLoaded.current = false
     setOrders([])
@@ -172,7 +173,7 @@ export default function LocationApp() {
       .eq('stage', 'picked-up')
       .eq('location_id', currentLocation.id)
       .then(({ count }) => { if (count != null) setPickedUpCount(count) })
-  }, [currentLocation?.id])
+  }, [currentLocation?.id, locationLoading])
 
   // ── Lazy-load picked-up orders ──
   useEffect(() => {
@@ -408,9 +409,14 @@ export default function LocationApp() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
           <div className={styles.sidebarLogo}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '1px' }}>
-              <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: '22px', color: '#131710', letterSpacing: '-0.5px', lineHeight: 1 }}>cadro</span>
-              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#245A1F', marginLeft: '2px', flexShrink: 0, position: 'relative', top: '-1px' }}></span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '1px' }}>
+                <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: '22px', color: '#131710', letterSpacing: '-0.5px', lineHeight: 1 }}>cadro</span>
+                <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#245A1F', marginLeft: '2px', flexShrink: 0, position: 'relative', top: '-1px' }}></span>
+              </div>
+              {sidebarOpen && currentLocation && (
+                <span className={styles.sidebarLogoSub} style={{ lineHeight: 1.3 }}>{currentLocation.name}</span>
+              )}
             </div>
           </div>
           <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>

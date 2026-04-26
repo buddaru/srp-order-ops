@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useCurrentLocation } from '../context/LocationContext'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache } from '../lib/cache'
 import { toDS } from '../utils/helpers'
@@ -29,6 +30,7 @@ const shiftDate = (ds, n) => {
 
 export default function Production() {
   const { isAdmin } = useAuth()
+  const { currentLocation } = useCurrentLocation() || {}
   const loadRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [date, setDate]       = useState(todayDS())
@@ -62,8 +64,8 @@ export default function Production() {
       }
       try {
         const [r1, r2] = await Promise.all([
-          safeQuery(() => supabase.from('production').select('*').eq('date', date).order('created_at')),
-          safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).maybeSingle()),
+          safeQuery(() => supabase.from('production').select('*').eq('date', date).eq('location_id', currentLocation?.id).order('created_at')),
+          safeQuery(() => supabase.from('production_notes').select('*').eq('date', date).eq('location_id', currentLocation?.id).maybeSingle()),
         ])
         if (r1.error?.message === 'timeout' || r2.error?.message === 'timeout') {
           setLoadError(true)
@@ -85,7 +87,7 @@ export default function Production() {
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [date])
+  }, [date, currentLocation?.id])
 
   const handleNoteChange = (val) => {
     setNote(val)
@@ -95,7 +97,7 @@ export default function Production() {
       if (noteId) {
         await supabase.from('production_notes').update({ content: val, updated_at: new Date().toISOString() }).eq('id', noteId)
       } else {
-        const { data } = await supabase.from('production_notes').insert({ date, content: val }).select().single()
+        const { data } = await supabase.from('production_notes').insert({ date, content: val, location_id: currentLocation?.id }).select().single()
         if (data) setNoteId(data.id)
       }
       setNoteSaved(true)
@@ -105,7 +107,7 @@ export default function Production() {
 
   const handleAdd = async () => {
     if (!newName.trim() || !newQty.trim()) return
-    const item = { date, item_name: newName.trim(), quantity: newQty.trim(), category: newCat.trim() || 'General', notes: newNotes.trim(), completed: false }
+    const item = { date, item_name: newName.trim(), quantity: newQty.trim(), category: newCat.trim() || 'General', notes: newNotes.trim(), completed: false, location_id: currentLocation?.id }
     const { data } = await supabase.from('production').insert(item).select().single()
     if (data) setItems(prev => [...prev, data])
     setNewName(''); setNewQty(''); setNewCat(''); setNewNotes(''); setShowForm(false)
@@ -135,13 +137,14 @@ export default function Production() {
 
   const handleSaveTemplate = async () => {
     if (items.length === 0) return
-    await supabase.from('production_template').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('production_template').delete().eq('location_id', currentLocation?.id)
     const templateItems = items.map((item, i) => ({
       item_name: item.item_name,
       quantity: item.quantity,
       category: item.category,
       notes: item.notes,
       sort_order: i,
+      location_id: currentLocation?.id,
     }))
     await supabase.from('production_template').insert(templateItems)
     alert('Template saved! Load it any day with "Load Template".')
@@ -152,7 +155,7 @@ export default function Production() {
       const ok = window.confirm('This will add template items to today\'s list. Continue?')
       if (!ok) return
     }
-    const { data } = await supabase.from('production_template').select('*').order('sort_order')
+    const { data } = await supabase.from('production_template').select('*').eq('location_id', currentLocation?.id).order('sort_order')
     if (!data || data.length === 0) {
       alert('No template saved yet. Build your list and click "Save as Template" first.')
       return
@@ -164,6 +167,7 @@ export default function Production() {
       category: t.category,
       notes: t.notes,
       completed: false,
+      location_id: currentLocation?.id,
     }))
     const { data: inserted } = await supabase.from('production').insert(toInsert).select()
     if (inserted) setItems(prev => [...prev, ...inserted])

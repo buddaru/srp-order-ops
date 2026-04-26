@@ -2,33 +2,34 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { MENU, CATEGORIES } from '../data/menuData'
 
-// Module-level cache so the DB is only hit once per session
-let _cache = null
+// Per-location cache so each location's menu is fetched once per session
+const _cache = {}
 
-export function useMenuItems() {
-  const [menuItems, setMenuItems] = useState(_cache || MENU)
-  const [loading, setLoading]     = useState(!_cache)
+export function useMenuItems(locationId) {
+  const cached = locationId ? _cache[locationId] : null
+  const [menuItems, setMenuItems] = useState(cached || MENU)
+  const [loading, setLoading]     = useState(!cached)
 
   useEffect(() => {
-    if (_cache) return
+    if (!locationId) { setLoading(false); return }
+    if (_cache[locationId]) { setMenuItems(_cache[locationId]); setLoading(false); return }
     supabase
       .from('menu_items')
       .select('*')
       .eq('active', true)
+      .eq('location_id', locationId)
       .order('sort_order', { ascending: true })
       .then(({ data, error }) => {
         if (!error && data && data.length > 0) {
-          _cache = data
+          _cache[locationId] = data
           setMenuItems(data)
         }
-        // If table is empty or errors, keep using static MENU as fallback
         setLoading(false)
       })
-  }, [])
+  }, [locationId])
 
   // Derive categories from loaded items, preserving canonical order
   const categories = CATEGORIES.filter(cat => menuItems.some(m => m.category === cat))
-  // Add any extra categories from DB that aren't in the static list
   menuItems.forEach(m => {
     if (!categories.includes(m.category)) categories.push(m.category)
   })
@@ -37,6 +38,10 @@ export function useMenuItems() {
 }
 
 // Call this to bust the cache after admin edits
-export function invalidateMenuCache() {
-  _cache = null
+export function invalidateMenuCache(locationId) {
+  if (locationId) {
+    delete _cache[locationId]
+  } else {
+    Object.keys(_cache).forEach(k => delete _cache[k])
+  }
 }

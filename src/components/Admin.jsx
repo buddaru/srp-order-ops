@@ -137,31 +137,35 @@ export default function Admin() {
   const [deleteId, setDeleteId]     = useState(null)
 
   const load = async () => {
-    if (!currentLocation) return
+    if (!currentLocation) { setLoading(false); return }
     setLoading(true)
+    try {
+      const [{ data: locMembers }, { data: orgMembers }] = await Promise.all([
+        supabase.from('location_members').select('user_id, role').eq('location_id', currentLocation.id),
+        supabase.from('organization_members').select('user_id, role').eq('organization_id', currentLocation.organization_id),
+      ])
 
-    const [{ data: locMembers }, { data: orgMembers }] = await Promise.all([
-      supabase.from('location_members').select('user_id, role').eq('location_id', currentLocation.id),
-      supabase.from('organization_members').select('user_id, role').eq('organization_id', currentLocation.organization_id),
-    ])
+      const userIds = [...new Set([
+        ...(locMembers || []).map(m => m.user_id),
+        ...(orgMembers || []).map(m => m.user_id),
+      ])]
 
-    const userIds = [...new Set([
-      ...(locMembers || []).map(m => m.user_id),
-      ...(orgMembers || []).map(m => m.user_id),
-    ])]
+      if (userIds.length === 0) { setUsers([]); setLoading(false); return }
 
-    if (userIds.length === 0) { setUsers([]); setLoading(false); return }
+      const { data: profiles } = await supabase.from('profiles').select('*').in('id', userIds).order('full_name')
 
-    const { data: profiles } = await supabase.from('profiles').select('*').in('id', userIds).order('full_name')
+      const orgMap = Object.fromEntries((orgMembers || []).map(m => [m.user_id, m.role]))
+      const locMap = Object.fromEntries((locMembers || []).map(m => [m.user_id, m.role]))
 
-    const orgMap = Object.fromEntries((orgMembers || []).map(m => [m.user_id, m.role]))
-    const locMap = Object.fromEntries((locMembers || []).map(m => [m.user_id, m.role]))
-
-    setUsers((profiles || []).map(p => ({
-      ...p,
-      memberRole: orgMap[p.id] || locMap[p.id] || p.role,
-    })))
-    setLoading(false)
+      setUsers((profiles || []).map(p => ({
+        ...p,
+        memberRole: orgMap[p.id] || locMap[p.id] || p.role,
+      })))
+    } catch (e) {
+      console.error('Admin load error:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [currentLocation?.id])

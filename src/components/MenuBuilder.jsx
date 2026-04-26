@@ -6,6 +6,7 @@ import {
   SIZES, CAKE_ADDONS, LAYER_PRICE
 } from '../data/menuData'
 import { useMenuItems } from '../hooks/useMenuItems'
+import { useCurrentLocation } from '../context/LocationContext'
 import styles from './MenuBuilder.module.css'
 
 const blankAddonState = () => ({
@@ -73,7 +74,8 @@ function buildAddonSummary(item, addons) {
 const itemKey = (item) => `${item.category}::${item.name}`
 
 export default function MenuBuilder({ cartItems, onChange }) {
-  const { menuItems, categories } = useMenuItems()
+  const { currentLocation } = useCurrentLocation() || {}
+  const { menuItems, categories } = useMenuItems(currentLocation?.id)
   const [selectedItem, setSelectedItem] = useState(null)
   const [size, setSize]                 = useState('round')
   const [addons, setAddons]             = useState(blankAddonState())

@@ -193,6 +193,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!MEEZ_TOKEN) return res.status(500).json({ error: 'MEEZ_API_TOKEN not set' })
 
+  const locationId   = req.body?.location_id || null
   // Pass ?resync=true to force re-fetch all recipes (picks up new fields on existing recipes)
   const forceResync = req.query.resync === 'true' || req.body?.resync === true
 
@@ -256,17 +257,18 @@ export default async function handler(req, res) {
           ingredients,
           steps,
           image_url:      featuredImage,
-          images:         media.images,    // ── NEW: all images
-          videos:         media.videos,    // ── NEW: all videos
-          recipe_history: history,         // ── NEW: revision history
+          images:         media.images,
+          videos:         media.videos,
+          recipe_history: history,
           notes:          detail.notes || null,
           last_viewed:    item.last_viewed || null,
           synced_at:      new Date().toISOString(),
+          ...(locationId ? { location_id: locationId } : {}),
         }
 
         const { data: upserted, error } = await supabase
           .from('recipes')
-          .upsert(record, { onConflict: 'meez_id' })
+          .upsert(record, { onConflict: locationId ? 'meez_id,location_id' : 'meez_id' })
           .select('id')
           .single()
 
