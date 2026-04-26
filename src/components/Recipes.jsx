@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import { useCurrentLocation } from '../context/LocationContext'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
 import Ingredients, { AddIngredientModal } from './Ingredients'
 import styles from './Recipes.module.css'
@@ -219,6 +220,7 @@ const mapRecipes = (recs) => recs.map(r => ({
 export default function Recipes() {
   const navigate = useNavigate()
   const { locationSlug } = useParams()
+  const { currentLocation } = useCurrentLocation() || {}
   const [tab, setTab]           = useState('recipes')
   const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy]     = useState('last_viewed')
@@ -255,8 +257,13 @@ export default function Recipes() {
         setLoadingRecipes(true)
       }
 
+      const locId = currentLocation?.id
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')),
+        safeQuery(() => {
+          let q = supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')
+          if (locId) q = q.eq('location_id', locId)
+          return q
+        }),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       const mapped = recs ? mapRecipes(recs) : null
@@ -283,7 +290,11 @@ export default function Recipes() {
 
     const runChunk = async () => {
       try {
-        const res  = await fetch('/api/sync-meez', { method: 'POST' })
+        const res  = await fetch('/api/sync-meez', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location_id: currentLocation?.id }),
+        })
         const data = await res.json()
 
         if (!res.ok) {
@@ -299,8 +310,12 @@ export default function Recipes() {
           setTimeout(runChunk, 200)
         } else {
           // Done — reload recipes and groups
+          const locId = currentLocation?.id
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name'),
+            (locId
+              ? supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').eq('location_id', locId).order('name')
+              : supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')
+            ),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {

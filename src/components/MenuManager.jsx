@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useCurrentLocation } from '../context/LocationContext'
 import { MENU, CATEGORIES } from '../data/menuData'
 import { invalidateMenuCache } from '../hooks/useMenuItems'
 import { fmtCost } from '../utils/costCalculator'
@@ -360,7 +361,7 @@ function ItemModal({ item, onClose, onUpdated }) {
   )
 }
 
-function AddItemModal({ categories, onClose, onSaved }) {
+function AddItemModal({ categories, onClose, onSaved, locationId }) {
   const [name,    setName]    = useState('')
   const [cat,     setCat]     = useState(categories[0] || '')
   const [newCat,  setNewCat]  = useState('')
@@ -376,6 +377,7 @@ function AddItemModal({ categories, onClose, onSaved }) {
     setSaving(true)
     const { error: err } = await supabase.from('menu_items').insert({
       name: name.trim(), category: finalCat, price: parseInt(price), active: true, sort_order: 999,
+      ...(locationId ? { location_id: locationId } : {}),
     })
     if (err) { setError(err.message); setSaving(false); return }
     await supabase.from('menu_categories').upsert({ name: finalCat }, { onConflict: 'name' })
@@ -625,6 +627,7 @@ function ItemRow({ item, onOpen, onToggle, onPriceChange, canEdit }) {
 
 export default function MenuManager() {
   const { isAdmin }  = useAuth()
+  const { currentLocation } = useCurrentLocation() || {}
   const [items,      setItems]      = useState([])
   const [categories, setCategories] = useState([])
   const [loading,    setLoading]    = useState(true)
@@ -637,8 +640,11 @@ export default function MenuManager() {
 
   const load = useCallback(async () => {
     setLoading(true)
+    const locId = currentLocation?.id
     const [{ data: dbItems }, { data: dbCats }] = await Promise.all([
-      supabase.from('menu_items').select('*').order('sort_order').order('name'),
+      locId
+        ? supabase.from('menu_items').select('*').eq('location_id', locId).order('sort_order').order('name')
+        : supabase.from('menu_items').select('*').order('sort_order').order('name'),
       supabase.from('menu_categories').select('name').order('sort_order'),
     ])
     const loadedItems = dbItems || []
@@ -674,10 +680,14 @@ export default function MenuManager() {
 
   const handleSeedFromDefaults = async () => {
     setSeeding(true); setSeedMsg('')
-    const rows = MENU.map((m, i) => ({ name: m.name, category: m.category, price: m.price, active: true, sort_order: i }))
+    const locId = currentLocation?.id
+    const rows = MENU.map((m, i) => ({
+      name: m.name, category: m.category, price: m.price, active: true, sort_order: i,
+      ...(locId ? { location_id: locId } : {}),
+    }))
     const { error } = await supabase.from('menu_items').upsert(rows, { onConflict: 'name,category' })
     if (error) setSeedMsg('Error: ' + error.message)
-    else { setSeedMsg(`Loaded ${rows.length} items.`); invalidateMenuCache(); load() }
+    else { setSeedMsg(`Loaded ${rows.length} items.`); invalidateMenuCache(locId); load() }
     setSeeding(false)
   }
 
@@ -749,7 +759,7 @@ export default function MenuManager() {
         </>
       )}
 
-      {showAdd    && <AddItemModal categories={categories.length > 0 ? categories : CATEGORIES} onClose={() => setShowAdd(false)} onSaved={load} />}
+      {showAdd    && <AddItemModal categories={categories.length > 0 ? categories : CATEGORIES} onClose={() => setShowAdd(false)} onSaved={load} locationId={currentLocation?.id} />}
       {showCatMgr && <ManageCategoriesModal categories={categories} onClose={() => setShowCatMgr(false)} onUpdated={cats => { setCategories(cats); load() }} />}
       {openItem   && <ItemModal item={openItem} onClose={() => setOpenItem(null)} onUpdated={updated => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))} />}
     </div>
