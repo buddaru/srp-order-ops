@@ -13,7 +13,7 @@ const EditIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="non
 
 export default function RecipeGroupPage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id, locationSlug } = useParams()
   const fileRef = useRef(null)
 
   const [group, setGroup] = useState(null)
@@ -182,7 +182,7 @@ export default function RecipeGroupPage() {
             <div className={styles.emptySub}>Click Edit Group to add recipes.</div>
           </div>
         ) : groupRecipes.map(r => (
-          <div key={r.id} className={styles.recipeRow} onClick={() => !editMode && navigate(`/recipes/${r.id}`)}>
+          <div key={r.id} className={styles.recipeRow} onClick={() => !editMode && navigate(`/app/${locationSlug}/recipes/${r.id}`)}>
             <div className={styles.recipeThumb}>🧁</div>
             <div className={styles.recipeInfo}>
               <div className={styles.recipeName}>{r.name}</div>

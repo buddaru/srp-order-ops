@@ -152,7 +152,7 @@ function useDragDrop(setList) {
 export default function RecipeEdit() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { id }    = useParams()
+  const { id, locationSlug }    = useParams()
   const { user }  = useAuth()
 
   // Seed from navigation state (coming from step-2 modal)
@@ -299,8 +299,8 @@ export default function RecipeEdit() {
       }
     }
 
-    if (opts.thenNavigate && savedId) navigate(`/recipes/${savedId}`)
-    else if (opts.thenNavigate) navigate('/recipes')
+    if (opts.thenNavigate && savedId) navigate(`/app/${locationSlug}/recipes/${savedId}`)
+    else if (opts.thenNavigate) navigate(`/app/${locationSlug}/recipes`)
   }, [recipeName, recipeGroup, yieldQty, yieldUnit, allergens, coverImage, ings, steps, dbId, navigate, user])
 
   // ── Autosave — debounced 2s after any change ──
