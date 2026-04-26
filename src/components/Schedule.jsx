@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache } from '../lib/cache'
 import { useAuth } from '../context/AuthContext'
+import { useCurrentLocation } from '../context/LocationContext'
 import styles from './Schedule.module.css'
 import PageHeader from './PageHeader'
 
@@ -43,7 +44,7 @@ function fmtHrs(h) { return h%1===0?`${h}h`:`${h.toFixed(1)}h` }
 function fmtMoney(n) { return '$'+Math.round(n).toLocaleString() }
 
 // ── Employee Modal ──
-function EmployeeModal({ employee, onSave, onClose }) {
+function EmployeeModal({ employee, locationId, onSave, onClose }) {
   const isEdit = !!employee?.id
   const [name, setName]       = useState(employee?.name||'')
   const [email, setEmail]     = useState(employee?.email||'')
@@ -58,7 +59,7 @@ function EmployeeModal({ employee, onSave, onClose }) {
     setSaving(true)
     const row = { name:name.trim(), email:email.trim(), phone:phone.trim(), pay_rate:parseFloat(payRate)||null, default_role:role }
     if (isEdit) { await supabase.from('employees').update(row).eq('id',employee.id) }
-    else { await supabase.from('employees').insert([row]) }
+    else { await supabase.from('employees').insert([{ ...row, location_id: locationId }]) }
     onSave()
   }
 
@@ -110,7 +111,7 @@ function EmployeeModal({ employee, onSave, onClose }) {
 }
 
 // ── Shift Modal ──
-function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
+function ShiftModal({ shift, employees, weekDays, locationId, onSave, onDelete, onClose }) {
   const isEdit = !!shift?.id
   const [empId, setEmpId]         = useState(shift?.employee_id||(employees[0]?.id||''))
   const [date, setDate]           = useState(shift?.shift_date||toDS(weekDays[0]))
@@ -144,7 +145,7 @@ function ShiftModal({ shift, employees, weekDays, onSave, onDelete, onClose }) {
     const emp = employees.find(x=>x.id===empId)
     const row = { employee_id:empId, employee_name:emp?.name||'', employee_email:emp?.email||'', shift_date:date, start_time:startTime, end_time:endTime, role, notes:notes.trim() }
     if (isEdit) { await supabase.from('shifts').update(row).eq('id',shift.id) }
-    else { await supabase.from('shifts').insert([row]) }
+    else { await supabase.from('shifts').insert([{ ...row, location_id: locationId }]) }
     onSave()
   }
 
@@ -338,6 +339,7 @@ function SendAllModal({ employees, weekShifts, weekLabel, onClose }) {
 // ── Main ──
 export default function Schedule() {
   const { isAdmin } = useAuth()
+  const { currentLocation } = useCurrentLocation()
   const [shifts, setShifts]         = useState([])
   const [employees, setEmployees]   = useState([])
   const [loading, setLoading]       = useState(false)
@@ -360,8 +362,11 @@ export default function Schedule() {
   const weekEnd  = weekDays[6]
 
   const loadAll = async () => {
+    const locId = currentLocation?.id
+    if (!locId) return
     // Show cached data instantly
-    const cached = getCache('schedule-all')
+    const cacheKey = `schedule-all-${locId}`
+    const cached = getCache(cacheKey)
     if (cached) {
       setShifts(cached.shifts)
       setEmployees(cached.employees)
@@ -370,14 +375,14 @@ export default function Schedule() {
       setLoading(true)
     }
     const [r1, r2] = await Promise.all([
-      safeQuery(() => supabase.from('shifts').select('*').order('shift_date').order('start_time')),
-      safeQuery(() => supabase.from('employees').select('*').order('name')),
+      safeQuery(() => supabase.from('shifts').select('*').eq('location_id', locId).order('shift_date').order('start_time')),
+      safeQuery(() => supabase.from('employees').select('*').eq('location_id', locId).order('name')),
     ])
     const shifts = r1.data || []
     const employees = r2.data || []
     setShifts(shifts)
     setEmployees(employees)
-    setCache('schedule-all', { shifts, employees })
+    setCache(cacheKey, { shifts, employees })
     setLoading(false)
   }
 
@@ -386,7 +391,7 @@ export default function Schedule() {
     const onVisible = () => { if (document.visibilityState === 'visible') loadAll() }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  },[])
+  },[currentLocation?.id])
 
   const weekShifts = useMemo(()=>{
     const ws=toDS(weekStart), we=toDS(weekEnd)
@@ -430,7 +435,7 @@ export default function Schedule() {
     setCopyingWeek(true)
     const newShifts=prev.map(s=>{
       const d=parseDS(s.shift_date); d.setDate(d.getDate()+7)
-      return { employee_id:s.employee_id, employee_name:s.employee_name, employee_email:s.employee_email, shift_date:toDS(d), start_time:s.start_time, end_time:s.end_time, role:s.role, notes:s.notes }
+      return { employee_id:s.employee_id, employee_name:s.employee_name, employee_email:s.employee_email, shift_date:toDS(d), start_time:s.start_time, end_time:s.end_time, role:s.role, notes:s.notes, location_id:currentLocation?.id }
     })
     await supabase.from('shifts').insert(newShifts)
     setCopyingWeek(false)
@@ -692,8 +697,8 @@ export default function Schedule() {
         </div>
       )}
 
-      {showShiftModal && <ShiftModal shift={editShift} employees={employees} weekDays={weekDays} onSave={handleSave} onDelete={handleShiftDel} onClose={()=>{setShowShiftModal(false);setEditShift(null)}} />}
-      {showEmpModal  && <EmployeeModal employee={editEmp} onSave={handleEmpSave} onClose={()=>{setShowEmpModal(false);setEditEmp(null)}} />}
+      {showShiftModal && <ShiftModal shift={editShift} employees={employees} weekDays={weekDays} locationId={currentLocation?.id} onSave={handleSave} onDelete={handleShiftDel} onClose={()=>{setShowShiftModal(false);setEditShift(null)}} />}
+      {showEmpModal  && <EmployeeModal employee={editEmp} locationId={currentLocation?.id} onSave={handleEmpSave} onClose={()=>{setShowEmpModal(false);setEditEmp(null)}} />}
       {showSendAll   && <SendAllModal employees={employees} weekShifts={weekShifts} weekLabel={fmtWeek(weekStart)} onClose={()=>setShowSendAll(false)} />}
 
       {deleteEmpId && (
