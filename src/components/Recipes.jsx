@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
 import Ingredients, { AddIngredientModal } from './Ingredients'
@@ -218,6 +218,7 @@ const mapRecipes = (recs) => recs.map(r => ({
 
 export default function Recipes() {
   const navigate = useNavigate()
+  const { locationSlug } = useParams()
   const [tab, setTab]           = useState('recipes')
   const [viewMode, setViewMode] = useState('list')
   const [sortBy, setSortBy]     = useState('last_viewed')
@@ -357,13 +358,13 @@ export default function Recipes() {
     const newId = `recipe-${Date.now()}`
     setStep(null)
     setRecipeData(null)
-    navigate(`/recipes/${newId}/edit`, { state: { name: data.name, group: data.group || '', ingredients: data.ingredients || '', prep: data.prep || '' } })
+    navigate(`/app/${locationSlug}/recipes/${newId}/edit`, { state: { name: data.name, group: data.group || '', ingredients: data.ingredients || '', prep: data.prep || '' } })
   }
 
   const handleGroupCreated = (group) => {
     setGroups(prev => [...prev, group])
     setShowGroupModal(false)
-    navigate(`/recipe-groups/${group.id}`)
+    navigate(`/app/${locationSlug}/recipe-groups/${group.id}`)
   }
 
   const closeModal = () => { setStep(null); setRecipeData(null) }
@@ -444,7 +445,7 @@ export default function Recipes() {
         ) : viewMode === 'grid' ? (
           <div className={styles.recipeGrid}>
             {filteredRecipes.map(r => (
-              <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/recipes/${r.id}`)}>
+              <div key={r.id} className={styles.recipeCard} onClick={() => navigate(`/app/${locationSlug}/recipes/${r.id}`)}>
                 <div className={styles.cardThumb}>
                   {r.imageUrl
                     ? /\.(mp4|mov|webm|m4v)(\?|$)/i.test(r.imageUrl)
@@ -487,7 +488,7 @@ export default function Recipes() {
               </div>
             </div>
             {filteredRecipes.slice(0, visibleCount).map(r => (
-              <div key={r.id} className={styles.listRow} onClick={() => navigate(`/recipes/${r.id}`)}>
+              <div key={r.id} className={styles.listRow} onClick={() => navigate(`/app/${locationSlug}/recipes/${r.id}`)}>
                 <div className={styles.listInfo}>
                   <div className={styles.listName}>{r.name}</div>
                   {r.yield !== '—' && <div className={styles.listMeta}>Yield: {r.yield}</div>}
@@ -515,7 +516,7 @@ export default function Recipes() {
         ) : viewMode === 'grid' ? (
           <div className={styles.groupGrid}>
             {filteredGroups.map(g => (
-              <div key={g.id} className={styles.groupCard} onClick={() => navigate(`/recipe-groups/${g.id}`)}>
+              <div key={g.id} className={styles.groupCard} onClick={() => navigate(`/app/${locationSlug}/recipe-groups/${g.id}`)}>
                 {g.cover_image
                   ? <div className={styles.groupCover} style={{ backgroundImage: `url(${g.cover_image})` }} />
                   : <div className={styles.groupEmoji}>📁</div>
@@ -527,7 +528,7 @@ export default function Recipes() {
         ) : (
           <div className={styles.listView}>
             {filteredGroups.map(g => (
-              <div key={g.id} className={styles.listRow} onClick={() => navigate(`/recipe-groups/${g.id}`)}>
+              <div key={g.id} className={styles.listRow} onClick={() => navigate(`/app/${locationSlug}/recipe-groups/${g.id}`)}>
                 <div className={styles.listThumb}>
                   {g.cover_image
                     ? <div className={styles.listCoverThumb} style={{ backgroundImage: `url(${g.cover_image})` }} />

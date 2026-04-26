@@ -157,7 +157,7 @@ function RecipeVideo({ src, poster, className }) {
 
 export default function RecipeView() {
   const navigate = useNavigate()
-  const { id }   = useParams()
+  const { id, locationSlug }   = useParams()
   const [loading,    setLoading]    = useState(true)
   const [recipe,     setRecipe]     = useState(null)
   const [scale,      setScale]      = useState(1)
@@ -250,14 +250,14 @@ export default function RecipeView() {
 
         {/* ── Title row with back + actions inline ── */}
         <div className={styles.titleSection}>
-          <button className={styles.backBtn} onClick={() => navigate('/recipes')}>
+          <button className={styles.backBtn} onClick={() => navigate(`/app/${locationSlug}/recipes`)}>
             <BackIcon /> Recipes
           </button>
           <div className={styles.titleRow}>
             <h1 className={styles.recipeTitle}>{recipe.name}</h1>
             <div className={styles.titleActions}>
               <button className={styles.btnOutline}><ShareIcon /> Share</button>
-              <button className={styles.btnEdit} onClick={() => navigate(`/recipes/${id}/edit`)}>
+              <button className={styles.btnEdit} onClick={() => navigate(`/app/${locationSlug}/recipes/${id}/edit`)}>
                 <EditIcon /> Edit Recipe
               </button>
             </div>
