@@ -245,12 +245,9 @@ export default function Recipes() {
   // mapRecipes is defined at module level below
 
   useEffect(() => {
-    const locId = currentLocation?.id
-    const cacheKey = `recipes-list-${locId || 'all'}`
-
     const load = async () => {
       // Show cached data immediately — feels instant
-      const cached = getCache(cacheKey)
+      const cached = getCache('recipes-list')
       if (cached) {
         setRecipes(cached.recipes)
         setGroups(cached.groups)
@@ -261,21 +258,17 @@ export default function Recipes() {
       }
 
       const [{ data: recs }, { data: grps }] = await Promise.all([
-        safeQuery(() => {
-          let q = supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')
-          if (locId) q = q.eq('location_id', locId)
-          return q
-        }),
+        safeQuery(() => supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')),
         safeQuery(() => supabase.from('recipe_groups').select('id, name, cover_image').order('name')),
       ])
       const mapped = recs ? mapRecipes(recs) : null
       if (mapped) setRecipes(mapped)
       if (grps) setGroups(grps)
-      if (mapped && grps) setCache(cacheKey, { recipes: mapped, groups: grps })
+      if (mapped && grps) setCache('recipes-list', { recipes: mapped, groups: grps })
       setLoadingRecipes(false)
     }
     load()
-  }, [currentLocation?.id])
+  }, [])
 
   useEffect(() => {
     const handler = e => {
@@ -295,7 +288,7 @@ export default function Recipes() {
         const res  = await fetch('/api/sync-meez', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ location_id: currentLocation?.id, resync: force }),
+          body: JSON.stringify({ resync: force }),
         })
         const data = await res.json()
 
@@ -312,22 +305,17 @@ export default function Recipes() {
           setTimeout(runChunk, 200)
         } else {
           // Done — reload recipes and groups
-          const locId = currentLocation?.id
           const [{ data: rows }, { data: grps }] = await Promise.all([
-            (locId
-              ? supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').eq('location_id', locId).order('name')
-              : supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')
-            ),
+            supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name'),
             supabase.from('recipe_groups').select('id, name, cover_image').order('name'),
           ])
           if (rows) {
             const synced = mapRecipes(rows)
             setRecipes(synced)
-            const syncCacheKey = `recipes-list-${locId || 'all'}`
             if (grps) {
-              setCache(syncCacheKey, { recipes: synced, groups: grps })
+              setCache('recipes-list', { recipes: synced, groups: grps })
             } else {
-              invalidateCache(syncCacheKey)
+              invalidateCache('recipes-list')
             }
           }
           if (grps) setGroups(grps)

@@ -197,7 +197,6 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!MEEZ_TOKEN) return res.status(500).json({ error: 'MEEZ_API_TOKEN not set' })
 
-  const locationId   = req.body?.location_id || null
   // Pass ?resync=true to force re-fetch all recipes (picks up new fields on existing recipes)
   const forceResync = req.query.resync === 'true' || req.body?.resync === true
 
@@ -207,9 +206,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ synced: 0, hasMore: false, message: 'No recipes found in Meez' })
     }
 
-    let existingQ = supabase.from('recipes').select('meez_id').not('meez_id', 'is', null)
-    if (locationId) existingQ = existingQ.eq('location_id', locationId)
-    const { data: existing } = await existingQ
+    const { data: existing } = await supabase.from('recipes').select('meez_id').not('meez_id', 'is', null)
     const syncedIds = new Set((existing || []).map(r => r.meez_id))
 
     // If resyncing, process all; otherwise only new ones
@@ -268,12 +265,11 @@ export default async function handler(req, res) {
           notes:          detail.notes || null,
           last_viewed:    item.last_viewed || null,
           synced_at:      new Date().toISOString(),
-          ...(locationId ? { location_id: locationId } : {}),
         }
 
         const { data: upserted, error } = await supabase
           .from('recipes')
-          .upsert(record, { onConflict: locationId ? 'meez_id,location_id' : 'meez_id' })
+          .upsert(record, { onConflict: 'meez_id' })
           .select('id')
           .single()
 
