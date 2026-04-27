@@ -65,7 +65,7 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Invoice ${esc(order.id)}</title>
+<title>Receipt ${esc(order.id)}</title>
 <meta name="viewport" content="width=1200">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -89,7 +89,7 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
   <!-- Masthead -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:34px;">
     <div>
-      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-style:italic;font-size:92px;line-height:0.88;color:#3B241C;letter-spacing:-0.02em;">Invoice</div>
+      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-style:italic;font-size:92px;line-height:0.88;color:#3B241C;letter-spacing:-0.02em;">Receipt</div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
         <span style="width:24px;height:1px;background:#8A1F24;display:inline-block;flex-shrink:0;"></span>
         <span style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#6B5347;">Sweet Red Peach · ${esc(locLabel)}</span>
@@ -101,7 +101,7 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
   <!-- Meta band -->
   <div style="background:#EFEFEF;padding:20px 26px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:36px;">
     <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:5px;">Invoice No.</div>
+      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:5px;">Receipt No.</div>
       <div style="font-size:14px;font-weight:500;">${esc(order.id)}</div>
     </div>
     <div>
@@ -156,6 +156,12 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
       </div>
     </div>
   </div>
+
+  ${order.notes ? `<!-- Notes -->
+  <div style="margin-top:32px;padding-top:24px;border-top:1px solid #E4D9C8;">
+    <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:10px;">Notes</div>
+    <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:14px;color:#6B5347;line-height:1.6;">${esc(order.notes)}</div>
+  </div>` : ''}
 
 </div>
 </body>
