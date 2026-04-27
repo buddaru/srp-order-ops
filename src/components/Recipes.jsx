@@ -245,9 +245,12 @@ export default function Recipes() {
   // mapRecipes is defined at module level below
 
   useEffect(() => {
+    const locId = currentLocation?.id
+    const cacheKey = `recipes-list-${locId || 'all'}`
+
     const load = async () => {
       // Show cached data immediately — feels instant
-      const cached = getCache('recipes-list')
+      const cached = getCache(cacheKey)
       if (cached) {
         setRecipes(cached.recipes)
         setGroups(cached.groups)
@@ -257,7 +260,6 @@ export default function Recipes() {
         setLoadingRecipes(true)
       }
 
-      const locId = currentLocation?.id
       const [{ data: recs }, { data: grps }] = await Promise.all([
         safeQuery(() => {
           let q = supabase.from('recipes').select('id, name, group_name, yield_qty, yield_unit, last_viewed, updated_at, image_url').order('name')
@@ -269,11 +271,11 @@ export default function Recipes() {
       const mapped = recs ? mapRecipes(recs) : null
       if (mapped) setRecipes(mapped)
       if (grps) setGroups(grps)
-      if (mapped && grps) setCache('recipes-list', { recipes: mapped, groups: grps })
+      if (mapped && grps) setCache(cacheKey, { recipes: mapped, groups: grps })
       setLoadingRecipes(false)
     }
     load()
-  }, [])
+  }, [currentLocation?.id])
 
   useEffect(() => {
     const handler = e => {
@@ -321,10 +323,11 @@ export default function Recipes() {
           if (rows) {
             const synced = mapRecipes(rows)
             setRecipes(synced)
+            const syncCacheKey = `recipes-list-${locId || 'all'}`
             if (grps) {
-              setCache('recipes-list', { recipes: synced, groups: grps })
+              setCache(syncCacheKey, { recipes: synced, groups: grps })
             } else {
-              invalidateCache('recipes-list')
+              invalidateCache(syncCacheKey)
             }
           }
           if (grps) setGroups(grps)
