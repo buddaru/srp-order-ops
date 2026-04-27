@@ -169,18 +169,22 @@ async function ensureGroup(name, groupCache) {
     .select('id')
     .single()
 
+  if (error) console.warn(`ensureGroup upsert failed for "${name}":`, error.message)
+
   if (data?.id) {
     groupCache.set(name, data.id)
     return data.id
   }
 
-  const { data: existing } = await supabase
+  const { data: existing, error: selErr } = await supabase
     .from('recipe_groups').select('id').eq('name', name).maybeSingle()
+  if (selErr) console.warn(`ensureGroup select failed for "${name}":`, selErr.message)
   if (existing?.id) {
     groupCache.set(name, existing.id)
     return existing.id
   }
 
+  console.error(`ensureGroup: could not find or create group "${name}"`)
   return null
 }
 
