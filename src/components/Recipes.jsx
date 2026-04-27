@@ -286,16 +286,16 @@ export default function Recipes() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleMeezSync = async () => {
+  const handleMeezSync = async (force = false) => {
     setSyncing(true)
-    setSyncMsg('Starting sync…')
+    setSyncMsg(force ? 'Force resyncing all recipes…' : 'Starting sync…')
 
     const runChunk = async () => {
       try {
         const res  = await fetch('/api/sync-meez', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ location_id: currentLocation?.id }),
+          body: JSON.stringify({ location_id: currentLocation?.id, resync: force }),
         })
         const data = await res.json()
 
@@ -402,9 +402,14 @@ export default function Recipes() {
           <p className="pageSub">Manage your recipe library, groups, and supporting docs.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button className={styles.syncBtn} onClick={handleMeezSync} disabled={syncing}>
+          <button className={styles.syncBtn} onClick={() => handleMeezSync(false)} disabled={syncing}>
             {syncing ? '⟳ Syncing…' : '⟳ Sync from Meez'}
           </button>
+          {syncMsg?.includes('already synced') && !syncing && (
+            <button className={styles.syncBtn} onClick={() => handleMeezSync(true)} disabled={syncing}>
+              ⟳ Force Resync
+            </button>
+          )}
           <div className={styles.dropWrap} ref={dropRef}>
             <button className={`btn btn-primary ${styles.newBtn}`} onClick={() => setDropOpen(o => !o)}>
               <PlusIcon /> New <ChevronIcon />
