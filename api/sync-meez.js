@@ -203,8 +203,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ synced: 0, hasMore: false, message: 'No recipes found in Meez' })
     }
 
-    const { data: existing } = await supabase
-      .from('recipes').select('meez_id').not('meez_id', 'is', null)
+    let existingQ = supabase.from('recipes').select('meez_id').not('meez_id', 'is', null)
+    if (locationId) existingQ = existingQ.eq('location_id', locationId)
+    const { data: existing } = await existingQ
     const syncedIds = new Set((existing || []).map(r => r.meez_id))
 
     // If resyncing, process all; otherwise only new ones
