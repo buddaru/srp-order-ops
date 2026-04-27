@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { useCurrentLocation } from '../context/LocationContext'
 import { PURCHASE_UNITS, recalculateAffectedRecipes } from '../utils/costCalculator'
 import styles from './Ingredients.module.css'
 
@@ -272,7 +271,6 @@ function IngredientRow({ ing, onSave, onDelete, onShowHistory }) {
 
 // Exported so Recipes.jsx New+ dropdown can open it
 export function AddIngredientModal({ onClose, onSaved }) {
-  const { currentLocation } = useCurrentLocation()
   const [name,       setName]       = useState('')
   const [unit,       setUnit]       = useState('oz')
   const [totalPrice, setTotalPrice] = useState('')
@@ -301,7 +299,6 @@ export function AddIngredientModal({ onClose, onSaved }) {
       purchase_price: computedPrice,
       yield_pct:      parseFloat(yield_pct) || 100,
       supplier:       supplier.trim() || null,
-      ...(currentLocation?.id ? { location_id: currentLocation.id } : {}),
     })
     if (err) {
       if (err.message?.includes('unique')) setError('An ingredient with this name already exists')
@@ -408,7 +405,6 @@ export function AddIngredientModal({ onClose, onSaved }) {
 // Main embedded component — used inside Recipes.jsx ingredients tab
 // externalSearch: search string passed from parent's search bar
 export default function Ingredients({ externalSearch = '' }) {
-  const { currentLocation } = useCurrentLocation()
   const [ingredients, setIngredients] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [delConfirm,  setDelConfirm]  = useState(null)
@@ -416,12 +412,10 @@ export default function Ingredients({ externalSearch = '' }) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    let q = supabase.from('ingredients').select('*').order('name')
-    if (currentLocation?.id) q = q.eq('location_id', currentLocation.id)
-    const { data } = await q
+    const { data } = await supabase.from('ingredients').select('*').order('name')
     setIngredients(data || [])
     setLoading(false)
-  }, [currentLocation?.id])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
