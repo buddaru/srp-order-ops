@@ -193,6 +193,27 @@ async function linkRecipeToGroup(recipeId, groupId) {
     .upsert({ group_id: groupId, recipe_id: recipeId }, { onConflict: 'group_id,recipe_id' })
 }
 
+async function seedIngredients(parsedIngredients) {
+  const names = [...new Set(
+    parsedIngredients
+      .filter(i => i.type === 'item' && i.name?.trim())
+      .map(i => i.name.trim())
+  )]
+  if (names.length === 0) return
+
+  const rows = names.map(name => ({
+    name,
+    purchase_unit:  'oz',
+    purchase_price: 0,
+    yield_pct:      100,
+  }))
+
+  const { error } = await supabase
+    .from('ingredients')
+    .upsert(rows, { onConflict: 'name', ignoreDuplicates: true })
+  if (error) console.warn('seedIngredients error:', error.message)
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   if (!MEEZ_TOKEN) return res.status(500).json({ error: 'MEEZ_API_TOKEN not set' })
@@ -280,6 +301,8 @@ export default async function handler(req, res) {
           const groupId = await ensureGroup(bookName, groupCache)
           if (groupId) await linkRecipeToGroup(upserted.id, groupId)
         }
+
+        await seedIngredients(ingredients)
 
         synced++
       } catch (err) {
