@@ -56,7 +56,6 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
     website,
   ].filter(Boolean).map(l => `${esc(l)}<br>`).join('')
 
-  const locLabel = locationContact.city || locationName || 'Carson, CA'
   const logoTag = logoSrc
     ? `<img src="${logoSrc}" alt="Sweet Red Peach" style="height:100px;width:auto;flex-shrink:0;">`
     : ''
@@ -92,7 +91,7 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
       <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-style:italic;font-size:92px;line-height:0.88;color:#3B241C;letter-spacing:-0.02em;">Receipt</div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
         <span style="width:24px;height:1px;background:#8A1F24;display:inline-block;flex-shrink:0;"></span>
-        <span style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#6B5347;">Sweet Red Peach · ${esc(locLabel)}</span>
+        <span style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#6B5347;">${esc(locationName || 'Sweet Red Peach')}</span>
       </div>
     </div>
     ${logoTag}

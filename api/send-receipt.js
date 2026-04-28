@@ -96,9 +96,8 @@ function buildReceiptHtml({ order, locationName, locationContact = {}, logoSrc }
     website,
   ].filter(Boolean).map(l => `${esc(l)}<br>`).join('')
 
-  const locLabel = locationContact.city || locationName || ''
   const logoTag = logoSrc
-    ? `<img src="${logoSrc}" alt="${esc(locationName || 'Sweet Red Peach')}" style="height:100px;width:auto;">`
+    ? `<img src="${logoSrc}" alt="${esc(locationName || 'Sweet Red Peach')}" class="logo-img" style="height:80px;width:auto;">`
     : ''
 
   const notesSection = order.notes ? `
@@ -121,34 +120,44 @@ function buildReceiptHtml({ order, locationName, locationContact = {}, logoSrc }
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:#EDE4D4;font-family:Arial,sans-serif;padding:32px 16px;}
+  @media only screen and (max-width:480px){
+    body{padding:0 !important}
+    .outer{padding:28px 20px !important}
+    .logo-img{height:56px !important}
+    .receipt-title{font-size:44px !important}
+    .meta-td{display:block !important;width:100% !important;padding:6px 16px !important}
+    .from-td,.billed-td{display:block !important;width:100% !important;padding-right:0 !important;padding-left:0 !important;padding-bottom:20px !important}
+    .totals-spacer{display:none !important}
+    .totals-amt{width:100% !important}
+  }
 </style>
 </head>
 <body>
-<div style="max-width:680px;margin:0 auto;background:#FFFFFF;color:#3B241C;padding:48px 52px;font-family:Arial,sans-serif;">
+<div class="outer" style="max-width:680px;margin:0 auto;background:#FFFFFF;color:#3B241C;padding:48px 52px;font-family:Arial,sans-serif;">
 
   <!-- Masthead -->
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
     <tr>
       <td style="vertical-align:bottom;">
-        <div style="font-family:Georgia,serif;font-weight:700;font-style:italic;font-size:60px;line-height:0.9;color:#3B241C;">Receipt</div>
-        <div style="margin-top:12px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B5347;">${esc(locationName || 'Sweet Red Peach')}${locLabel ? ' · ' + esc(locLabel) : ''}</div>
+        <div class="receipt-title" style="font-family:Georgia,serif;font-weight:700;font-style:italic;font-size:60px;line-height:0.9;color:#3B241C;">Receipt</div>
+        <div style="margin-top:12px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B5347;">${esc(locationName || 'Sweet Red Peach')}</div>
       </td>
-      <td style="vertical-align:top;text-align:right;">${logoTag}</td>
+      <td style="vertical-align:top;text-align:right;width:100px;">${logoTag}</td>
     </tr>
   </table>
 
   <!-- Meta band -->
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEFEF;margin-bottom:32px;">
     <tr>
-      <td style="padding:16px 20px;">
+      <td class="meta-td" width="33%" style="padding:16px 20px;vertical-align:top;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Receipt No.</div>
         <div style="font-size:13px;font-weight:600;">${esc(order.id)}</div>
       </td>
-      <td style="padding:16px 20px;">
+      <td class="meta-td" width="33%" style="padding:16px 20px;vertical-align:top;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Issued</div>
         <div style="font-size:13px;font-weight:600;">${fmtIssued(order.createdAt)}</div>
       </td>
-      <td style="padding:16px 20px;">
+      <td class="meta-td" width="34%" style="padding:16px 20px;vertical-align:top;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Pickup</div>
         <div style="font-size:13px;font-weight:600;">${fmtDateStr(order.pickupDate)}${order.pickupTime ? ' · ' + fmtTimeStr(order.pickupTime) : ''}</div>
       </td>
@@ -158,12 +167,12 @@ function buildReceiptHtml({ order, locationName, locationContact = {}, logoSrc }
   <!-- From / Billed to -->
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
     <tr>
-      <td width="50%" style="vertical-align:top;padding-right:20px;">
+      <td class="from-td" width="50%" style="vertical-align:top;padding-right:20px;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:8px;">From</div>
         <div style="font-family:Georgia,serif;font-weight:700;font-size:17px;color:#3B241C;margin-bottom:6px;">${esc(locationName || 'Sweet Red Peach')}</div>
         <div style="font-size:11px;color:#6B5347;line-height:1.65;">${fromLines}</div>
       </td>
-      <td width="50%" style="vertical-align:top;padding-left:20px;">
+      <td class="billed-td" width="50%" style="vertical-align:top;padding-left:20px;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:8px;">Billed to</div>
         <div style="font-family:Georgia,serif;font-weight:700;font-size:17px;color:#3B241C;margin-bottom:6px;">${esc(order.customer)}</div>
         <div style="font-size:11px;color:#6B5347;line-height:1.65;">
@@ -190,8 +199,8 @@ function buildReceiptHtml({ order, locationName, locationContact = {}, logoSrc }
   <!-- Totals -->
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
     <tr>
-      <td></td>
-      <td width="200">
+      <td class="totals-spacer"></td>
+      <td class="totals-amt" width="200">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="font-size:12px;color:#6B5347;padding:4px 0;border-bottom:1px solid #E4D9C8;">Subtotal</td>
