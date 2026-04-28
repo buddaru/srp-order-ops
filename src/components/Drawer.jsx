@@ -16,6 +16,10 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
   const locationName    = currentLocation?.name || 'Sweet Red Peach'
 
   const openInvoice = async () => {
+    // Open synchronously before any await so iOS Safari doesn't block it as a popup
+    const win = window.open('', '_blank')
+    if (!win) return
+
     let logoSrc = ''
     try {
       const res = await fetch('/srp-logo.png')
@@ -27,9 +31,9 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
       })
     } catch { /* proceed without logo */ }
     const html = buildInvoiceHtml({ order, locationName, locationContact, logoSrc })
-    const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
-    window.open(blobUrl, '_blank')
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
   }
 
   const sendReceipt = async () => {
