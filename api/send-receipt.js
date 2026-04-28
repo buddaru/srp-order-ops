@@ -1,5 +1,4 @@
-import fs from 'fs'
-import path from 'path'
+const LOGO_URL = 'https://app.getcadro.com/srp-logo.png'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -10,17 +9,8 @@ export default async function handler(req, res) {
   const SENDGRID_KEY = process.env.SENDGRID_API_KEY
   if (!SENDGRID_KEY) return res.status(500).json({ error: 'SendGrid not configured' })
 
-  let logoSrc = ''
-  try {
-    const logoPath = path.join(process.cwd(), 'public', 'srp-logo.png')
-    const logoBuffer = fs.readFileSync(logoPath)
-    logoSrc = 'data:image/png;base64,' + logoBuffer.toString('base64')
-  } catch {
-    // logo not critical — proceed without it
-  }
-
-  const html = buildInvoiceHtml({ order, locationName, locationContact: locationContact || {}, logoSrc })
-  const subject = `Your order receipt — ${order.id}`
+  const html = buildReceiptHtml({ order, locationName, locationContact: locationContact || {}, logoSrc: LOGO_URL })
+  const subject = `Your receipt from ${locationName || 'Sweet Red Peach'} — ${order.id}`
 
   try {
     const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -31,7 +21,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: order.email, name: order.customer }] }],
-        from: { email: 'sweetredpeachcarson@gmail.com', name: locationName || 'Sweet Red Peach' },
+        from: { email: 'receipts@getcadro.com', name: locationName || 'Sweet Red Peach' },
         subject,
         content: [{ type: 'text/html', value: html }],
       }),
@@ -73,7 +63,7 @@ function fmtIssued(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }) {
+function buildReceiptHtml({ order, locationName, locationContact = {}, logoSrc }) {
   const total = (order.items || []).reduce(
     (s, it) => s + (parseFloat(it.price) || 0) * (parseInt(it.qty) || 0), 0
   )
@@ -106,48 +96,59 @@ function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }
     website,
   ].filter(Boolean).map(l => `${esc(l)}<br>`).join('')
 
-  const locLabel = locationContact.city || locationName || 'Carson, CA'
+  const locLabel = locationContact.city || locationName || ''
   const logoTag = logoSrc
-    ? `<img src="${logoSrc}" alt="Sweet Red Peach" style="height:100px;width:auto;flex-shrink:0;">`
+    ? `<img src="${logoSrc}" alt="${esc(locationName || 'Sweet Red Peach')}" style="height:100px;width:auto;">`
     : ''
+
+  const notesSection = order.notes ? `
+  <!-- Notes -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+    <tr>
+      <td style="border-top:1px solid #E4D9C8;padding-top:20px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:8px;">Notes</div>
+        <div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:#6B5347;line-height:1.6;">${esc(order.notes)}</div>
+      </td>
+    </tr>
+  </table>` : ''
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Invoice ${esc(order.id)}</title>
-<meta name="viewport" content="width=1200">
+<title>Receipt ${esc(order.id)}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:#EDE4D4;font-family:Arial,sans-serif;padding:48px 24px;}
+  body{background:#EDE4D4;font-family:Arial,sans-serif;padding:32px 16px;}
 </style>
 </head>
 <body>
-<div style="width:720px;margin:0 auto;background:#FFFFFF;color:#3B241C;padding:48px 56px;font-family:Arial,sans-serif;">
+<div style="max-width:680px;margin:0 auto;background:#FFFFFF;color:#3B241C;padding:48px 52px;font-family:Arial,sans-serif;">
 
   <!-- Masthead -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:34px;">
-    <div>
-      <div style="font-family:Georgia,serif;font-weight:700;font-style:italic;font-size:64px;line-height:0.88;color:#3B241C;letter-spacing:-0.01em;">Invoice</div>
-      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B5347;">Sweet Red Peach · ${esc(locLabel)}</span>
-      </div>
-    </div>
-    ${logoTag}
-  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+    <tr>
+      <td style="vertical-align:bottom;">
+        <div style="font-family:Georgia,serif;font-weight:700;font-style:italic;font-size:60px;line-height:0.9;color:#3B241C;">Receipt</div>
+        <div style="margin-top:12px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B5347;">${esc(locationName || 'Sweet Red Peach')}${locLabel ? ' · ' + esc(locLabel) : ''}</div>
+      </td>
+      <td style="vertical-align:top;text-align:right;">${logoTag}</td>
+    </tr>
+  </table>
 
   <!-- Meta band -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEFEF;margin-bottom:36px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEFEF;margin-bottom:32px;">
     <tr>
-      <td style="padding:16px 22px;">
-        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Invoice No.</div>
+      <td style="padding:16px 20px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Receipt No.</div>
         <div style="font-size:13px;font-weight:600;">${esc(order.id)}</div>
       </td>
-      <td style="padding:16px 22px;">
+      <td style="padding:16px 20px;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Issued</div>
         <div style="font-size:13px;font-weight:600;">${fmtIssued(order.createdAt)}</div>
       </td>
-      <td style="padding:16px 22px;">
+      <td style="padding:16px 20px;">
         <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:4px;">Pickup</div>
         <div style="font-size:13px;font-weight:600;">${fmtDateStr(order.pickupDate)}${order.pickupTime ? ' · ' + fmtTimeStr(order.pickupTime) : ''}</div>
       </td>
@@ -155,16 +156,16 @@ function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }
   </table>
 
   <!-- From / Billed to -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
     <tr>
-      <td width="50%" style="vertical-align:top;padding-right:24px;">
-        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:10px;">From</div>
-        <div style="font-family:Georgia,serif;font-weight:700;font-size:18px;color:#3B241C;margin-bottom:8px;">${esc(locationName || 'Sweet Red Peach')}</div>
+      <td width="50%" style="vertical-align:top;padding-right:20px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:8px;">From</div>
+        <div style="font-family:Georgia,serif;font-weight:700;font-size:17px;color:#3B241C;margin-bottom:6px;">${esc(locationName || 'Sweet Red Peach')}</div>
         <div style="font-size:11px;color:#6B5347;line-height:1.65;">${fromLines}</div>
       </td>
-      <td width="50%" style="vertical-align:top;padding-left:24px;">
-        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:10px;">Billed to</div>
-        <div style="font-family:Georgia,serif;font-weight:700;font-size:18px;color:#3B241C;margin-bottom:8px;">${esc(order.customer)}</div>
+      <td width="50%" style="vertical-align:top;padding-left:20px;">
+        <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:8px;">Billed to</div>
+        <div style="font-family:Georgia,serif;font-weight:700;font-size:17px;color:#3B241C;margin-bottom:6px;">${esc(order.customer)}</div>
         <div style="font-size:11px;color:#6B5347;line-height:1.65;">
           ${order.phone ? esc(order.phone) + '<br>' : ''}
           ${order.email ? esc(order.email) : ''}
@@ -174,7 +175,7 @@ function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }
   </table>
 
   <!-- Items table -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:4px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
     <thead>
       <tr style="border-bottom:1px solid #E4D9C8;">
         <th style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#9A8574;font-weight:400;padding:0 0 8px;text-align:left;">Item</th>
@@ -187,23 +188,25 @@ function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }
   </table>
 
   <!-- Totals -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
     <tr>
       <td></td>
-      <td width="220" style="border-top:1px solid #E4D9C8;padding-top:8px;">
+      <td width="200">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="font-size:12px;color:#6B5347;padding:4px 0;border-bottom:1px solid #E4D9C8;">Subtotal</td>
             <td style="font-size:12px;color:#6B5347;text-align:right;padding:4px 0;border-bottom:1px solid #E4D9C8;">${fmt$(total)}</td>
           </tr>
           <tr>
-            <td style="font-family:Georgia,serif;font-size:16px;font-weight:700;color:#3B241C;padding-top:10px;">Total</td>
-            <td style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#3B241C;text-align:right;padding-top:10px;">${fmt$(total)}</td>
+            <td style="font-family:Georgia,serif;font-size:15px;font-weight:700;color:#3B241C;padding-top:10px;">Total</td>
+            <td style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:#3B241C;text-align:right;padding-top:10px;">${fmt$(total)}</td>
           </tr>
         </table>
       </td>
     </tr>
   </table>
+
+  ${notesSection}
 
 </div>
 </body>
