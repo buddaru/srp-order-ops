@@ -1,7 +1,7 @@
 /* ── Root layout ── */
 .app { min-height: 100vh; display: flex; flex-direction: row; }
 .mainContent { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.boardWrapper { padding: 20px 28px; overflow-x: auto; flex: 1; }
+.boardWrapper { padding: var(--space-5) var(--space-7); overflow-x: auto; flex: 1; }
 .drawerBackdrop { position: fixed; inset: 0; z-index: 140; }
 
 /* ── Sidebar ── */
@@ -18,7 +18,7 @@
   overflow: hidden;
   z-index: 100;
   flex-shrink: 0;
-  transition: width 0.22s ease, min-width 0.22s ease;
+  transition: width var(--duration-slow) ease, min-width var(--duration-slow) ease;
 }
 .sidebarCollapsed .sidebar {
   width: 52px;
@@ -26,81 +26,96 @@
 }
 
 .sidebarTop {
-  padding: 13px 12px 11px;
+  padding: 12px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-height: 50px;
+  gap: var(--space-2);
+  min-height: 52px;
   flex-shrink: 0;
 }
-.sidebarLogo { display: flex; align-items: center; gap: 9px; overflow: hidden; flex: 1; min-width: 0; }
+.sidebarLogo { display: flex; align-items: center; gap: var(--space-2); overflow: hidden; flex: 1; min-width: 0; }
 .sidebarLogoMark { display: none; }
 .sidebarLogoText { overflow: hidden; }
 .sidebarCollapsed .sidebarLogoText { display: none; }
 @media (max-width: 768px) {
   .sidebarLogoText { display: block !important; }
 }
-.sidebarLogoSub { font-size: 10px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
+.sidebarLogoSub { font-size: 10px; color: var(--text-muted); font-family: var(--font-body); }
 
 .sidebarToggle {
-  background: none; border: 1px solid var(--border-2); border-radius: 5px;
+  background: none; border: 1px solid var(--border-2); border-radius: var(--radius-sm);
   width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
   cursor: pointer; color: var(--text-muted); flex-shrink: 0;
-  transition: background 0.12s, color 0.12s;
+  transition: background var(--duration-fast), color var(--duration-fast);
   padding: 0;
 }
 .sidebarToggle:hover { background: var(--bg-2); color: var(--text); }
 
 /* Nav */
-.sidebarNav { flex: 1; padding: 8px 7px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.sidebarNav { flex: 1; padding: var(--space-2) var(--space-2); display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 
 .sidebarSection {
-  font-size: 9px; font-weight: 600; letter-spacing: 0.09em;
+  font-size: 9px; font-weight: var(--font-semibold); letter-spacing: var(--track-wide);
   text-transform: uppercase; color: var(--text-muted);
-  padding: 10px 8px 3px; font-family: 'DM Sans', sans-serif;
+  padding: 10px var(--space-2) 3px; font-family: var(--font-body);
   white-space: nowrap; overflow: hidden;
 }
 
 .sidebarItem {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 9px; border-radius: 6px;
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 7px var(--space-2); border-radius: var(--radius-sm);
   text-decoration: none; color: var(--text-muted);
-  font-size: 13px; font-weight: 400;
-  font-family: 'DM Sans', sans-serif;
-  transition: background 0.1s, color 0.1s;
+  font-size: var(--text-sm); font-weight: var(--font-normal);
+  font-family: var(--font-body);
+  transition: background var(--duration-fast), color var(--duration-fast);
   white-space: nowrap; overflow: hidden;
 }
 .sidebarItem:hover { background: var(--bg-2); color: var(--text); }
-.sidebarItemActive { background: var(--card); color: var(--text); font-weight: 500; border: 1px solid var(--border); }
-.sidebarItemActive:hover { background: var(--card); }
+
+/* Active item: solid background pill (FAANG pattern) */
+.sidebarItemActive {
+  background: var(--accent-light);
+  color: var(--brand);
+  font-weight: var(--font-semibold);
+  border: none;
+}
+.sidebarItemActive:hover { background: var(--accent-light); color: var(--brand); }
 
 .sidebarIcon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 16px; }
 
 .sidebarSoon {
   margin-left: auto; flex-shrink: 0;
-  font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  font-size: 9px; font-weight: var(--font-semibold); letter-spacing: var(--track-wide); text-transform: uppercase;
   color: var(--text-muted); background: var(--bg-2);
-  padding: 2px 6px; border-radius: 20px; border: 1px solid var(--border);
-  font-family: 'DM Sans', sans-serif;
+  padding: 2px 6px; border-radius: var(--radius-full); border: 1px solid var(--border);
+  font-family: var(--font-body);
 }
 
 /* Footer */
-.sidebarFooter { padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
-.sidebarCollapsed .sidebarFooter { padding: 8px; align-items: center; }
-.sidebarUser { display: flex; align-items: center; gap: 9px; overflow: hidden; }
+.sidebarFooter {
+  padding: var(--space-3) var(--space-3);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+}
+.sidebarCollapsed .sidebarFooter { padding: var(--space-2); align-items: center; }
+.sidebarUser { display: flex; align-items: center; gap: var(--space-2); overflow: hidden; }
 .sidebarAvatar {
-  width: 26px; height: 26px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: var(--radius-full);
   background: var(--brand); color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 600; flex-shrink: 0;
-  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: var(--font-semibold); flex-shrink: 0;
+  font-family: var(--font-body);
 }
 .sidebarUserInfo { overflow: hidden; flex: 1; min-width: 0; }
-.sidebarUserName { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
-.sidebarUserRole { font-size: 10px; color: var(--text-muted); text-transform: capitalize; font-family: 'DM Sans', sans-serif; }
-.sidebarSignOut { background: none; border: none; font-size: 11px; color: var(--text-muted); cursor: pointer; text-align: left; padding: 0 2px; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: color 0.12s; }
+.sidebarUserName { font-size: 12px; font-weight: var(--font-medium); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-body); }
+.sidebarUserRole { font-size: 10px; color: var(--text-muted); text-transform: capitalize; font-family: var(--font-body); }
+.sidebarSignOut { background: none; border: none; font-size: 11px; color: var(--text-muted); cursor: pointer; text-align: left; padding: 0 2px; font-family: var(--font-body); font-weight: var(--font-medium); transition: color var(--duration-fast); }
 .sidebarSignOut:hover { color: #DC2626; }
 .sidebarCollapsed .sidebarUserInfo,
 .sidebarCollapsed .sidebarSignOut { display: none; }
@@ -108,18 +123,18 @@
 /* Loading */
 .loadingScreen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); }
 .loadingLogo { font-size: 48px; animation: pulse 1.2s ease-in-out infinite; }
-.loadingText { font-size: 15px; color: var(--text-muted); font-weight: 500; }
+.loadingText { font-size: var(--text-md); color: var(--text-muted); font-weight: var(--font-medium); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 /* Confirm modal */
-.confirmOverlay { position: fixed; inset: 0; background: rgba(20,12,8,0.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.confirmBox { background: var(--card); border-radius: 14px; padding: 28px 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.28); }
-.confirmTitle { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
-.confirmMsg { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+.confirmOverlay { position: fixed; inset: 0; background: rgba(20,12,8,0.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: var(--space-4); }
+.confirmBox { background: var(--card); border-radius: var(--radius-lg); padding: var(--space-7) var(--space-7) var(--space-6); width: 100%; max-width: 400px; box-shadow: var(--shadow-xl); }
+.confirmTitle { font-family: var(--font-title); font-size: 22px; font-weight: var(--font-semibold); margin-bottom: var(--space-2); color: var(--text); }
+.confirmMsg { font-size: var(--text-base); color: var(--text-muted); line-height: 1.6; margin-bottom: var(--space-6); }
 .confirmActions { display: flex; gap: 10px; justify-content: flex-end; }
-.confirmCancel { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-family: 'Proxima Nova','Nunito',sans-serif; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+.confirmCancel { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 18px; font-family: var(--font-body); font-size: var(--text-sm); color: var(--text-muted); cursor: pointer; transition: background var(--duration-fast); }
 .confirmCancel:hover { background: var(--bg); }
-.confirmOk { background: var(--brand); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-family: 'Proxima Nova','Nunito',sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.confirmOk { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 20px; font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--font-semibold); cursor: pointer; transition: opacity var(--duration-fast); }
 .confirmOk:hover { opacity: 0.88; }
 
 /* Mobile */
@@ -127,17 +142,18 @@
   .app { flex-direction: column; }
   .boardWrapper { padding: 14px 12px; }
 
-  /* Sidebar becomes an off-screen overlay drawer on mobile */
+  /* Sidebar: full-width overlay drawer on mobile */
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
-    width: 220px !important;
-    min-width: 220px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 320px !important;
     height: 100%;
     height: -webkit-fill-available;
     transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    transition: transform var(--duration-slow) ease;
+    box-shadow: var(--shadow-xl);
     z-index: 300;
     overflow-y: auto;
     display: flex;
@@ -149,29 +165,31 @@
   .sidebarOverlay {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.45);
     z-index: 299;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
   }
   .sidebarOpen .sidebarOverlay {
     display: block;
   }
-  /* Hide the collapse toggle on mobile — close is handled by overlay tap */
   .sidebarToggle { display: none; }
 }
 
 @media (max-width: 640px) {
   .boardWrapper { padding: 12px; overflow-x: unset; }
 }
+
 .sidebarLogoBrand { display: flex; align-items: flex-end; gap: 3px; line-height: 1; }
-.sidebarLogoName { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 500; color: var(--text); letter-spacing: -0.5px; white-space: nowrap; line-height: 1; }
-.sidebarLogoDot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); flex-shrink: 0; margin-bottom: 3px; display: inline-block; }
+.sidebarLogoName { font-family: var(--font-title); font-size: 20px; font-weight: var(--font-medium); color: var(--text); letter-spacing: -0.5px; white-space: nowrap; line-height: 1; }
+.sidebarLogoDot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--brand); flex-shrink: 0; margin-bottom: 3px; display: inline-block; }
 
 /* Mobile sidebar — always show labels even when desktop is collapsed */
 @media (max-width: 768px) {
   .sidebarSection { display: block !important; }
   .sidebarItem span { display: inline !important; }
   .sidebarSoon { display: inline !important; }
-  .sidebarFooter { display: block !important; }
+  .sidebarFooter { display: flex !important; }
   .sidebarUserInfo { display: block !important; }
 }
 

@@ -74,8 +74,8 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
   }
 
   return (
-    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className={styles.modal}>
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()} role="presentation">
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={isEdit ? `Edit order ${order.id}` : 'New Order'}>
         <div className={styles.header}>
           <div>
             <div className={styles.title}>{isEdit ? `Edit ${order.id}` : 'New Order'}</div>
