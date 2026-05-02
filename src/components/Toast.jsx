@@ -9,8 +9,13 @@ export default function Toast({ toast, onClose }) {
   }, [toast, onClose])
 
   return (
-    <div className={`${styles.toast} ${toast ? styles.show : ''}`}>
-      <button className={styles.close} onClick={onClose}>×</button>
+    <div
+      className={`${styles.toast} ${toast ? styles.show : ''}`}
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <button className={styles.close} onClick={onClose} aria-label="Dismiss notification">×</button>
       {toast && (
         <>
           <div className={styles.label}>{toast.label}</div>
