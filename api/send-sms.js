@@ -1,7 +1,13 @@
+import { rateLimit } from './_rateLimit.js'
+
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const { allowed } = rateLimit(req, { limit: 10, windowMs: 60_000 })
+  if (!allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' })
   }
 
   const { to, message } = req.body
