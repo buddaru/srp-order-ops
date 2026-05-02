@@ -18,6 +18,7 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
   const [notes, setNotes]       = useState('')
   const [image, setImage]       = useState(null)
   const [errors, setErrors]     = useState({})
+  const [saving, setSaving]     = useState(false)
 
   const formatPhone = (val) => {
     const digits = val.replace(/\D/g, '').slice(0, 10)
@@ -49,7 +50,8 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
   }
 
   const handleSubmit = () => {
-    if (!validate()) return
+    if (!validate() || saving) return
+    setSaving(true)
     onSave({
       customer: customer.trim(),
       initials: mkInitials(customer.trim()),
@@ -79,7 +81,7 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
             <div className={styles.title}>{isEdit ? `Edit ${order.id}` : 'New Order'}</div>
             {isEdit && <div className={styles.subtitle}>{order.customer}</div>}
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>×</button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">×</button>
         </div>
 
         <div className={styles.body}>
@@ -140,7 +142,9 @@ export default function OrderModal({ mode, order, onSave, onClose, onDelete, isA
             <button className={styles.deleteBtn} onClick={() => { onDelete(order.id); onClose() }}>Delete order</button>
           )}
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-          <button className={styles.saveBtn} onClick={handleSubmit}>{isEdit ? 'Save changes' : 'Create order'}</button>
+          <button className={styles.saveBtn} onClick={handleSubmit} disabled={saving} aria-busy={saving}>
+            {saving ? (isEdit ? 'Saving…' : 'Creating…') : (isEdit ? 'Save changes' : 'Create order')}
+          </button>
         </div>
       </div>
     </div>

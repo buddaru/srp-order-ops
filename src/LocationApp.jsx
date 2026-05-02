@@ -102,13 +102,16 @@ export default function LocationApp() {
   const [drawerOrderId, setDrawerOrderId] = useState(null)
   const [editingId, setEditingId]         = useState(null)
   const [showNew, setShowNew]             = useState(false)
-  const [sidebarOpen, setSidebarOpen]     = useState(true)
+  const [sidebarOpen, setSidebarOpen]     = useState(() => {
+    try { return localStorage.getItem('sidebarOpen') !== 'false' } catch { return true }
+  })
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, profile, isAdmin, signOut } = useAuth()
   const { readySms, pickupSms } = useBusiness()
   const navigate = useNavigate()
   const location = useLocation()
   const [toast, setToast]                 = useState(null)
+  const [deletingId, setDeletingId]       = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [confirmPickup, setConfirmPickup] = useState(null)
   const [dateRange, setDateRange]         = useState(null)
@@ -135,6 +138,7 @@ export default function LocationApp() {
         .from('orders')
         .select('*')
         .neq('stage', 'picked-up')
+        .is('deleted_at', null)
         .order('created_at', { ascending: true })
 
       // Explicit location filter for multi-location users; RLS also enforces this.
@@ -184,6 +188,7 @@ export default function LocationApp() {
       .select('*')
       .eq('stage', 'picked-up')
       .eq('location_id', currentLocation.id)
+      .is('deleted_at', null)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
         if (data && data.length > 0) {
@@ -233,7 +238,10 @@ export default function LocationApp() {
     ]
     setOrders(prev => prev.map(x => x.id === id ? { ...x, stage: 'picked-up', notifications: notifs } : x))
     const { error } = await supabase.from('orders').update({ stage: 'picked-up', notifications: notifs }).eq('id', id)
-    if (error) console.error('applyPickup error:', error)
+    if (error) {
+      setOrders(prev => prev.map(x => x.id === id ? o : x))
+      showToast({ label: '⚠️ Update failed', customer: o.customer, msg: 'Could not mark as picked up. Please try again.' })
+    }
   }
 
   // ── Stage movement ──
@@ -291,9 +299,6 @@ export default function LocationApp() {
     const o = orders.find(x => x.id === id)
     if (!o) return
     const msg = o.stage === 'ready' ? readySms(o.customer) : pickupSms(o.customer)
-    const notifs = [...o.notifications, { text: `📱 SMS sent to ${o.phone || 'customer'}`, ts: new Date().toISOString() }]
-    setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
-    await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
     try {
       const res = await fetch('/api/send-sms', {
         method: 'POST',
@@ -303,24 +308,39 @@ export default function LocationApp() {
       const data = await res.json()
       if (!res.ok) {
         showToast({ label: '⚠️ SMS failed', customer: o.customer, msg: data.error || 'Could not send SMS.' })
-      } else {
-        showToast({ label: '📱 SMS sent!', customer: o.customer, msg: msg.substring(0, 80) })
+        return
       }
+      // Only log the notification after the SMS is confirmed delivered
+      const notifs = [...o.notifications, { text: `📱 SMS sent to ${o.phone || 'customer'}`, ts: new Date().toISOString() }]
+      setOrders(prev => prev.map(x => x.id !== id ? x : { ...x, notifications: notifs }))
+      await supabase.from('orders').update({ notifications: notifs }).eq('id', id)
+      showToast({ label: '📱 SMS sent!', customer: o.customer, msg: msg.substring(0, 80) })
     } catch (err) {
       showToast({ label: '⚠️ SMS error', customer: o.customer, msg: 'Network error — SMS not sent.' })
     }
   }
 
-  // ── Delete ──
+  // ── Delete (soft) ──
   const handleDelete = (id) => setConfirmDelete(id)
   const doDelete = async () => {
     const id = confirmDelete
-    const name = orders.find(o => o.id === id)?.customer || ''
-    setOrders(prev => prev.filter(o => o.id !== id))
+    const o = orders.find(x => x.id === id)
+    const name = o?.customer || ''
+    setOrders(prev => prev.filter(x => x.id !== id))
     if (drawerOrderId === id) setDrawerOrderId(null)
     setConfirmDelete(null)
-    await supabase.from('orders').delete().eq('id', id)
-    showToast({ label: '🗑 Order deleted', customer: name, msg: 'Order permanently removed.' })
+    setDeletingId(id)
+    const { error } = await supabase
+      .from('orders')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+    setDeletingId(null)
+    if (error) {
+      setOrders(prev => [...prev, o])
+      showToast({ label: '⚠️ Delete failed', customer: name, msg: 'Order could not be removed. Please try again.' })
+    } else {
+      showToast({ label: '🗑 Order deleted', customer: name, msg: 'Order removed.' })
+    }
   }
 
   // ── Edit ──
@@ -419,7 +439,15 @@ export default function LocationApp() {
               )}
             </div>
           </div>
-          <button className={styles.sidebarToggle} onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Collapse' : 'Expand'}>
+          <button
+            className={styles.sidebarToggle}
+            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={sidebarOpen ? 'Collapse' : 'Expand'}
+            onClick={() => setSidebarOpen(v => {
+              try { localStorage.setItem('sidebarOpen', String(!v)) } catch {}
+              return !v
+            })}
+          >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.22s' }}>
               <polyline points="15 18 9 12 15 6"/>
             </svg>

@@ -103,7 +103,8 @@
   cursor: pointer;
   transition: opacity 0.15s;
 }
-.saveBtn:hover { opacity: 0.88; }
+.saveBtn:hover:not(:disabled) { opacity: 0.88; }
+.saveBtn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .deleteBtn {
   background: none;
@@ -121,6 +122,7 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
+  .fieldRow { grid-template-columns: 1fr; }
   .modal {
     position: fixed !important;
     bottom: 0 !important;

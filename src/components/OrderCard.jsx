@@ -57,16 +57,16 @@ export default function OrderCard({ order, isAdmin, onMove, onEdit, onDrawer, on
 
       <div className={styles.actions}>
         {prev && (
-          <button className="btn btn-back" onClick={e => { e.stopPropagation(); onMove(order.id, -1); }}>
+          <button className="btn btn-back" aria-label={`Move back to ${prev.label}`} onClick={e => { e.stopPropagation(); onMove(order.id, -1); }}>
             ← {prev.label}
           </button>
         )}
         {next && (
-          <button className={`btn ${styles.stageBtn}`} onClick={e => { e.stopPropagation(); onMove(order.id, 1); }}>
+          <button className={`btn ${styles.stageBtn}`} aria-label={`Move to ${next.label}`} onClick={e => { e.stopPropagation(); onMove(order.id, 1); }}>
             → {next.label}
           </button>
         )}
-        <button className="btn" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit order">✏</button>
+        <button className="btn" aria-label="Edit order" onClick={e => { e.stopPropagation(); onEdit(order.id); }} title="Edit order">✏</button>
       </div>
     </div>
   )
