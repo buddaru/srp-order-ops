@@ -23,39 +23,35 @@ function LocationShell() {
 // Loads the user's first accessible location and redirects there.
 // Shown for any path that doesn't match /app/:locationSlug/* (including root /).
 function RootRedirect() {
-  const { user } = useAuth()
+  const { user, loading, orgMemberships, locationMemberships } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!user) return
+    if (loading || !user) return
     async function redirect() {
       let slug = null
 
-      // Try org membership first (org_owner → all org locations)
-      const { data: orgMems } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .limit(1)
+      // Use memberships already fetched by AuthContext — no extra queries needed.
+      const orgIds       = orgMemberships.map(m => m.organization_id)
+      const directLocIds = locationMemberships.map(m => m.location_id)
 
-      if (orgMems?.length) {
+      if (orgIds.length) {
         const { data: locs } = await supabase
           .from('locations')
           .select('slug')
-          .eq('organization_id', orgMems[0].organization_id)
+          .in('organization_id', orgIds)
           .order('created_at', { ascending: true })
           .limit(1)
         slug = locs?.[0]?.slug ?? null
       }
 
-      // Fall back to direct location membership
-      if (!slug) {
-        const { data: locMems } = await supabase
-          .from('location_members')
-          .select('location_id, locations(slug)')
-          .eq('user_id', user.id)
+      if (!slug && directLocIds.length) {
+        const { data: locs } = await supabase
+          .from('locations')
+          .select('slug')
+          .in('id', directLocIds)
           .limit(1)
-        slug = locMems?.[0]?.locations?.slug ?? null
+        slug = locs?.[0]?.slug ?? null
       }
 
       if (slug) {
@@ -64,7 +60,7 @@ function RootRedirect() {
       // If no location found yet (tables pre-migration), stay on loading screen.
     }
     redirect()
-  }, [user])
+  }, [user, loading, orgMemberships, locationMemberships])
 
   if (!user) return <Login />
   return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>Loading…</div>
