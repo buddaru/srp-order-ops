@@ -10,18 +10,41 @@ const supabase = createClient(
 
 // ── Gmail OAuth helpers ──
 async function getAccessToken() {
+  // Prefer token stored in Supabase (survives rotation); fall back to env var
+  let refreshToken = process.env.GMAIL_REFRESH_TOKEN
+  const { data: row } = await supabase
+    .from('gmail_tokens')
+    .select('refresh_token')
+    .eq('id', 'default')
+    .single()
+  if (row?.refresh_token) refreshToken = row.refresh_token
+
+  if (!refreshToken) throw new Error('No Gmail refresh token found — run /api/gmail-auth to authorize')
+
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id:     process.env.GMAIL_CLIENT_ID,
       client_secret: process.env.GMAIL_CLIENT_SECRET,
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+      refresh_token: refreshToken,
       grant_type:    'refresh_token',
     }),
   })
   const data = await res.json()
-  if (!data.access_token) throw new Error('Failed to get Gmail access token')
+  if (!data.access_token) {
+    throw new Error(`Gmail auth failed: ${data.error} — ${data.error_description}. Visit /api/gmail-auth to re-authorize.`)
+  }
+
+  // If Google rotated the refresh token, persist the new one immediately
+  if (data.refresh_token && data.refresh_token !== refreshToken) {
+    await supabase.from('gmail_tokens').upsert({
+      id:            'default',
+      refresh_token: data.refresh_token,
+      updated_at:    new Date().toISOString(),
+    })
+  }
+
   return data.access_token
 }
 
