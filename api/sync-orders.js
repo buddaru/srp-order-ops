@@ -413,6 +413,7 @@ export default async function handler(req, res) {
 
         const { error } = await supabase.from('orders').insert({
           id,
+          location_id:    process.env.SYNC_LOCATION_ID,
           customer:       order.customer,
           initials:       order.initials,
           phone:          order.phone,
