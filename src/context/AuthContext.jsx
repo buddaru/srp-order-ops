@@ -6,8 +6,8 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser]                   = useState(null)
   const [profile, setProfile]             = useState(null)
-  const [orgMemberRoles, setOrgMemberRoles] = useState([]) // ['org_owner', 'org_admin']
-  const [locMemberRoles, setLocMemberRoles] = useState([]) // ['manager', 'employee']
+  const [orgMemberships, setOrgMemberships]   = useState([]) // [{organization_id, role}]
+  const [locationMemberships, setLocationMemberships] = useState([]) // [{location_id, role}]
   const [loading, setLoading]             = useState(true)
 
   async function loadProfile(userId) {
@@ -29,17 +29,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Load org and location roles for isAdmin computation.
+  // Load org and location memberships (with IDs) for isAdmin + LocationContext.
   // Runs in parallel with loadProfile; errors are non-fatal (new tables may not
   // exist yet on staging before the migration SQL is run).
-  async function loadMemberRoles(userId) {
+  async function loadMemberships(userId) {
     try {
       const [orgRes, locRes] = await Promise.all([
-        supabase.from('organization_members').select('role').eq('user_id', userId),
-        supabase.from('location_members').select('role').eq('user_id', userId),
+        supabase.from('organization_members').select('organization_id, role').eq('user_id', userId),
+        supabase.from('location_members').select('location_id, role').eq('user_id', userId),
       ])
-      setOrgMemberRoles((orgRes.data || []).map(m => m.role))
-      setLocMemberRoles((locRes.data || []).map(m => m.role))
+      setOrgMemberships(orgRes.data || [])
+      setLocationMemberships(locRes.data || [])
     } catch (e) {
       // Tables don't exist yet pre-migration — silently ignore.
     }
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
         setUser(session.user)
         Promise.all([
           loadProfile(session.user.id),
-          loadMemberRoles(session.user.id),
+          loadMemberships(session.user.id),
         ]).finally(() => { if (mounted) setLoading(false) })
       } else {
         setLoading(false)
@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
         setUser(session.user)
         Promise.all([
           loadProfile(session.user.id),
-          loadMemberRoles(session.user.id),
+          loadMemberships(session.user.id),
         ]).finally(() => { if (mounted) setLoading(false) })
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         setUser(session.user)
@@ -104,8 +104,8 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     setUser(null)
     setProfile(null)
-    setOrgMemberRoles([])
-    setLocMemberRoles([])
+    setOrgMemberships([])
+    setLocationMemberships([])
     await supabase.auth.signOut()
   }
 
@@ -113,10 +113,10 @@ export function AuthProvider({ children }) {
   // OR has profile.role = 'admin' (backward compat during migration period).
   const isAdmin =
     profile?.role === 'admin' ||
-    orgMemberRoles.some(r => ['org_owner', 'org_admin'].includes(r))
+    orgMemberships.some(m => ['org_owner', 'org_admin'].includes(m.role))
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin, signIn, signOut, orgMemberships, locationMemberships }}>
       {children}
     </AuthContext.Provider>
   )

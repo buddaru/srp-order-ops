@@ -6,51 +6,49 @@ import { useAuth } from './AuthContext'
 const LocationContext = createContext(null)
 
 export function LocationProvider({ children }) {
-  const { user } = useAuth()
+  const { user, orgMemberships, locationMemberships, loading: authLoading } = useAuth()
   const { locationSlug } = useParams()
 
-  const [locations, setLocations]               = useState([])
-  const [orgMemberships, setOrgMemberships]     = useState([])
-  const [locationMemberships, setLocationMemberships] = useState([])
-  const [loading, setLoading]                   = useState(true)
+  const [locations, setLocations] = useState([])
+  const [loading, setLoading]     = useState(true)
 
   const load = useCallback(async () => {
     if (!user) { setLoading(false); return }
     try {
-      const [orgRes, locRes] = await Promise.all([
-        supabase.from('organization_members').select('organization_id, role').eq('user_id', user.id),
-        supabase.from('location_members').select('location_id, role').eq('user_id', user.id),
-      ])
-
-      const orgMems = orgRes.data || []
-      const locMems = locRes.data || []
-      setOrgMemberships(orgMems)
-      setLocationMemberships(locMems)
-
-      const orgIds      = orgMems.map(m => m.organization_id)
-      const directLocIds = locMems.map(m => m.location_id)
+      const orgIds       = orgMemberships.map(m => m.organization_id)
+      const directLocIds = locationMemberships.map(m => m.location_id)
 
       let allLocs = []
+      const fetches = []
       if (orgIds.length > 0) {
-        const { data } = await supabase.from('locations').select('*').in('organization_id', orgIds)
-        allLocs = data || []
+        fetches.push(
+          supabase.from('locations').select('*').in('organization_id', orgIds)
+            .then(({ data }) => { allLocs = [...allLocs, ...(data || [])] })
+        )
       }
       if (directLocIds.length > 0) {
-        const { data } = await supabase.from('locations').select('*').in('id', directLocIds)
-        for (const loc of (data || [])) {
-          if (!allLocs.find(l => l.id === loc.id)) allLocs.push(loc)
-        }
+        fetches.push(
+          supabase.from('locations').select('*').in('id', directLocIds)
+            .then(({ data }) => {
+              for (const loc of (data || [])) {
+                if (!allLocs.find(l => l.id === loc.id)) allLocs.push(loc)
+              }
+            })
+        )
       }
-
+      await Promise.all(fetches)
       setLocations(allLocs)
     } catch (e) {
       console.warn('LocationContext load error:', e.message)
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user, orgMemberships, locationMemberships])
 
-  useEffect(() => { load() }, [load])
+  // Don't start fetching locations until auth (including memberships) is done.
+  useEffect(() => {
+    if (!authLoading) load()
+  }, [authLoading, load])
 
   // The current location is the one whose slug matches the URL param.
   // Falls back to the first accessible location when slug isn't in the URL
