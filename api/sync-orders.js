@@ -457,7 +457,9 @@ export default async function handler(req, res) {
         const html    = getBody(full)
 
         // Skip reply/forward threads — they're not new order confirmations
+        // Skip reply/forward threads and any non-Bento inbox emails from the INBOX scan
         if (/^(re|fwd?):/i.test(subject)) { skipped++; continue }
+        if (!subject.includes('New Pickup Order')) { skipped++; continue }
 
         if (!html) {
           console.warn(`No HTML body in message ${msg.id}`)
