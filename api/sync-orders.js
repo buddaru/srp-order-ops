@@ -328,11 +328,19 @@ export default async function handler(req, res) {
     if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to test' })
     try {
       const accessToken = await getAccessToken()
+
+      // Identify which Gmail account is authenticated
+      const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      const profile = await profileRes.json()
+
       const afterDate = '2026/04/04' // only sync orders from this date forward
       const query = `from:noreply@notifications.getbento.com after:${afterDate}`
       const gmailResponse = await gmailSearch(accessToken, query)
       return res.status(200).json({
         oauthOk: true,
+        authorizedAs: profile.emailAddress,
         query,
         messageCount: gmailResponse.messages?.length ?? 0,
         gmailResponse,
