@@ -49,13 +49,14 @@ async function getAccessToken() {
 }
 
 async function gmailSearch(accessToken, query, maxResults = 500) {
-  const params = new URLSearchParams({ q: query, maxResults })
+  // labelIds=INBOX bypasses the search index and reads directly from the mailbox,
+  // which avoids the Gmail API indexing delay that can cause new emails to be missed.
+  const params = new URLSearchParams({ q: query, maxResults, labelIds: 'INBOX' })
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
   const data = await res.json()
-  // Return full response so caller can inspect errors
   return data
 }
 
