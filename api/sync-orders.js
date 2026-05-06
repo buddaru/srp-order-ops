@@ -58,20 +58,33 @@ async function getOrdersLabelId(accessToken) {
   return label?.id || null
 }
 
-async function gmailSearch(accessToken, labelId, afterDate, maxResults = 500) {
-  // When using labelIds, omit the q= parameter entirely — any search query routes
-  // through Gmail's text index which has an unpredictable indexing delay. The label
-  // index is always current. Old emails are handled cheaply by gmail_message_id dedup.
-  // Fall back to sender+date query if the Orders label isn't found.
-  const params = labelId
-    ? new URLSearchParams({ labelIds: labelId, maxResults })
-    : new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults })
+async function gmailListMessages(accessToken, params) {
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
-  const data = await res.json()
-  return data
+  return res.json()
+}
+
+async function gmailSearch(accessToken, labelId, afterDate) {
+  // Fetch from two sources and merge so new emails are never missed:
+  // 1. Orders label — covers all indexed Bento emails efficiently
+  // 2. Recent INBOX (50 messages, no query) — reads directly from the mailbox store,
+  //    catches emails that haven't propagated through Gmail's index yet
+  const [labelData, inboxData] = await Promise.all([
+    labelId
+      ? gmailListMessages(accessToken, new URLSearchParams({ labelIds: labelId, maxResults: 500 }))
+      : gmailListMessages(accessToken, new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults: 500 })),
+    gmailListMessages(accessToken, new URLSearchParams({ labelIds: 'INBOX', maxResults: 50 })),
+  ])
+
+  const seen = new Set()
+  const messages = []
+  for (const msg of [...(labelData.messages || []), ...(inboxData.messages || [])]) {
+    if (!seen.has(msg.id)) { seen.add(msg.id); messages.push(msg) }
+  }
+
+  return { messages, error: labelData.error || inboxData.error }
 }
 
 async function gmailGetMessage(accessToken, messageId) {
