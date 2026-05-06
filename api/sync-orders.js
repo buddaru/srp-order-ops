@@ -134,21 +134,21 @@ function parseOrder(html, messageId) {
 
     // Bento order number
     const orderNumMatch = text.match(/Order #(\d+)/)
-    if (!orderNumMatch) return null
+    if (!orderNumMatch) { console.warn(`[${messageId}] parse fail: no order number`); return null }
     const bentoOrderId = orderNumMatch[1]
 
     // Pickup date + time — handle multiline: "Order for:\n  Thu\n  Apr 02 1:00pm"
     const dateMatch =
       text.match(/Order for:[^]*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i) ||
       text.match(/Order for:[^]*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
-    if (!dateMatch) return null
+    if (!dateMatch) { console.warn(`[${messageId}] parse fail: no date match (order #${bentoOrderId})\nText snippet: ${text.slice(0,300)}`); return null }
 
     const pickupDate = parseBentoDate(dateMatch[1])
     const pickupTime = parseTime(dateMatch[2])
 
     // Customer details block
     const custIdx = lines.findIndex(l => l.includes('Customer Details'))
-    if (custIdx === -1) return null
+    if (custIdx === -1) { console.warn(`[${messageId}] parse fail: no Customer Details (order #${bentoOrderId})\nLines: ${lines.slice(0,20).join(' | ')}`); return null }
 
     const customer = lines[custIdx + 1] || ''
     const rawPhone = lines[custIdx + 2] || ''
@@ -174,7 +174,7 @@ function parseOrder(html, messageId) {
     // Parse line items from HTML directly (more reliable than plain text)
     const items = parseItems(html)
 
-    if (!customer || items.length === 0) return null
+    if (!customer || items.length === 0) { console.warn(`[${messageId}] parse fail: no customer (${customer}) or no items (${items.length}) (order #${bentoOrderId})`); return null }
 
     // Build notes from item details + any special request
     const combinedNotes = buildNotes(items, notes)
