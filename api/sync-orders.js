@@ -59,12 +59,12 @@ async function getOrdersLabelId(accessToken) {
 }
 
 async function gmailSearch(accessToken, labelId, afterDate, maxResults = 500) {
-  // Use labelIds to list messages directly from the label index — no search indexing
-  // delay. The q=after: date filter is metadata-only and does not hit the text search
-  // index, so it doesn't suffer from the same indexing delay. Fall back to a full
-  // sender+date query if the Orders label isn't found.
+  // When using labelIds, omit the q= parameter entirely — any search query routes
+  // through Gmail's text index which has an unpredictable indexing delay. The label
+  // index is always current. Old emails are handled cheaply by gmail_message_id dedup.
+  // Fall back to sender+date query if the Orders label isn't found.
   const params = labelId
-    ? new URLSearchParams({ labelIds: labelId, q: `after:${afterDate}`, maxResults })
+    ? new URLSearchParams({ labelIds: labelId, maxResults })
     : new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults })
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
