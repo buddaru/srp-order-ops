@@ -374,16 +374,24 @@ export default async function handler(req, res) {
       })
     }
 
-    // 3. Get existing bento_order_ids to deduplicate
+    // 3. Build two dedup sets:
+    //    - processedMsgIds: Gmail message IDs already stored (fast pre-filter, grows over time)
+    //    - existingBentoIds: bento_order_ids already stored (fallback for orders imported before
+    //      gmail_message_id was tracked — prevents duplicates during the transition period)
     const { data: existing } = await supabase
       .from('orders')
-      .select('bento_order_id')
-      .not('bento_order_id', 'is', null)
+      .select('gmail_message_id, bento_order_id')
 
-    const existingIds = new Set((existing || []).map(r => r.bento_order_id))
+    const processedMsgIds  = new Set()
+    const existingBentoIds = new Set()
+    for (const r of existing || []) {
+      if (r.gmail_message_id) processedMsgIds.add(r.gmail_message_id)
+      if (r.bento_order_id)   existingBentoIds.add(r.bento_order_id)
+    }
 
-    // 4. Process up to 20 emails per click — skips already-imported ones, imports new ones
-    const batch = messages.slice(0, 20)
+    // 4. Pre-filter by Gmail message ID, then import up to 20 per click.
+    const unprocessed = messages.filter(m => !processedMsgIds.has(m.id))
+    const batch = unprocessed.slice(0, 20)
 
     let imported = 0
     let skipped  = 0
@@ -407,24 +415,36 @@ export default async function handler(req, res) {
           errors++
           continue
         }
-        if (existingIds.has(order.bento_order_id)) { skipped++; continue }
+
+        // Fallback dedup: existing orders imported before gmail_message_id was tracked
+        if (existingBentoIds.has(order.bento_order_id)) {
+          // Backfill the gmail_message_id so this order won't be re-checked next time
+          await supabase
+            .from('orders')
+            .update({ gmail_message_id: msg.id })
+            .eq('bento_order_id', order.bento_order_id)
+            .is('gmail_message_id', null)
+          skipped++
+          continue
+        }
 
         const id = await nextOrderId()
 
         const { error } = await supabase.from('orders').insert({
           id,
-          customer:       order.customer,
-          initials:       order.initials,
-          phone:          order.phone,
-          email:          order.email,
-          items:          order.items,
-          pickup_date:    order.pickup_date,
-          pickup_time:    order.pickup_time,
-          notes:          order.notes,
-          notifications:  order.notifications,
-          stage:          order.stage,
-          image:          order.image,
-          bento_order_id: order.bento_order_id,
+          customer:          order.customer,
+          initials:          order.initials,
+          phone:             order.phone,
+          email:             order.email,
+          items:             order.items,
+          pickup_date:       order.pickup_date,
+          pickup_time:       order.pickup_time,
+          notes:             order.notes,
+          notifications:     order.notifications,
+          stage:             order.stage,
+          image:             order.image,
+          bento_order_id:    order.bento_order_id,
+          gmail_message_id:  msg.id,
         })
 
         if (error) {
@@ -432,7 +452,6 @@ export default async function handler(req, res) {
           errors++
           continue
         } else {
-          existingIds.add(order.bento_order_id)
           imported++
         }
       } catch (err) {
@@ -442,17 +461,18 @@ export default async function handler(req, res) {
       }
     }
 
-    const remaining = messages.length - existingIds.size - errors
+    const remaining = unprocessed.length - batch.length
     return res.status(200).json({
       imported,
-      skipped,
+      skipped: messages.length - unprocessed.length,
       errors,
       totalFound: messages.length,
+      newFound: unprocessed.length,
       message: imported > 0
-        ? `${imported} orders added — click Sync again for more`
-        : skipped === batch.length
+        ? `${imported} order${imported > 1 ? 's' : ''} added${remaining > 0 ? ' — click Sync again for more' : ''}`
+        : errors === 0
           ? 'Already up to date'
-          : `0 imported, ${errors} errors of ${batch.length} processed`,
+          : `0 imported, ${errors} errors`,
     })
 
   } catch (err) {
