@@ -350,6 +350,21 @@ export default async function handler(req, res) {
       })
       const profile = await profileRes.json()
 
+      // ?msgId=XXX — inspect a specific message and show why parse fails
+      if (req.query.msgId) {
+        const full  = await gmailGetMessage(accessToken, req.query.msgId)
+        const html  = getBody(full)
+        const lines = html ? stripHtml(html) : []
+        const text  = lines.join('\n')
+        const order = parseOrder(html, req.query.msgId)
+        return res.status(200).json({
+          parsed: !!order,
+          order,
+          subject: full.payload?.headers?.find(h => h.name === 'Subject')?.value,
+          textPreview: text.slice(0, 800),
+        })
+      }
+
       const afterDate = '2026/04/04'
       const labelId = await getOrdersLabelId(accessToken)
       const gmailResponse = await gmailSearch(accessToken, labelId, afterDate)
