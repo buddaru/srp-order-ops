@@ -48,10 +48,22 @@ async function getAccessToken() {
   return data.access_token
 }
 
-async function gmailSearch(accessToken, query, maxResults = 500) {
-  // labelIds=INBOX bypasses the search index and reads directly from the mailbox,
-  // which avoids the Gmail API indexing delay that can cause new emails to be missed.
-  const params = new URLSearchParams({ q: query, maxResults, labelIds: 'INBOX' })
+async function getOrdersLabelId(accessToken) {
+  const res = await fetch(
+    'https://gmail.googleapis.com/gmail/v1/users/me/labels',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  )
+  const data = await res.json()
+  const label = (data.labels || []).find(l => l.name.toLowerCase() === 'orders')
+  return label?.id || null
+}
+
+async function gmailSearch(accessToken, labelId, afterDate, maxResults = 500) {
+  // Use labelIds to list messages directly from the label index — no search indexing
+  // delay. Fall back to a sender+date query if the Orders label isn't found.
+  const params = labelId
+    ? new URLSearchParams({ labelIds: labelId, maxResults })
+    : new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults })
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -336,13 +348,13 @@ export default async function handler(req, res) {
       })
       const profile = await profileRes.json()
 
-      const afterDate = '2026/04/04' // only sync orders from this date forward
-      const query = `from:noreply@notifications.getbento.com after:${afterDate}`
-      const gmailResponse = await gmailSearch(accessToken, query)
+      const afterDate = '2026/04/04'
+      const labelId = await getOrdersLabelId(accessToken)
+      const gmailResponse = await gmailSearch(accessToken, labelId, afterDate)
       return res.status(200).json({
         oauthOk: true,
         authorizedAs: profile.emailAddress,
-        query,
+        ordersLabelId: labelId,
         messageCount: gmailResponse.messages?.length ?? 0,
         gmailResponse,
       })
@@ -359,17 +371,18 @@ export default async function handler(req, res) {
     // 1. Get Gmail access token
     const accessToken = await getAccessToken()
 
-    // 2. Fetch Bento order emails from 4/4/2026 forward
-    const afterDate = '2026/04/04' // only sync orders from this date forward
-    const query = `from:noreply@notifications.getbento.com after:${afterDate}`
-    const gmailResponse = await gmailSearch(accessToken, query)
+    // 2. Fetch Bento order emails — use the Orders label for instant access without
+    //    search index delay; fall back to sender+date query if the label isn't found.
+    const afterDate = '2026/04/04'
+    const labelId = await getOrdersLabelId(accessToken)
+    const gmailResponse = await gmailSearch(accessToken, labelId, afterDate)
 
     // Surface any Gmail API errors for debugging
     if (gmailResponse.error) {
       return res.status(200).json({
         imported: 0, skipped: 0,
         message: 'Gmail API error — check debug field',
-        debug: { query, gmailError: gmailResponse.error }
+        debug: { gmailError: gmailResponse.error }
       })
     }
 
