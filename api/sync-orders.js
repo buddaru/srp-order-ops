@@ -60,9 +60,11 @@ async function getOrdersLabelId(accessToken) {
 
 async function gmailSearch(accessToken, labelId, afterDate, maxResults = 500) {
   // Use labelIds to list messages directly from the label index — no search indexing
-  // delay. Fall back to a sender+date query if the Orders label isn't found.
+  // delay. The q=after: date filter is metadata-only and does not hit the text search
+  // index, so it doesn't suffer from the same indexing delay. Fall back to a full
+  // sender+date query if the Orders label isn't found.
   const params = labelId
-    ? new URLSearchParams({ labelIds: labelId, maxResults })
+    ? new URLSearchParams({ labelIds: labelId, q: `after:${afterDate}`, maxResults })
     : new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults })
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
@@ -132,21 +134,21 @@ function parseOrder(html, messageId) {
 
     // Bento order number
     const orderNumMatch = text.match(/Order #(\d+)/)
-    if (!orderNumMatch) return null
+    if (!orderNumMatch) { console.warn(`[${messageId}] parse fail: no order number`); return null }
     const bentoOrderId = orderNumMatch[1]
 
     // Pickup date + time — handle multiline: "Order for:\n  Thu\n  Apr 02 1:00pm"
     const dateMatch =
       text.match(/Order for:[^]*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i) ||
       text.match(/Order for:[^]*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
-    if (!dateMatch) return null
+    if (!dateMatch) { console.warn(`[${messageId}] parse fail: no date match (order #${bentoOrderId})\nText snippet: ${text.slice(0,300)}`); return null }
 
     const pickupDate = parseBentoDate(dateMatch[1])
     const pickupTime = parseTime(dateMatch[2])
 
     // Customer details block
     const custIdx = lines.findIndex(l => l.includes('Customer Details'))
-    if (custIdx === -1) return null
+    if (custIdx === -1) { console.warn(`[${messageId}] parse fail: no Customer Details (order #${bentoOrderId})\nLines: ${lines.slice(0,20).join(' | ')}`); return null }
 
     const customer = lines[custIdx + 1] || ''
     const rawPhone = lines[custIdx + 2] || ''
@@ -172,7 +174,7 @@ function parseOrder(html, messageId) {
     // Parse line items from HTML directly (more reliable than plain text)
     const items = parseItems(html)
 
-    if (!customer || items.length === 0) return null
+    if (!customer || items.length === 0) { console.warn(`[${messageId}] parse fail: no customer (${customer}) or no items (${items.length}) (order #${bentoOrderId})`); return null }
 
     // Build notes from item details + any special request
     const combinedNotes = buildNotes(items, notes)
