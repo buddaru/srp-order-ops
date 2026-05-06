@@ -435,14 +435,20 @@ export default async function handler(req, res) {
     let imported = 0
     let skipped  = 0
     let errors   = 0
+    const failedIds = []
 
     for (const msg of batch) {
       try {
-        const full  = await gmailGetMessage(accessToken, msg.id)
-        const html  = getBody(full)
+        const full    = await gmailGetMessage(accessToken, msg.id)
+        const subject = full.payload?.headers?.find(h => h.name === 'Subject')?.value || ''
+        const html    = getBody(full)
+
+        // Skip reply/forward threads — they're not new order confirmations
+        if (/^(re|fwd?):/i.test(subject)) { skipped++; continue }
 
         if (!html) {
           console.warn(`No HTML body in message ${msg.id}`)
+          failedIds.push(msg.id)
           errors++
           continue
         }
@@ -450,7 +456,8 @@ export default async function handler(req, res) {
         const order = parseOrder(html, msg.id)
 
         if (!order) {
-          console.warn(`Parse failed for message ${msg.id}`)
+          console.warn(`Parse failed for message ${msg.id} subject="${subject}"`)
+          failedIds.push(msg.id)
           errors++
           continue
         }
@@ -512,6 +519,7 @@ export default async function handler(req, res) {
         : errors === 0
           ? 'Already up to date'
           : `0 imported, ${errors} errors`,
+      failedIds,
     })
 
   } catch (err) {
