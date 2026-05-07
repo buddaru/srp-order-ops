@@ -39,6 +39,10 @@ const IconInvoices = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 
 let orderSeq = 0
 
+// `image` is a base64 data URL — can be MB per row. Excluded from list/search
+// queries and lazy-loaded when the drawer opens for an order that has one.
+const ORDER_LIST_COLS = 'id, customer, initials, phone, email, items, pickup_date, pickup_time, notes, notifications, stage, created_at, bento_order_id'
+
 const fromDB = (row) => ({
   id:            row.id,
   customer:      row.customer,
@@ -129,6 +133,18 @@ export default function LocationApp() {
   const drawerOrder = orders.find(o => o.id === drawerOrderId) || null
   const editOrder   = orders.find(o => o.id === editingId)     || null
   const showToast   = useCallback(t => setToast(t), [])
+  const imageFetched = useRef(new Set())
+
+  // Lazy-load `image` for the open drawer/edit row, since the bulk loader skips it.
+  useEffect(() => {
+    const id = drawerOrderId || editingId
+    if (!id || imageFetched.current.has(id)) return
+    imageFetched.current.add(id)
+    supabase.from('orders').select('image').eq('id', id).single()
+      .then(({ data }) => {
+        if (data?.image) setOrders(prev => prev.map(o => o.id === id ? { ...o, image: data.image } : o))
+      })
+  }, [drawerOrderId, editingId])
 
   // ── Load orders — scoped to current location ──
   const loadOrders = useCallback(async () => {
@@ -136,7 +152,7 @@ export default function LocationApp() {
     try {
       let query = supabase
         .from('orders')
-        .select('*')
+        .select(ORDER_LIST_COLS)
         .neq('stage', 'picked-up')
         .is('deleted_at', null)
         .order('created_at', { ascending: true })
@@ -185,7 +201,7 @@ export default function LocationApp() {
     pickedUpLoaded.current = true
     supabase
       .from('orders')
-      .select('*')
+      .select(ORDER_LIST_COLS)
       .eq('stage', 'picked-up')
       .eq('location_id', currentLocation.id)
       .is('deleted_at', null)
@@ -211,7 +227,7 @@ export default function LocationApp() {
     searchTimer.current = setTimeout(async () => {
       let query = supabase
         .from('orders')
-        .select('*')
+        .select(ORDER_LIST_COLS)
         .or(`customer.ilike.%${q}%,id.ilike.%${q}%,phone.ilike.%${q}%`)
         .order('created_at', { ascending: false })
         .limit(8)
