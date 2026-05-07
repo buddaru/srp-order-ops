@@ -373,9 +373,24 @@ export default function LocationApp() {
   }
 
   // ── Create ──
+  // Probe the actual max SRP-### across all stages (incl. picked-up + soft-deleted),
+  // since `orderSeq` only sees what's currently loaded and would otherwise collide.
+  const fetchNextSeq = async () => {
+    const { data } = await supabase
+      .from('orders')
+      .select('id')
+      .like('id', 'SRP-%')
+      .order('created_at', { ascending: false })
+      .limit(100)
+    const nums = (data || [])
+      .map(r => parseInt(String(r.id).replace('SRP-', ''), 10))
+      .filter(n => !isNaN(n))
+    const dbMax = nums.length > 0 ? Math.max(...nums) : 0
+    return Math.max(dbMax, orderSeq) + 1
+  }
+
   const handleCreateOrder = async (data) => {
-    const tempSeq = orderSeq + 1
-    const tempId = `SRP-${String(tempSeq).padStart(3, '0')}`
+    const tempId = `SRP-tmp-${Date.now()}`
     const newOrder = {
       id: tempId, ...data,
       notifications: [{ text: '✓ Order created', ts: new Date().toISOString() }],
@@ -385,19 +400,28 @@ export default function LocationApp() {
     setOrders(prev => [...prev, newOrder])
     setShowNew(false)
 
-    const dbRow = { ...toDB(newOrder), location_id: currentLocation?.id }
-    const { data: inserted, error } = await supabase.from('orders').insert(dbRow).select('id').single()
-    if (error) {
+    let seq = await fetchNextSeq()
+    let finalId = null
+    let lastError = null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = `SRP-${String(seq).padStart(3, '0')}`
+      const dbRow = { ...toDB({ ...newOrder, id: candidate }), id: candidate, location_id: currentLocation?.id }
+      const { data: inserted, error } = await supabase.from('orders').insert(dbRow).select('id').single()
+      if (!error) { finalId = inserted?.id || candidate; break }
+      lastError = error
+      if (error.code !== '23505') break
+      seq += 1
+    }
+
+    if (!finalId) {
+      console.error('Create order failed:', lastError)
       setOrders(prev => prev.filter(o => o.id !== tempId))
       setShowNew(true)
       showToast({ label: '⚠️ Save failed', customer: data.customer, msg: 'Order could not be saved. Check your connection.' })
       return
     }
-    const finalId = inserted?.id || tempId
-    if (finalId !== tempId) {
-      setOrders(prev => prev.map(o => o.id === tempId ? { ...o, id: finalId } : o))
-    }
-    orderSeq = tempSeq
+    setOrders(prev => prev.map(o => o.id === tempId ? { ...o, id: finalId } : o))
+    orderSeq = parseInt(finalId.replace('SRP-', ''), 10) || orderSeq
     showToast({ label: '✓ Order created', customer: data.customer, msg: `${finalId} added to the board.` })
   }
 
