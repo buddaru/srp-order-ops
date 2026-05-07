@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { STAGES } from '../utils/helpers'
+import { supabase } from '../lib/supabase'
 import styles from './Header.module.css'
 import { useAuth } from '../context/AuthContext'
 import { useCurrentLocation } from '../context/LocationContext'
@@ -18,20 +19,48 @@ export default function Header({ orders, onJumpToOrder, profile, onSignOut, onMe
   const [locationMenuOpen, setLocationMenuOpen] = useState(false)
   const locationMenuRef = useRef(null)
 
-  const handleSync = async () => {
+  const [failedImports, setFailedImports] = useState([])
+  const [failedOpen, setFailedOpen]       = useState(false)
+  const failedRef = useRef(null)
+
+  const loadFailed = async () => {
+    const { data } = await supabase
+      .from('failed_imports')
+      .select('gmail_message_id, subject, sender, reason, attempted_at')
+      .is('resolved_at', null)
+      .order('attempted_at', { ascending: false })
+      .limit(50)
+    setFailedImports(data || [])
+  }
+
+  useEffect(() => {
+    if (isOrdersPage && currentLocation?.slug === 'srp-carson') loadFailed()
+  }, [isOrdersPage, currentLocation?.slug])
+
+  const handleSync = async (retryFailed = false) => {
     setSyncing(true)
     setSyncMsg(null)
     try {
-      const res  = await fetch('/api/sync-orders', { method: 'POST' })
+      const url  = retryFailed ? '/api/sync-orders?retryFailed=1' : '/api/sync-orders'
+      const res  = await fetch(url, { method: 'POST' })
       const data = await res.json()
       setSyncMsg(data.error || data.message || 'No response')
       if (data.imported > 0 && onOrdersSynced) onOrdersSynced()
+      loadFailed()
     } catch (err) {
       setSyncMsg('Sync failed: ' + err.message)
     } finally {
       setSyncing(false)
       setTimeout(() => setSyncMsg(null), 8000)
     }
+  }
+
+  const handleDismissFailed = async (messageId) => {
+    await supabase
+      .from('failed_imports')
+      .update({ resolved_at: new Date().toISOString() })
+      .eq('gmail_message_id', messageId)
+    loadFailed()
   }
 
   const localDS = (offset = 0) => {
@@ -56,6 +85,18 @@ export default function Header({ orders, onJumpToOrder, profile, onSignOut, onMe
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [locationMenuOpen])
+
+  // Close failed-imports popover on outside click
+  useEffect(() => {
+    if (!failedOpen) return
+    const handler = (e) => {
+      if (failedRef.current && !failedRef.current.contains(e.target)) {
+        setFailedOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [failedOpen])
 
   const handleLocationSwitch = (slug) => {
     setLocationMenuOpen(false)
@@ -120,19 +161,68 @@ export default function Header({ orders, onJumpToOrder, profile, onSignOut, onMe
         {/* Right — sync button + counters */}
         <div className={styles.right}>
           {isOrdersPage && currentLocation?.slug === 'srp-carson' && (
-            <button
-              className={styles.syncBtn}
-              onClick={handleSync}
-              disabled={syncing}
-              title="Sync orders from email"
-              aria-label={syncing ? 'Syncing orders…' : 'Sync orders from email'}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }}>
-                <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-                <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-              </svg>
-              {syncing ? 'Syncing...' : syncMsg || 'Sync Orders'}
-            </button>
+            <>
+              <button
+                className={styles.syncBtn}
+                onClick={() => handleSync(false)}
+                disabled={syncing}
+                title="Sync orders from email"
+                aria-label={syncing ? 'Syncing orders…' : 'Sync orders from email'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }}>
+                  <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                  <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                </svg>
+                {syncing ? 'Syncing...' : syncMsg || 'Sync Orders'}
+              </button>
+
+              {failedImports.length > 0 && (
+                <div className={styles.failedArea} ref={failedRef}>
+                  <button
+                    className={styles.failedBadge}
+                    onClick={() => setFailedOpen(v => !v)}
+                    title={`${failedImports.length} email${failedImports.length > 1 ? 's' : ''} couldn't be parsed`}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    {failedImports.length}
+                  </button>
+
+                  {failedOpen && (
+                    <div className={styles.failedDropdown}>
+                      <div className={styles.failedHeader}>
+                        <span>Couldn't parse {failedImports.length} email{failedImports.length > 1 ? 's' : ''}</span>
+                        <button
+                          className={styles.failedRetry}
+                          onClick={() => { setFailedOpen(false); handleSync(true) }}
+                          disabled={syncing}
+                        >
+                          Retry all
+                        </button>
+                      </div>
+                      <div className={styles.failedList}>
+                        {failedImports.map(f => (
+                          <div key={f.gmail_message_id} className={styles.failedRow}>
+                            <div className={styles.failedRowText}>
+                              <div className={styles.failedSubject}>{f.subject || '(no subject)'}</div>
+                              <div className={styles.failedReason}>{f.reason}</div>
+                            </div>
+                            <button
+                              className={styles.failedDismiss}
+                              onClick={() => handleDismissFailed(f.gmail_message_id)}
+                              title="Dismiss"
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
           <div className={styles.counters}>
             <div className={styles.counter}>
