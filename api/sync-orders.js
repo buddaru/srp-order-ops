@@ -15,6 +15,9 @@ const supabase = createClient(
 )
 
 const BENTO_SENDER = 'noreply@notifications.getbento.com'
+// Without this, RLS hides the imported orders from the location-scoped UI.
+// Override per env if a second location's Bento ever feeds the same Gmail account.
+const BENTO_LOCATION_ID = process.env.BENTO_LOCATION_ID || 'b2c3d4e5-0002-0002-0002-000000000002'
 // Vercel hobby = 10s, pro = 60s. Leave a few seconds of headroom so we can
 // still write last_history_id and respond before the platform kills us.
 const SOFT_RUNTIME_BUDGET_MS = 50_000
@@ -575,6 +578,7 @@ export default async function handler(req, res) {
           image:            order.image,
           bento_order_id:   order.bento_order_id,
           gmail_message_id: msgId,
+          location_id:      BENTO_LOCATION_ID,
         })
 
         if (error) {
