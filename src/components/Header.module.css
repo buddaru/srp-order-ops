@@ -48,6 +48,67 @@
 .syncBtn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--brand); color: var(--brand); }
 .syncBtn:disabled { opacity: 0.55; cursor: not-allowed; filter: grayscale(20%); }
 
+/* ── Failed imports badge ── */
+.failedArea { position: relative; flex-shrink: 0; margin-right: var(--space-2); }
+
+.failedBadge {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px;
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 11px; font-weight: var(--font-medium);
+  cursor: pointer; white-space: nowrap;
+  transition: background var(--duration-fast);
+}
+.failedBadge:hover { background: #fee2e2; }
+
+.failedDropdown {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); min-width: 320px; max-width: 400px; z-index: 400;
+  overflow: hidden;
+}
+
+.failedHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm); color: var(--text); font-weight: var(--font-medium);
+}
+
+.failedRetry {
+  background: var(--brand); color: white; border: none;
+  padding: 4px 10px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 11px; font-weight: var(--font-medium);
+  cursor: pointer;
+}
+.failedRetry:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.failedList { max-height: 320px; overflow-y: auto; }
+
+.failedRow {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: 8px 14px; border-bottom: 1px solid var(--border-2);
+}
+.failedRow:last-child { border-bottom: none; }
+
+.failedRowText { min-width: 0; flex: 1; }
+.failedSubject {
+  font-size: 12px; color: var(--text); font-weight: var(--font-medium);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.failedReason {
+  font-size: 11px; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.failedDismiss {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 18px; line-height: 1; cursor: pointer;
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+}
+.failedDismiss:hover { background: var(--bg-2); color: var(--text); }
+
 /* ── Location selector ── */
 .locationArea {
   position: relative;
@@ -102,6 +163,8 @@
   /* On mobile: hide sync text, icon only */
   .syncBtn { padding: 5px var(--space-2); margin-right: var(--space-2); font-size: 0; gap: 0; }
   .syncBtn svg { width: 14px; height: 14px; }
+
+  .failedDropdown { min-width: 280px; max-width: calc(100vw - 24px); }
 
   /* Counters: hide labels, show nums only with slim dividers */
   .counters { gap: var(--space-2); }

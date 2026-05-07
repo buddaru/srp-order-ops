@@ -1,5 +1,11 @@
 // api/sync-orders.js
-// Vercel serverless function — syncs Bento email orders into Supabase
+// Vercel serverless function — syncs Bento email orders into Supabase.
+//
+// Discovery uses Gmail's history API for incremental sync: we store the last-seen
+// historyId in gmail_tokens.last_history_id. On each call we fetch only what's new.
+// First run (or expired historyId) falls back to a sender-scoped search.
+// Per-message parse/insert failures are persisted in failed_imports so they can be
+// inspected and retried via ?retryFailed=1 instead of disappearing into logs.
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -8,9 +14,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
 )
 
+const BENTO_SENDER = 'noreply@notifications.getbento.com'
+// Vercel hobby = 10s, pro = 60s. Leave a few seconds of headroom so we can
+// still write last_history_id and respond before the platform kills us.
+const SOFT_RUNTIME_BUDGET_MS = 50_000
+
 // ── Gmail OAuth helpers ──
 async function getAccessToken() {
-  // Prefer token stored in Supabase (survives rotation); fall back to env var
   let refreshToken = process.env.GMAIL_REFRESH_TOKEN
   const { data: row } = await supabase
     .from('gmail_tokens')
@@ -36,75 +46,93 @@ async function getAccessToken() {
     throw new Error(`Gmail auth failed: ${data.error} — ${data.error_description}. Visit /api/gmail-auth to re-authorize.`)
   }
 
-  // If Google rotated the refresh token, persist the new one immediately
   if (data.refresh_token && data.refresh_token !== refreshToken) {
-    await supabase.from('gmail_tokens').upsert({
-      id:            'default',
-      refresh_token: data.refresh_token,
-      updated_at:    new Date().toISOString(),
-    })
+    await supabase.from('gmail_tokens')
+      .update({ refresh_token: data.refresh_token, updated_at: new Date().toISOString() })
+      .eq('id', 'default')
   }
 
   return data.access_token
 }
 
-async function getOrdersLabelId(accessToken) {
-  const res = await fetch(
-    'https://gmail.googleapis.com/gmail/v1/users/me/labels',
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  )
-  const data = await res.json()
-  const label = (data.labels || []).find(l => l.name.toLowerCase() === 'orders')
-  return label?.id || null
-}
-
-async function gmailListMessages(accessToken, params) {
-  const res = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  )
+async function gmailFetch(accessToken, url) {
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
   return res.json()
 }
 
-async function gmailSearch(accessToken, labelId, afterDate) {
-  // Fetch from two sources and merge so new emails are never missed:
-  // 1. Orders label — covers all indexed Bento emails efficiently
-  // 2. Recent INBOX (50 messages, no query) — reads directly from the mailbox store,
-  //    catches emails that haven't propagated through Gmail's index yet
-  const [labelData, inboxData] = await Promise.all([
-    labelId
-      ? gmailListMessages(accessToken, new URLSearchParams({ labelIds: labelId, maxResults: 500 }))
-      : gmailListMessages(accessToken, new URLSearchParams({ q: `from:noreply@notifications.getbento.com after:${afterDate}`, maxResults: 500 })),
-    gmailListMessages(accessToken, new URLSearchParams({ labelIds: 'INBOX', maxResults: 50 })),
-  ])
-
-  const seen = new Set()
-  const messages = []
-  for (const msg of [...(labelData.messages || []), ...(inboxData.messages || [])]) {
-    if (!seen.has(msg.id)) { seen.add(msg.id); messages.push(msg) }
-  }
-
-  return { messages, error: labelData.error || inboxData.error }
+async function getProfile(accessToken) {
+  return gmailFetch(accessToken, 'https://gmail.googleapis.com/gmail/v1/users/me/profile')
 }
 
 async function gmailGetMessage(accessToken, messageId) {
-  const res = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  )
-  return res.json()
+  return gmailFetch(accessToken, `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`)
+}
+
+// Incremental: pull all new messages since startHistoryId. Throws with .status=404
+// if Gmail considers the historyId too old (~1 week).
+async function historyListAll(accessToken, startHistoryId) {
+  const ids = new Set()
+  let pageToken = null
+  let pages = 0
+  do {
+    const params = new URLSearchParams({
+      startHistoryId,
+      historyTypes: 'messageAdded',
+      maxResults: '100',
+    })
+    if (pageToken) params.set('pageToken', pageToken)
+    const data = await gmailFetch(
+      accessToken,
+      `https://gmail.googleapis.com/gmail/v1/users/me/history?${params}`
+    )
+    if (data.error) {
+      const err = new Error(data.error.message || 'history list failed')
+      err.status = data.error.code
+      throw err
+    }
+    for (const h of data.history || []) {
+      for (const m of h.messagesAdded || []) {
+        if (m.message?.id) ids.add(m.message.id)
+      }
+    }
+    pageToken = data.nextPageToken
+    pages++
+  } while (pageToken && pages < 20)
+  return [...ids]
+}
+
+// Backfill: list all Bento-sender messages, paginated. Used on first run and
+// when the saved historyId has expired.
+async function searchAllBento(accessToken, maxPages = 5) {
+  const ids = new Set()
+  let pageToken = null
+  let pages = 0
+  do {
+    const params = new URLSearchParams({
+      q: `from:${BENTO_SENDER}`,
+      maxResults: '100',
+    })
+    if (pageToken) params.set('pageToken', pageToken)
+    const data = await gmailFetch(
+      accessToken,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params}`
+    )
+    if (data.error) throw new Error(data.error.message || 'search failed')
+    for (const m of data.messages || []) ids.add(m.id)
+    pageToken = data.nextPageToken
+    pages++
+  } while (pageToken && pages < maxPages)
+  return [...ids]
 }
 
 // ── HTML parser ──
 function getBody(message) {
-  // Recursively search all MIME parts for text/html
   function findHtmlPart(parts) {
     if (!parts) return null
     for (const part of parts) {
       if (part.mimeType === 'text/html' && part.body?.data) {
         return Buffer.from(part.body.data, 'base64').toString('utf-8')
       }
-      // Recurse into nested multipart/* containers
       if (part.mimeType?.startsWith('multipart/') && part.parts) {
         const found = findHtmlPart(part.parts)
         if (found) return found
@@ -120,6 +148,10 @@ function getBody(message) {
     return Buffer.from(message.payload.body.data, 'base64').toString('utf-8')
   }
   return ''
+}
+
+function getHeader(payload, name) {
+  return payload?.headers?.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || ''
 }
 
 function stripHtml(html) {
@@ -145,23 +177,20 @@ function parseOrder(html, messageId) {
     const lines = stripHtml(html)
     const text  = lines.join('\n')
 
-    // Bento order number
     const orderNumMatch = text.match(/Order #(\d+)/)
-    if (!orderNumMatch) { console.warn(`[${messageId}] parse fail: no order number`); return null }
+    if (!orderNumMatch) return { error: 'no order number', snippet: text.slice(0, 300) }
     const bentoOrderId = orderNumMatch[1]
 
-    // Pickup date + time — handle multiline: "Order for:\n  Thu\n  Apr 02 1:00pm"
     const dateMatch =
       text.match(/Order for:[^]*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i) ||
       text.match(/Order for:[^]*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
-    if (!dateMatch) { console.warn(`[${messageId}] parse fail: no date match (order #${bentoOrderId})\nText snippet: ${text.slice(0,300)}`); return null }
+    if (!dateMatch) return { error: `no date match for #${bentoOrderId}`, snippet: text.slice(0, 300) }
 
     const pickupDate = parseBentoDate(dateMatch[1])
     const pickupTime = parseTime(dateMatch[2])
 
-    // Customer details block
     const custIdx = lines.findIndex(l => l.includes('Customer Details'))
-    if (custIdx === -1) { console.warn(`[${messageId}] parse fail: no Customer Details (order #${bentoOrderId})\nLines: ${lines.slice(0,20).join(' | ')}`); return null }
+    if (custIdx === -1) return { error: `no Customer Details for #${bentoOrderId}` }
 
     const customer = lines[custIdx + 1] || ''
     const rawPhone = lines[custIdx + 2] || ''
@@ -170,7 +199,6 @@ function parseOrder(html, messageId) {
     const phone = formatPhone(rawPhone)
     const initials = mkInitials(customer)
 
-    // Special requests → notes
     let notes = ''
     const srIdx = lines.findIndex(l => l.includes('Special Requests'))
     if (srIdx !== -1) {
@@ -184,56 +212,50 @@ function parseOrder(html, messageId) {
       notes = noteParts.join(' ').trim()
     }
 
-    // Parse line items from HTML directly (more reliable than plain text)
     const items = parseItems(html)
 
-    if (!customer || items.length === 0) { console.warn(`[${messageId}] parse fail: no customer (${customer}) or no items (${items.length}) (order #${bentoOrderId})`); return null }
+    if (!customer)        return { error: `no customer name for #${bentoOrderId}` }
+    if (items.length === 0) return { error: `no line items for #${bentoOrderId}` }
 
-    // Build notes from item details + any special request
     const combinedNotes = buildNotes(items, notes)
 
     return {
-      bento_order_id: bentoOrderId,
-      customer:       titleCase(customer),
-      initials,
-      phone,
-      email:          email.toLowerCase(),
-      pickup_date:    pickupDate,
-      pickup_time:    pickupTime,
-      notes:          combinedNotes,
-      stage:          'received',
-      notifications:  [],
-      image:          null,
-      items,
+      order: {
+        bento_order_id: bentoOrderId,
+        customer:       titleCase(customer),
+        initials,
+        phone,
+        email:          email.toLowerCase(),
+        pickup_date:    pickupDate,
+        pickup_time:    pickupTime,
+        notes:          combinedNotes,
+        stage:          'received',
+        notifications:  [],
+        image:          null,
+        items,
+      }
     }
   } catch (err) {
-    console.error('Parse error:', err.message)
-    return null
+    return { error: `parser threw: ${err.message}` }
   }
 }
 
 function parseItems(html) {
   const items = []
-
-  // Split on each lineItem row start — avoids nested </tr> problem
   const chunks = html.split(/<tr class="lineItem"/i)
-  chunks.shift() // drop content before first lineItem
+  chunks.shift()
 
   for (const chunk of chunks) {
-    // Qty
     const qtyMatch = chunk.match(/(\d+)x<\/p>/)
     const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1
 
-    // Product name
     const nameMatch = chunk.match(/font-weight:700[^>]*>\s*\n?\s*([^<\n]+?)\s*\n?\s*</)
     const name = nameMatch ? nameMatch[1].trim() : ''
     if (!name) continue
 
-    // Price — from itemTotal cell (appears after productName cell)
     const priceMatch = chunk.match(/class="itemTotal"[\s\S]*?\$(\d+\.\d{2})/)
     const price = priceMatch ? parseFloat(priceMatch[1]) : 0
 
-    // Field key-value pairs
     const fields = {}
     const fieldRegex = /class="fieldName"[^>]*>([\s\S]*?)<\/td>[\s\S]*?class="fieldDescription"[^>]*>([\s\S]*?)<\/td>/gi
     let fm
@@ -242,7 +264,7 @@ function parseItems(html) {
       const val = fm[2]
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<[^>]+>/g, '')
-        .replace(/\$[\d.]+/g, '')   // strip addon upcharges like "$15.00"
+        .replace(/\$[\d.]+/g, '')
         .split('\n')
         .map(s => s.trim())
         .filter(Boolean)
@@ -278,7 +300,6 @@ function parseItems(html) {
   return items
 }
 
-// ── Build notes from item details + special request ──
 function buildNotes(items, specialRequest) {
   const lines = []
   items.forEach(item => {
@@ -293,21 +314,17 @@ function buildNotes(items, specialRequest) {
   return lines.join('\n')
 }
 
-// ── Date/time helpers ──
 function parseBentoDate(str) {
-  // "Apr 02", "Mar 21", "Dec 11", "Thu Apr 02"
   const cleaned = str.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i, '').trim()
   const now     = new Date()
   const year    = now.getFullYear()
   const d       = new Date(`${cleaned} ${year}`)
-  // If parsed date is more than 6 months in the past, assume next year
   if (isNaN(d)) return null
   if (d < new Date(now - 180 * 86400 * 1000)) d.setFullYear(year + 1)
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function parseTime(str) {
-  // "1:00pm" → "13:00"
   const m = str.match(/(\d{1,2}):(\d{2})(am|pm)/i)
   if (!m) return '12:00'
   let h = parseInt(m[1])
@@ -332,7 +349,6 @@ function titleCase(str) {
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 }
 
-// ── Generate SRP order ID ──
 async function nextOrderId() {
   const { data } = await supabase
     .from('orders')
@@ -349,44 +365,67 @@ async function nextOrderId() {
   return `SRP-${String(max + 1).padStart(3, '0')}`
 }
 
+// ── Failure persistence ──
+async function recordFailure(messageId, subject, sender, reason, html) {
+  try {
+    await supabase.from('failed_imports').upsert({
+      gmail_message_id: messageId,
+      subject:          subject || '',
+      sender:           sender || '',
+      reason,
+      raw_html:         html ? html.slice(0, 50000) : null,
+      attempted_at:     new Date().toISOString(),
+      resolved_at:      null,
+    })
+  } catch (err) {
+    console.error('failed_imports write failed (table may not exist yet):', err.message)
+  }
+}
+
+async function clearFailure(messageId) {
+  try {
+    await supabase.from('failed_imports')
+      .update({ resolved_at: new Date().toISOString() })
+      .eq('gmail_message_id', messageId)
+      .is('resolved_at', null)
+  } catch (err) {
+    console.error('failed_imports clear failed:', err.message)
+  }
+}
+
 // ── Main handler ──
 export default async function handler(req, res) {
-  // GET ?debug=1 → test OAuth + Gmail search without importing anything
   if (req.method === 'GET') {
-    if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to test' })
+    if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to inspect' })
     try {
       const accessToken = await getAccessToken()
+      const profile = await getProfile(accessToken)
 
-      // Identify which Gmail account is authenticated
-      const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-      const profile = await profileRes.json()
-
-      // ?msgId=XXX — inspect a specific message and show why parse fails
       if (req.query.msgId) {
         const full  = await gmailGetMessage(accessToken, req.query.msgId)
         const html  = getBody(full)
         const lines = html ? stripHtml(html) : []
         const text  = lines.join('\n')
-        const order = parseOrder(html, req.query.msgId)
+        const result = parseOrder(html, req.query.msgId)
         return res.status(200).json({
-          parsed: !!order,
-          order,
-          subject: full.payload?.headers?.find(h => h.name === 'Subject')?.value,
+          parsed: !!result.order,
+          order: result.order,
+          parseError: result.error,
+          subject: getHeader(full.payload, 'Subject'),
+          from: getHeader(full.payload, 'From'),
           textPreview: text.slice(0, 800),
         })
       }
 
-      const afterDate = '2026/04/04'
-      const labelId = await getOrdersLabelId(accessToken)
-      const gmailResponse = await gmailSearch(accessToken, labelId, afterDate)
+      const { data: tokenRow } = await supabase.from('gmail_tokens').select('last_history_id').eq('id', 'default').single()
+      const { count: failedCount } = await supabase.from('failed_imports').select('*', { count: 'exact', head: true }).is('resolved_at', null)
+
       return res.status(200).json({
         oauthOk: true,
         authorizedAs: profile.emailAddress,
-        ordersLabelId: labelId,
-        messageCount: gmailResponse.messages?.length ?? 0,
-        gmailResponse,
+        currentHistoryId: profile.historyId,
+        lastHistoryId: tokenRow?.last_history_id || null,
+        unresolvedFailures: failedCount ?? null,
       })
     } catch (err) {
       return res.status(200).json({ oauthOk: false, error: err.message })
@@ -397,92 +436,122 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const startedAt = Date.now()
+  const wantsBackfill   = req.query?.backfill === '1'
+  const wantsRetryFailed = req.query?.retryFailed === '1'
+
   try {
-    // 1. Get Gmail access token
     const accessToken = await getAccessToken()
 
-    // 2. Fetch Bento order emails — use the Orders label for instant access without
-    //    search index delay; fall back to sender+date query if the label isn't found.
-    const afterDate = '2026/04/04'
-    const labelId = await getOrdersLabelId(accessToken)
-    const gmailResponse = await gmailSearch(accessToken, labelId, afterDate)
+    // 1. Discover candidate message IDs.
+    const { data: tokenRow } = await supabase
+      .from('gmail_tokens')
+      .select('last_history_id')
+      .eq('id', 'default')
+      .single()
+    const lastHistoryId = tokenRow?.last_history_id
 
-    // Surface any Gmail API errors for debugging
-    if (gmailResponse.error) {
-      return res.status(200).json({
-        imported: 0, skipped: 0,
-        message: 'Gmail API error — check debug field',
-        debug: { gmailError: gmailResponse.error }
-      })
+    let candidateIds = []
+    let mode = 'incremental'
+
+    if (wantsBackfill || !lastHistoryId) {
+      candidateIds = await searchAllBento(accessToken)
+      mode = 'backfill'
+    } else {
+      try {
+        candidateIds = await historyListAll(accessToken, lastHistoryId)
+      } catch (err) {
+        if (err.status === 404) {
+          // Saved historyId expired (Gmail keeps history ~7 days). Recover by backfilling.
+          candidateIds = await searchAllBento(accessToken)
+          mode = 'backfill-recovered'
+        } else {
+          throw err
+        }
+      }
     }
 
-    const messages = gmailResponse.messages || []
-
-    if (messages.length === 0) {
-      return res.status(200).json({
-        imported: 0, skipped: 0,
-        message: 'No Bento orders found in Gmail',
-        debug: { query, gmailRawResponse: gmailResponse }
-      })
+    // 2. Optionally include unresolved failed messages (for retry after a parser fix).
+    let failedSet = new Set()
+    if (wantsRetryFailed) {
+      const { data: failedRows } = await supabase
+        .from('failed_imports')
+        .select('gmail_message_id')
+        .is('resolved_at', null)
+      const failedIds = (failedRows || []).map(r => r.gmail_message_id)
+      candidateIds = [...new Set([...candidateIds, ...failedIds])]
+    } else {
+      // Skip messages we've already failed on, so the user isn't stuck retrying broken parses.
+      const { data: failedRows } = await supabase
+        .from('failed_imports')
+        .select('gmail_message_id')
+        .is('resolved_at', null)
+      failedSet = new Set((failedRows || []).map(r => r.gmail_message_id))
     }
 
-    // 3. Build two dedup sets:
-    //    - processedMsgIds: Gmail message IDs already stored (fast pre-filter, grows over time)
-    //    - existingBentoIds: bento_order_ids already stored (fallback for orders imported before
-    //      gmail_message_id was tracked — prevents duplicates during the transition period)
-    const { data: existing } = await supabase
+    // 3. Build dedup sets from existing orders.
+    const { data: existingOrders } = await supabase
       .from('orders')
       .select('gmail_message_id, bento_order_id')
 
     const processedMsgIds  = new Set()
     const existingBentoIds = new Set()
-    for (const r of existing || []) {
+    for (const r of existingOrders || []) {
       if (r.gmail_message_id) processedMsgIds.add(r.gmail_message_id)
       if (r.bento_order_id)   existingBentoIds.add(r.bento_order_id)
     }
 
-    // 4. Pre-filter by Gmail message ID, then import up to 20 per click.
-    const unprocessed = messages.filter(m => !processedMsgIds.has(m.id))
-    const batch = unprocessed.slice(0, 20)
+    const toProcess = candidateIds.filter(id =>
+      !processedMsgIds.has(id) && !failedSet.has(id)
+    )
 
-    let imported = 0
-    let skipped  = 0
-    let errors   = 0
-    const failedIds = []
+    // 4. Process every candidate (no batch cap). Bail only if we're about to hit
+    //    Vercel's wall-clock limit; the next click resumes from the same historyId.
+    let imported = 0, skipped = 0, errors = 0, processed = 0
+    const failedNow = []
 
-    for (const msg of batch) {
+    for (const msgId of toProcess) {
+      if (Date.now() - startedAt > SOFT_RUNTIME_BUDGET_MS) break
+      processed++
+
       try {
-        const full    = await gmailGetMessage(accessToken, msg.id)
-        const subject = full.payload?.headers?.find(h => h.name === 'Subject')?.value || ''
+        const full = await gmailGetMessage(accessToken, msgId)
+
+        if (full.error) {
+          // Message was deleted between discovery and fetch — count as skipped, don't fail.
+          skipped++
+          continue
+        }
+
+        const subject = getHeader(full.payload, 'Subject')
+        const from    = getHeader(full.payload, 'From')
         const html    = getBody(full)
 
-        // Skip reply/forward threads — they're not new order confirmations
-        // Skip reply/forward threads and any non-Bento inbox emails from the INBOX scan
-        if (/^(re|fwd?):/i.test(subject)) { skipped++; continue }
-        if (!subject.includes('New Pickup Order')) { skipped++; continue }
+        // Sender-based filter (replaces brittle subject string match).
+        if (!from.toLowerCase().includes(BENTO_SENDER)) { skipped++; continue }
+        if (/^(re|fwd?):/i.test(subject))                { skipped++; continue }
+        // Soft-skip Bento mail that clearly isn't an order (newsletters, account notices).
+        if (!/order/i.test(subject))                     { skipped++; continue }
 
         if (!html) {
-          console.warn(`No HTML body in message ${msg.id}`)
-          failedIds.push(msg.id)
-          errors++
+          await recordFailure(msgId, subject, from, 'no HTML body', null)
+          failedNow.push(msgId); errors++
           continue
         }
 
-        const order = parseOrder(html, msg.id)
-
-        if (!order) {
-          console.warn(`Parse failed for message ${msg.id} subject="${subject}"`)
-          failedIds.push(msg.id)
-          errors++
+        const result = parseOrder(html, msgId)
+        if (!result.order) {
+          await recordFailure(msgId, subject, from, result.error || 'parse failed', html)
+          failedNow.push(msgId); errors++
           continue
         }
 
-        // Fallback dedup: existing orders imported before gmail_message_id was tracked
+        const order = result.order
+
+        // Fallback dedup: matching bento_order_id from a previous (pre-tracking) import.
         if (existingBentoIds.has(order.bento_order_id)) {
-          // Backfill the gmail_message_id so this order won't be re-checked next time
-          await supabase
-            .from('orders')
-            .update({ gmail_message_id: msg.id })
+          await supabase.from('orders')
+            .update({ gmail_message_id: msgId })
             .eq('bento_order_id', order.bento_order_id)
             .is('gmail_message_id', null)
           skipped++
@@ -493,50 +562,79 @@ export default async function handler(req, res) {
 
         const { error } = await supabase.from('orders').insert({
           id,
-          customer:          order.customer,
-          initials:          order.initials,
-          phone:             order.phone,
-          email:             order.email,
-          items:             order.items,
-          pickup_date:       order.pickup_date,
-          pickup_time:       order.pickup_time,
-          notes:             order.notes,
-          notifications:     order.notifications,
-          stage:             order.stage,
-          image:             order.image,
-          bento_order_id:    order.bento_order_id,
-          gmail_message_id:  msg.id,
+          customer:         order.customer,
+          initials:         order.initials,
+          phone:            order.phone,
+          email:            order.email,
+          items:            order.items,
+          pickup_date:      order.pickup_date,
+          pickup_time:      order.pickup_time,
+          notes:            order.notes,
+          notifications:    order.notifications,
+          stage:            order.stage,
+          image:            order.image,
+          bento_order_id:   order.bento_order_id,
+          gmail_message_id: msgId,
         })
 
         if (error) {
-          console.error(`Insert error for bento #${order.bento_order_id}:`, JSON.stringify(error))
-          errors++
+          await recordFailure(msgId, subject, from, `insert failed: ${error.message}`, html)
+          failedNow.push(msgId); errors++
           continue
-        } else {
-          imported++
         }
+
+        // In-memory dedup for the rest of this run.
+        processedMsgIds.add(msgId)
+        existingBentoIds.add(order.bento_order_id)
+
+        // If this was a retry, mark the failure resolved.
+        if (wantsRetryFailed) await clearFailure(msgId)
+
+        imported++
       } catch (err) {
-        console.error('Error processing message:', err.message)
-        errors++
-        continue
+        await recordFailure(msgId, '', '', `runtime error: ${err.message}`, null)
+        failedNow.push(msgId); errors++
       }
     }
 
-    const remaining = unprocessed.length - batch.length
+    // 5. Advance the historyId only if we drained the queue. If we bailed on the
+    //    runtime budget, the next click picks up from the same point and dedup
+    //    handles anything we already imported.
+    const remaining = toProcess.length - processed
+    if (remaining === 0) {
+      try {
+        const profile = await getProfile(accessToken)
+        if (profile.historyId) {
+          await supabase.from('gmail_tokens')
+            .update({
+              last_history_id: profile.historyId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', 'default')
+        }
+      } catch (err) {
+        console.error('historyId update failed:', err.message)
+      }
+    }
+
     return res.status(200).json({
       imported,
-      skipped: messages.length - unprocessed.length,
+      skipped,
       errors,
-      totalFound: messages.length,
-      newFound: unprocessed.length,
-      message: imported > 0
-        ? `${imported} order${imported > 1 ? 's' : ''} added${remaining > 0 ? ' — click Sync again for more' : ''}`
-        : errors === 0
-          ? 'Already up to date'
-          : `0 imported, ${errors} errors`,
-      failedIds,
+      processed,
+      remaining,
+      totalCandidates: candidateIds.length,
+      mode,
+      message:
+        imported > 0
+          ? `${imported} order${imported > 1 ? 's' : ''} added${remaining > 0 ? ` — ${remaining} more, click Sync again` : ''}`
+          : remaining > 0
+            ? `${remaining} more to process — click Sync again`
+            : errors > 0
+              ? `0 imported, ${errors} parse failure${errors > 1 ? 's' : ''} (see failed_imports)`
+              : 'Already up to date',
+      failedIds: failedNow,
     })
-
   } catch (err) {
     console.error('Sync error:', err)
     return res.status(500).json({ error: err.message || 'Sync failed' })
