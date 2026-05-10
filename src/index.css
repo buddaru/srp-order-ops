@@ -157,8 +157,8 @@ textarea { resize: none; height: 68px; line-height: 1.6; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Prevent iOS auto-zoom on input focus */
-@media (max-width: 768px) {
+/* Prevent iOS auto-zoom on input focus (touch devices — phones, iPads) */
+@media (pointer: coarse) {
   input, select, textarea { font-size: 16px !important; }
 }
 @media (max-width: 768px) {

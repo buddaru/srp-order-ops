@@ -174,7 +174,7 @@
 }
 .customItemName {
   flex: 1;
-  font-size: 13px !important;
+  font-size: 13px;
   padding: 8px 10px !important;
   border-radius: var(--radius-sm) !important;
   width: auto !important;
@@ -198,7 +198,7 @@
   border: none !important;
   padding: 8px 0 !important;
   width: 60px !important;
-  font-size: 13px !important;
+  font-size: 13px;
   outline: none !important;
   box-shadow: none !important;
 }

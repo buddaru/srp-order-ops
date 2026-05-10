@@ -291,7 +291,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
               <div className={styles.customItemPriceWrap}>
                 <span className={styles.customItemDollar}>$</span>
                 <input
-                  type="number" min="0" step="0.01"
+                  type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
                   className={styles.customItemPriceInput}
                   placeholder="0.00"
                   value={customItemPrice}
@@ -300,7 +300,6 @@ export default function MenuBuilder({ cartItems, onChange }) {
               </div>
               <button
                 className={styles.saveItemBtn}
-                style={{ padding: '7px 14px', fontSize: 12 }}
                 onClick={handleAddCustomItem}
                 disabled={!customName.trim()}
               >
@@ -450,7 +449,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
                       <div className={styles.customPriceWrap}>
                         <span>$</span>
                         <input
-                          type="number" min="0"
+                          type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
                           className={styles.customPriceInput}
                           placeholder="0"
                           value={addons.customPrice}
@@ -476,7 +475,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
                   <div className={styles.customPriceWrap}>
                     <span>$</span>
                     <input
-                      type="number" min="0"
+                      type="text" inputMode="decimal" pattern="[0-9]*\.?[0-9]*"
                       className={styles.customPriceInput}
                       placeholder="0"
                       value={addons.customPrice}
