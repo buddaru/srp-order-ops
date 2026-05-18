@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { supabase } from '../lib/supabase'
 import { useLocation } from 'react-router-dom'
 import { useCurrentLocation } from '../context/LocationContext'
@@ -7,6 +8,7 @@ import styles from './Settings.module.css'
 
 export default function Settings() {
   const { profile, user } = useAuth()
+  const { dark, toggle: toggleDark } = useTheme()
   const location = useLocation()
   const { currentLocation, isLocationAdmin, reload: reloadLocation } = useCurrentLocation()
 
@@ -132,6 +134,27 @@ export default function Settings() {
           <div className={styles.row}>
             <span className={styles.rowLabel}>Email</span>
             <span className={styles.rowVal}>{email}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>Appearance</div>
+        <div className={styles.card}>
+          <div className={styles.row}>
+            <div>
+              <div className={styles.rowLabel} style={{ color: 'var(--text)', fontWeight: 500 }}>Dark mode</div>
+              <div className={styles.rowLabel} style={{ marginTop: 2 }}>Switch to a dark color theme</div>
+            </div>
+            <button
+              className={`${styles.toggle} ${dark ? styles.toggleOn : ''}`}
+              onClick={toggleDark}
+              role="switch"
+              aria-checked={dark}
+              aria-label="Toggle dark mode"
+            >
+              <span className={styles.toggleThumb} />
+            </button>
           </div>
         </div>
       </div>
