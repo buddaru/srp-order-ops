@@ -44,6 +44,20 @@
 }
 .sidebarLogoSub { font-size: 10px; color: var(--text-muted); font-family: var(--font-body); }
 
+.liveDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
 .sidebarToggle {
   background: none; border: 1px solid var(--border-2); border-radius: var(--radius-sm);
   width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;

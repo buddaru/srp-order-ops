@@ -91,6 +91,7 @@ export default function LocationApp() {
 
   const [orders, setOrders]               = useState([])
   const [ordersLoaded, setOrdersLoaded]   = useState(false)
+  const [realtimeConnected, setRealtimeConnected] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching]     = useState(false)
   const [pickedUpCount, setPickedUpCount] = useState(0)
@@ -202,6 +203,61 @@ export default function LocationApp() {
         }
       })
   }, [selectedStage, currentLocation])
+
+  // ── Realtime subscription — auto-refresh orders from any device ──
+  useEffect(() => {
+    if (!currentLocation?.id || locationLoading) return
+
+    const channel = supabase
+      .channel(`orders:loc:${currentLocation.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `location_id=eq.${currentLocation.id}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const row = payload.new
+            if (row.deleted_at) return
+            const newOrder = fromDB(row)
+            if (newOrder.stage === 'picked-up') {
+              setPickedUpCount(c => c + 1)
+              return
+            }
+            setOrders(prev =>
+              prev.some(o => o.id === newOrder.id) ? prev : [...prev, newOrder]
+            )
+          } else if (payload.eventType === 'UPDATE') {
+            const row = payload.new
+            const updated = fromDB(row)
+            if (row.deleted_at) {
+              setOrders(prev => prev.filter(o => o.id !== updated.id))
+              return
+            }
+            setOrders(prev => {
+              const idx = prev.findIndex(o => o.id === updated.id)
+              if (idx === -1) {
+                if (updated.stage === 'picked-up') return prev
+                return [...prev, updated]
+              }
+              if (updated.stage === 'picked-up') {
+                setPickedUpCount(c => c + 1)
+                return prev.filter(o => o.id !== updated.id)
+              }
+              return prev.map(o => o.id === updated.id ? updated : o)
+            })
+          } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe((status) => {
+        setRealtimeConnected(status === 'SUBSCRIBED')
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+      setRealtimeConnected(false)
+    }
+  }, [currentLocation?.id, locationLoading])
 
   // ── Search ──
   const handleSearch = useCallback((q) => {
@@ -435,7 +491,10 @@ export default function LocationApp() {
                 <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#245A1F', marginLeft: '2px', flexShrink: 0, position: 'relative', top: '-1px' }}></span>
               </div>
               {sidebarOpen && currentLocation && (
-                <span className={styles.sidebarLogoSub} style={{ lineHeight: 1.3 }}>{currentLocation.name}</span>
+                <span className={styles.sidebarLogoSub} style={{ lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {currentLocation.name}
+                  {realtimeConnected && <span className={styles.liveDot} title="Live — auto-updating" />}
+                </span>
               )}
             </div>
           </div>
