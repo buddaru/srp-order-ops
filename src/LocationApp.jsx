@@ -112,6 +112,7 @@ export default function LocationApp() {
   })
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, profile, isAdmin, signOut } = useAuth()
+  const recipesEnabled = currentLocation?.settings?.recipes_enabled ?? true
   const { readySms, pickupSms } = useBusiness()
   const navigate = useNavigate()
   const location = useLocation()
@@ -562,7 +563,7 @@ export default function LocationApp() {
 
           {sidebarOpen && <div className={styles.sidebarSection} style={{ marginTop: 6 }}>Kitchen</div>}
           {!sidebarOpen && <div style={{ height: 8 }} />}
-          {navLink('recipes',  <IconRecipes />,  'Recipes')}
+          {(isAdmin || recipesEnabled) && navLink('recipes',  <IconRecipes />,  'Recipes')}
           {navLink('reports',  <IconReports />,  'Reports')}
           {navLink('invoices', <IconInvoices />, 'Receipts')}
 

@@ -6,7 +6,7 @@ import { useCurrentLocation } from '../context/LocationContext'
 import styles from './Settings.module.css'
 
 export default function Settings() {
-  const { profile, user } = useAuth()
+  const { profile, user, isAdmin } = useAuth()
   const location = useLocation()
   const { currentLocation, isLocationAdmin, reload: reloadLocation } = useCurrentLocation()
 
@@ -28,6 +28,9 @@ export default function Settings() {
   const [locMsg,     setLocMsg]     = useState('')
   const [locErr,     setLocErr]     = useState('')
 
+  const [recipesEnabled, setRecipesEnabled] = useState(true)
+  const [savingRecipes,  setSavingRecipes]  = useState(false)
+
   useEffect(() => {
     if (location.search.includes('reset=1')) {
       setTimeout(() => document.getElementById('pw-section')?.scrollIntoView({ behavior: 'smooth' }), 200)
@@ -39,6 +42,7 @@ export default function Settings() {
     setLocAddress(c.address || '')
     setLocPhone(c.phone     || '')
     setLocWebsite(c.website || '')
+    setRecipesEnabled(currentLocation?.settings?.recipes_enabled ?? true)
   }, [currentLocation])
 
   const email = profile?.email || user?.email || '—'
@@ -102,6 +106,33 @@ export default function Settings() {
       setLocErr(err.message || 'Could not save location info')
     } finally {
       setSavingLoc(false)
+    }
+  }
+
+  const handleToggleRecipes = async (enabled) => {
+    if (!currentLocation) return
+    setSavingRecipes(true)
+    try {
+      // Fetch all locations for this org so we can merge into their existing settings
+      const { data: orgLocs } = await supabase
+        .from('locations')
+        .select('id, settings')
+        .eq('organization_id', currentLocation.organization_id)
+
+      await Promise.all(
+        (orgLocs || []).map(loc =>
+          supabase
+            .from('locations')
+            .update({ settings: { ...(loc.settings || {}), recipes_enabled: enabled } })
+            .eq('id', loc.id)
+        )
+      )
+      setRecipesEnabled(enabled)
+      await reloadLocation()
+    } catch (err) {
+      console.error('Failed to update recipes permission:', err)
+    } finally {
+      setSavingRecipes(false)
     }
   }
 
@@ -170,6 +201,31 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {isAdmin && currentLocation && (
+        <div className={styles.section}>
+          <div className={styles.sectionLabel}>Permissions</div>
+          <div className={styles.card}>
+            <div className={styles.toggleRow}>
+              <div className={styles.toggleInfo}>
+                <div className={styles.toggleLabel}>Recipes page</div>
+                <div className={styles.toggleSub}>
+                  {recipesEnabled ? 'Visible to all roles' : 'Admin only'}
+                </div>
+              </div>
+              <label className={styles.toggle}>
+                <input
+                  type="checkbox"
+                  checked={recipesEnabled}
+                  disabled={savingRecipes}
+                  onChange={e => handleToggleRecipes(e.target.checked)}
+                />
+                <span className={styles.toggleSlider} />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLocationAdmin && currentLocation && (
         <div className={styles.section}>
