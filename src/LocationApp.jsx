@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useIdleRefresh } from './hooks/useIdleRefresh'
 import { Routes, Route, NavLink, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { STAGES, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
@@ -178,6 +179,8 @@ export default function LocationApp() {
       setOrdersLoaded(true)
     }
   }, [currentLocation])
+
+  useIdleRefresh(loadOrders)
 
   useEffect(() => {
     if (locationLoading) return
