@@ -1,5 +1,13 @@
+import { requireUser } from './_auth.js'
+import { rateLimit } from './_rateLimit.js'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  if (!(await requireUser(req, res))) return
+  if (!rateLimit(req, { limit: 30, windowMs: 60_000 }).allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' })
+  }
 
   const { employee, weekLabel, shifts } = req.body
   if (!employee?.email) return res.status(400).json({ error: 'Employee email required' })

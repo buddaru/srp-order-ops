@@ -1,9 +1,12 @@
 import { rateLimit } from './_rateLimit.js'
+import { requireUser } from './_auth.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  if (!(await requireUser(req, res))) return
 
   const { allowed } = rateLimit(req, { limit: 10, windowMs: 60_000 })
   if (!allowed) {

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadro — Architecture Diagram</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a1a2e;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 20px;
+      min-width: 1400px;
+    }
+    h1 {
+      color: white;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
+    }
+    .subtitle {
+      color: #94a3b8;
+      text-align: center;
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Main grid ── */
+    .diagram {
+      display: grid;
+      grid-template-columns: 160px 1fr 1fr 1fr 170px;
+      gap: 8px;
+      align-items: start;
+    }
+
+    /* ── Swim-lane columns ── */
+    .lane {
+      border-radius: 8px;
+      padding: 10px;
+      border: 2px solid;
+    }
+    .lane-clients  { background:#fff3e0; border-color:#e65100; }
+    .lane-frontend { background:#e3f2fd; border-color:#1565c0; }
+    .lane-api      { background:#fffde7; border-color:#f57f17; }
+    .lane-supa     { background:#e8f5e9; border-color:#2e7d32; }
+    .lane-ext      { background:#f3e5f5; border-color:#6a1b9a; }
+
+    .lane-hdr {
+      font-weight: 800;
+      font-size: 11px;
+      text-align: center;
+      padding: 5px 4px;
+      border-radius: 5px;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: white;
+    }
+    .lane-clients  .lane-hdr { background:#e65100; }
+    .lane-frontend .lane-hdr { background:#1565c0; }
+    .lane-api      .lane-hdr { background:#e65c00; }
+    .lane-supa     .lane-hdr { background:#2e7d32; }
+    .lane-ext      .lane-hdr { background:#6a1b9a; }
+
+    /* ── Section groups ── */
+    .sec {
+      border-radius: 6px;
+      padding: 7px 7px 5px;
+      margin-bottom: 7px;
+      border: 1.5px solid;
+    }
+    .sec-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+    }
+
+    /* Section colour schemes */
+    .s-blue   { background:#eff6ff; border-color:#93c5fd; }
+    .s-blue   .sec-title { color:#1e40af; }
+    .s-green  { background:#f0fdf4; border-color:#86efac; }
+    .s-green  .sec-title { color:#166534; }
+    .s-teal   { background:#f0fdfa; border-color:#5eead4; }
+    .s-teal   .sec-title { color:#0f766e; }
+    .s-emld   { background:#ecfdf5; border-color:#6ee7b7; }
+    .s-emld   .sec-title { color:#064e3b; }
+    .s-yel    { background:#fefce8; border-color:#fde047; }
+    .s-yel    .sec-title { color:#854d0e; }
+    .s-ora    { background:#fff7ed; border-color:#fdba74; }
+    .s-ora    .sec-title { color:#c2410c; }
+    .s-pink   { background:#fdf2f8; border-color:#f9a8d4; }
+    .s-pink   .sec-title { color:#9d174d; }
+    .s-purp   { background:#faf5ff; border-color:#c4b5fd; }
+    .s-purp   .sec-title { color:#5b21b6; }
+    .s-amb    { background:#fffbeb; border-color:#fcd34d; }
+    .s-amb    .sec-title { color:#78350f; }
+    .s-red    { background:#fef2f2; border-color:#fca5a5; }
+    .s-red    .sec-title { color:#991b1b; }
+    .s-g2     { background:#dcfce7; border-color:#4ade80; }
+    .s-g2     .sec-title { color:#15803d; }
+
+    /* ── Component boxes ── */
+    .box {
+      border-radius: 4px;
+      padding: 6px 7px;
+      margin-bottom: 4px;
+      border: 1.5px solid;
+      font-size: 10.5px;
+      line-height: 1.4;
+    }
+    .box:last-child { margin-bottom: 0; }
+
+    .bname {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+    .bdet {
+      font-size: 10px;
+      color: #374151;
+      line-height: 1.4;
+    }
+
+    /* Box colours */
+    .b-ora  { background:#ffedd5; border-color:#f97316; }
+    .b-yel  { background:#fef9c3; border-color:#eab308; }
+    .b-blue { background:#dbeafe; border-color:#3b82f6; }
+    .b-grn  { background:#dcfce7; border-color:#22c55e; }
+    .b-teal { background:#ccfbf1; border-color:#14b8a6; }
+    .b-emld { background:#a7f3d0; border-color:#10b981; }
+    .b-amb  { background:#fde68a; border-color:#f59e0b; }
+    .b-pink { background:#fce7f3; border-color:#ec4899; }
+    .b-purp { background:#ede9fe; border-color:#8b5cf6; }
+    .b-ind  { background:#e0e7ff; border-color:#6366f1; }
+    .b-cyan { background:#cffafe; border-color:#06b6d4; }
+    .b-red  { background:#fee2e2; border-color:#ef4444; }
+    .b-g2   { background:#bbf7d0; border-color:#16a34a; }
+    .b-lim  { background:#d9f99d; border-color:#84cc16; }
+    .b-vio  { background:#fdf4ff; border-color:#a855f7; }
+
+    /* ── Realtime badge ── */
+    .rt-badge {
+      display:inline-block;
+      background:#16a34a;
+      color:white;
+      font-size:8px;
+      font-weight:800;
+      padding:1px 5px;
+      border-radius:8px;
+      margin-left:4px;
+      vertical-align:middle;
+    }
+
+    /* ── RLS block ── */
+    .rls-box {
+      background:#fffbeb;
+      border:2px solid #f59e0b;
+      border-radius:6px;
+      padding:7px;
+      font-size:10px;
+      margin-top:6px;
+      line-height:1.6;
+    }
+    .rls-box strong { color:#92400e; }
+    code { font-family: monospace; font-size:9.5px; background:#f1f5f9; padding:1px 3px; border-radius:2px; }
+
+    /* ── Note callout ── */
+    .note {
+      background:#fef9c3;
+      border:1.5px solid #fbbf24;
+      border-radius:5px;
+      padding:6px 7px;
+      font-size:10px;
+      margin-top:6px;
+      line-height:1.5;
+    }
+    .note strong { color:#92400e; }
+
+    /* ── Flow summary strip ── */
+    .flows {
+      margin-top: 14px;
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .flows-title {
+      color: #f1f5f9;
+      font-weight: 800;
+      font-size: 12px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .flows-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .flow-card {
+      border-radius: 6px;
+      padding: 8px 9px;
+      font-size: 10px;
+      line-height: 1.5;
+      border: 1px solid;
+    }
+    .flow-card strong { display:block; margin-bottom:3px; font-size:10.5px; }
+  </style>
+</head>
+<body>
+  <h1>Cadro — Full System Architecture</h1>
+  <p class="subtitle">Client &nbsp;⟹&nbsp; React SPA (Vite · Vercel CDN) &nbsp;⟹&nbsp; Vercel Serverless API &nbsp;⟹&nbsp; Supabase (Postgres · Auth · Realtime) &nbsp;⟹&nbsp; External Services</p>
+
+  <div class="diagram">
+
+    <!-- ════════════════════════════════════════════════════════
+         COLUMN 1 — CLIENTS
+    ════════════════════════════════════════════════════════ -->
+    <div class="lane lane-clients">
+      <div class="lane-hdr">👤 Clients</div>
+
+      <div class="box b-ora">
+        <div class="bname">Staff Browser</div>
+        <div class="bdet">Chrome · Safari · Mobile<br>HTTPS → loads SPA</div>
+      </div>
+
+      <div class="box b-ora">
+        <div class="bname">Admin Browser</div>
+        <div class="bdet">Menu · Team · Settings<br>HTTPS → loads SPA</div>
+      </div>
+
+      <div class="box b-yel">
+        <div class="bname">Bento Platform</div>
+        <div class="bdet">Online ordering<br>→ sends email per order</div>
+      </div>
+
+      <div class="box b-yel">
+        <div class="bname">Gmail Inbox</div>
+        <div class="bdet">Bento order confirmation<br>emails, pulled by<br>sync-orders.js on demand</div>
+      </div>
+
+      <div class="note">
+        <strong>Note:</strong> Orders arrive via browser OR via Gmail pull (Bento). Both paths land in the same <code>orders</code> table.
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         COLUMN 2 — FRONTEND
+    ════════════════════════════════════════════════════════ -->
+    <div class="lane lane-frontend">
+      <div class="lane-hdr">🖥️ Frontend — React 18 SPA · Vite Build · Vercel CDN</div>
+
+      <!-- Bootstrap -->
+      <div class="sec s-blue">
+        <div class="sec-title">App Bootstrap</div>
+        <div class="box b-blue">
+          <div class="bname">main.jsx</div>
+          <div class="bdet">‹AuthProvider› wraps everything · ‹BrowserRouter›</div>
+        </div>
+        <div class="box b-blue">
+          <div class="bname">App.jsx</div>
+          <div class="bdet">Route guard · RootRedirect (slug lookup) · LocationShell · /app/:locationSlug/*</div>
+        </div>
+      </div>
+
+      <!-- Context Providers -->
+      <div class="sec s-green">
+        <div class="sec-title">Context Providers (React Context API)</div>
+        <div class="box b-grn">
+          <div class="bname">AuthContext</div>
+          <div class="bdet">supabase.auth session · user + profile · orgMemberships [] · locationMemberships [] · isAdmin flag · signIn / signOut</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">LocationContext</div>
+          <div class="bdet">locations [] · currentLocation (from :locationSlug) · effectiveRole(locId) · isLocationAdmin</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">BusinessContext</div>
+          <div class="bdet">business_settings · SMS templates · readySms(name) · pickupSms(name)</div>
+        </div>
+      </div>
+
+      <!-- Operations Pages -->
+      <div class="sec s-teal">
+        <div class="sec-title">Operations Pages  /orders</div>
+        <div class="box b-teal">
+          <div class="bname">Board.jsx</div>
+          <div class="bdet">Kanban: received → in-progress → baking → decorated → boxed → ready → picked-up</div>
+        </div>
+        <div class="box b-teal">
+          <div class="bname">CalStrip.jsx</div>
+          <div class="bdet">Date filter strip · stage tabs · picked-up count</div>
+        </div>
+        <div class="box b-teal">
+          <div class="bname">OrderCard.jsx · OrderModal.jsx</div>
+          <div class="bdet">Move stage · edit · delete · create order</div>
+        </div>
+        <div class="box b-teal">
+          <div class="bname">Drawer.jsx</div>
+          <div class="bdet">Order timeline · SMS log panel · send receipt</div>
+        </div>
+      </div>
+
+      <!-- Kitchen Pages -->
+      <div class="sec s-emld">
+        <div class="sec-title">Kitchen Pages</div>
+        <div class="box b-emld">
+          <div class="bname">Production.jsx</div>
+          <div class="bdet">Daily production log + notes + templates</div>
+        </div>
+        <div class="box b-emld">
+          <div class="bname">Waste.jsx</div>
+          <div class="bdet">Waste log entry</div>
+        </div>
+        <div class="box b-emld">
+          <div class="bname">Recipes.jsx · RecipeView · RecipeEdit · RecipeGroupPage</div>
+          <div class="bdet">Full recipe library, grouped, with audit log</div>
+        </div>
+      </div>
+
+      <!-- Business Pages -->
+      <div class="sec s-yel">
+        <div class="sec-title">Business Pages</div>
+        <div class="box b-yel">
+          <div class="bname">Reports.jsx</div>
+        </div>
+        <div class="box b-yel">
+          <div class="bname">Invoices.jsx</div>
+          <div class="bdet">PDF upload → AI parse → confirm → apply to ingredient prices</div>
+        </div>
+        <div class="box b-yel">
+          <div class="bname">Schedule.jsx</div>
+          <div class="bdet">Employee shifts + send email schedules</div>
+        </div>
+      </div>
+
+      <!-- Admin Pages -->
+      <div class="sec s-pink">
+        <div class="sec-title">Admin Pages (isAdmin only)</div>
+        <div class="box b-pink">
+          <div class="bname">Admin.jsx</div>
+          <div class="bdet">Team / user management → calls create-user.js</div>
+        </div>
+        <div class="box b-pink">
+          <div class="bname">MenuManager.jsx · MenuBuilder.jsx</div>
+          <div class="bdet">Menu items · categories · variants · pricing</div>
+        </div>
+        <div class="box b-pink">
+          <div class="bname">Settings.jsx</div>
+          <div class="bdet">Per-location business settings, SMS templates</div>
+        </div>
+      </div>
+
+      <!-- Shared Layer -->
+      <div class="sec s-purp">
+        <div class="sec-title">Shared Layer</div>
+        <div class="box b-purp">
+          <div class="bname">src/lib/supabase.js</div>
+          <div class="bdet">createClient() · 10s fetch timeout · persistSession: srp-auth · safeQuery() wrapper · Realtime channels</div>
+        </div>
+        <div class="box b-purp">
+          <div class="bname">Header.jsx · Toast.jsx · ErrorBoundary.jsx</div>
+          <div class="bdet">Global search · sync-orders trigger · Sentry error capture</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         COLUMN 3 — VERCEL API
+    ════════════════════════════════════════════════════════ -->
+    <div class="lane lane-api">
+      <div class="lane-hdr">⚡ Vercel Serverless API  /api/*  · Node.js</div>
+
+      <!-- Notifications -->
+      <div class="sec s-ora">
+        <div class="sec-title">Notifications</div>
+        <div class="box b-ora">
+          <div class="bname">send-sms.js</div>
+          <div class="bdet">Rate-limited: 10 req/min per IP<br>POST { to, message }<br>→ Twilio (E.164 format)</div>
+        </div>
+        <div class="box b-ora">
+          <div class="bname">send-receipt.js</div>
+          <div class="bdet">POST { order, locationName }<br>Builds HTML email → SendGrid API<br>From: receipts@getcadro.com</div>
+        </div>
+        <div class="box b-ora">
+          <div class="bname">send-schedule.js</div>
+          <div class="bdet">POST { employee, weekLabel, shifts }<br>Builds HTML schedule → SendGrid API</div>
+        </div>
+      </div>
+
+      <!-- Data Sync -->
+      <div class="sec s-amb">
+        <div class="sec-title">Data Sync</div>
+        <div class="box b-amb">
+          <div class="bname">sync-orders.js</div>
+          <div class="bdet">1. Read gmail_tokens from Supabase<br>2. Refresh OAuth token via Google<br>3. Fetch unread Bento emails<br>4. Parse HTML → order rows<br>5. INSERT to orders (service role)<br>6. Rotate &amp; save new refresh_token</div>
+        </div>
+        <div class="box b-amb">
+          <div class="bname">gmail-auth.js</div>
+          <div class="bdet">One-time OAuth setup endpoint<br>Redirect → Google consent screen<br>Exchange auth code → save tokens<br>to gmail_tokens table</div>
+        </div>
+        <div class="box b-amb">
+          <div class="bname">sync-meez.js  [maxDuration: 60s]</div>
+          <div class="bdet">Meez API chunks of 10 per call<br>Upsert recipes · images · videos<br>Allergens · recipe history</div>
+        </div>
+      </div>
+
+      <!-- Invoice AI Pipeline -->
+      <div class="sec s-pink">
+        <div class="sec-title">Invoice AI Pipeline</div>
+        <div class="box b-pink">
+          <div class="bname">parse-invoice.js  [maxDuration: 60s]</div>
+          <div class="bdet">1. Receive PDF as base64<br>2. Load ingredient names from Supabase<br>3. Send PDF + prompt → Anthropic Claude API<br>4. Extract invoice line items<br>5. Fuzzy-match to ingredient library<br>6. Return JSON match candidates</div>
+        </div>
+        <div class="box b-pink">
+          <div class="bname">apply-invoice.js</div>
+          <div class="bdet">1. Save full invoice record<br>2. Log price history per ingredient<br>3. Update ingredient current_price<br>4. Record supply_items</div>
+        </div>
+        <div class="box b-pink">
+          <div class="bname">fetch-rd-price.js</div>
+          <div class="bdet">GET ?q=ingredient name<br>→ Scrapes Restaurant Depot<br>  Salesforce Commerce Cloud search</div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div class="sec s-purp">
+        <div class="sec-title">Admin Functions</div>
+        <div class="box b-purp">
+          <div class="bname">create-user.js</div>
+          <div class="bdet">supabase.auth.admin.createUser()<br>Upsert profiles row<br>Insert org_member or location_member</div>
+        </div>
+        <div class="box b-purp">
+          <div class="bname">_rateLimit.js  (shared middleware)</div>
+          <div class="bdet">In-memory IP + rolling-window counter<br>Used by send-sms.js</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         COLUMN 4 — SUPABASE
+    ════════════════════════════════════════════════════════ -->
+    <div class="lane lane-supa">
+      <div class="lane-hdr">🗄️ Supabase · Postgres · Auth · Realtime · Storage</div>
+
+      <!-- Auth -->
+      <div class="sec s-green">
+        <div class="sec-title">Auth Layer</div>
+        <div class="box b-grn">
+          <div class="bname">supabase.auth</div>
+          <div class="bdet">Email + password login · JWT sessions<br>Auto refresh (refreshMargin: 180s)<br>onAuthStateChange() · visibilitychange sync<br>storageKey: srp-auth</div>
+        </div>
+      </div>
+
+      <!-- Multi-tenant -->
+      <div class="sec s-g2">
+        <div class="sec-title">Multi-Tenant Schema</div>
+        <div class="box b-grn">
+          <div class="bname">organizations</div>
+          <div class="bdet">id · name · subscription_status<br>trialing | active | past_due | canceled</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">locations</div>
+          <div class="bdet">id · organization_id · name · slug<br>timezone · business_hours · settings JSONB</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">organization_members</div>
+          <div class="bdet">user_id · org_id · role: org_owner | org_admin</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">location_members</div>
+          <div class="bdet">user_id · location_id · role: manager | employee</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">location_integrations</div>
+          <div class="bdet">location_id · provider · config JSONB<br>Gmail | SendGrid | Twilio | Bento</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">profiles</div>
+          <div class="bdet">id = auth.user_id · full_name · email · role</div>
+        </div>
+      </div>
+
+      <!-- Orders + Realtime -->
+      <div class="sec" style="background:#f0fdf4;border:2px solid #16a34a">
+        <div class="sec-title" style="color:#15803d;border-bottom-color:#16a34a">
+          Orders Table <span class="rt-badge">REALTIME</span>
+        </div>
+        <div class="box b-emld">
+          <div class="bname">orders</div>
+          <div class="bdet">id: SRP-### · customer · phone · email<br>items JSONB[] · pickup_date · pickup_time<br>stage · notes · notifications JSONB[]<br>location_id · deleted_at · bento_order_id</div>
+        </div>
+        <div class="box b-g2">
+          <div class="bname">⚡ Realtime Channel: orders:loc:{id}</div>
+          <div class="bdet">INSERT → add card to board<br>UPDATE → sync stage / edits<br>DELETE → remove card<br>WebSocket broadcast to ALL browsers</div>
+        </div>
+      </div>
+
+      <!-- Operations Tables -->
+      <div class="sec s-emld">
+        <div class="sec-title">Operations Tables  (location_id scoped)</div>
+        <div class="box b-emld">
+          <div class="bname">production · production_notes · production_template</div>
+        </div>
+        <div class="box b-emld">
+          <div class="bname">waste_log · employees · shifts</div>
+        </div>
+      </div>
+
+      <!-- Kitchen Tables -->
+      <div class="sec s-green">
+        <div class="sec-title">Kitchen Tables  (location_id scoped)</div>
+        <div class="box b-grn">
+          <div class="bname">recipes · recipe_groups · recipe_group_members · recipe_audit_log</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">menu_items · menu_categories · variants · addons · menu_item_recipes</div>
+        </div>
+        <div class="box b-grn">
+          <div class="bname">ingredients · ingredient_price_history · invoices</div>
+        </div>
+      </div>
+
+      <!-- Config Tables -->
+      <div class="sec s-yel">
+        <div class="sec-title">Config Tables</div>
+        <div class="box b-yel">
+          <div class="bname">business_settings</div>
+          <div class="bdet">location_id · business_name · city<br>sms_ready · sms_pickup · contact info</div>
+        </div>
+        <div class="box b-yel">
+          <div class="bname">gmail_tokens</div>
+          <div class="bdet">id: 'default' · refresh_token<br>Survives serverless cold starts</div>
+        </div>
+      </div>
+
+      <!-- RLS -->
+      <div class="rls-box">
+        <strong>🔒 Row Level Security — All Tables</strong><br>
+        <code>user_has_location_access(loc_id)</code><br>
+        org_owner / org_admin → all locs in org<br>
+        manager / employee → assigned location only<br>
+        Service role key → bypasses RLS (API only)
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         COLUMN 5 — EXTERNAL SERVICES
+    ════════════════════════════════════════════════════════ -->
+    <div class="lane lane-ext">
+      <div class="lane-hdr">🔌 External Services</div>
+
+      <div class="box b-purp">
+        <div class="bname">Twilio</div>
+        <div class="bdet">SMS API<br>Order ready + pickup alerts<br>← send-sms.js</div>
+      </div>
+
+      <div class="box b-ind">
+        <div class="bname">SendGrid</div>
+        <div class="bdet">Email API<br>HTML receipts + schedules<br>← send-receipt · send-schedule</div>
+      </div>
+
+      <div class="box b-blue">
+        <div class="bname">Gmail API (OAuth 2.0)</div>
+        <div class="bdet">Read Bento order emails<br>Token stored in Supabase<br>← sync-orders · gmail-auth</div>
+      </div>
+
+      <div class="box b-cyan">
+        <div class="bname">Meez API</div>
+        <div class="bdet">Recipe library sync<br>Images · Allergens · History<br>← sync-meez.js</div>
+      </div>
+
+      <div class="box b-ora">
+        <div class="bname">Restaurant Depot</div>
+        <div class="bdet">Salesforce Commerce Cloud<br>Ingredient price lookup<br>← fetch-rd-price.js</div>
+      </div>
+
+      <div class="box b-vio">
+        <div class="bname">Anthropic Claude API</div>
+        <div class="bdet">Invoice PDF parsing<br>Line-item extraction<br>Fuzzy ingredient matching<br>← parse-invoice.js</div>
+      </div>
+
+      <div class="box b-red">
+        <div class="bname">Sentry</div>
+        <div class="bdet">@sentry/react<br>Error capture + performance<br>← ErrorBoundary.jsx</div>
+      </div>
+
+      <div class="note">
+        <strong>Note:</strong> All credentials stored as Vercel env vars. Per-location creds will move to <code>location_integrations</code> in a future phase.
+      </div>
+    </div>
+
+  </div><!-- end .diagram -->
+
+  <!-- ── Key Data Flows ── -->
+  <div class="flows">
+    <div class="flows-title">Key Data Flows</div>
+    <div class="flows-grid">
+      <div class="flow-card" style="background:#0f2744;border-color:#3b82f6;color:#bfdbfe">
+        <strong style="color:#93c5fd">📦 Order Created by Staff</strong>
+        Staff fills OrderModal → optimistic update → supabase INSERT → Realtime broadcast → all browsers update
+      </div>
+      <div class="flow-card" style="background:#052e16;border-color:#22c55e;color:#bbf7d0">
+        <strong style="color:#86efac">📧 Bento Order Sync</strong>
+        Bento → Gmail → Header triggers sync-orders.js → parse email HTML → INSERT orders → Realtime push
+      </div>
+      <div class="flow-card" style="background:#431407;border-color:#f97316;color:#fed7aa">
+        <strong style="color:#fdba74">📱 SMS Notification</strong>
+        Staff clicks SMS on Drawer → POST /api/send-sms → Twilio → customer phone · log notification to order
+      </div>
+      <div class="flow-card" style="background:#2e1065;border-color:#8b5cf6;color:#ddd6fe">
+        <strong style="color:#c4b5fd">🧾 Invoice AI Pipeline</strong>
+        Upload PDF → parse-invoice (Claude) → confirm line items → apply-invoice → update ingredient prices
+      </div>
+      <div class="flow-card" style="background:#042f2e;border-color:#14b8a6;color:#ccfbf1">
+        <strong style="color:#5eead4">👤 Auth + Location Load</strong>
+        Login → AuthContext loads session + memberships → LocationContext resolves slug → BusinessContext loads settings
+      </div>
+      <div class="flow-card" style="background:#1a1a0a;border-color:#eab308;color:#fef9c3">
+        <strong style="color:#fde047">🍽️ Recipe Sync (Meez)</strong>
+        Staff triggers → Header → POST /api/sync-meez → Meez API chunks → upsert recipes in Supabase
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

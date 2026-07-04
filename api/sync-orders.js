@@ -8,6 +8,7 @@
 // inspected and retried via ?retryFailed=1 instead of disappearing into logs.
 
 import { createClient } from '@supabase/supabase-js'
+import { requireUser } from './_auth.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -398,6 +399,9 @@ async function clearFailure(messageId) {
 
 // ── Main handler ──
 export default async function handler(req, res) {
+  // Authenticate every path — debug inspection leaks OAuth state, POST triggers Gmail reads.
+  if (!(await requireUser(req, res))) return
+
   if (req.method === 'GET') {
     if (req.query?.debug !== '1') return res.status(405).json({ error: 'Use POST to sync, or GET?debug=1 to inspect' })
     try {

@@ -2,9 +2,14 @@
 // Attempts to look up an ingredient price on Restaurant Depot's website.
 // Falls back gracefully if the site is unreachable or requires location login.
 
+import { requireUser } from './_auth.js'
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://app.getcadro.com')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(200).end()
+
+  if (!(await requireUser(req, res))) return
 
   const { q } = req.query
   if (!q) return res.status(400).json({ error: 'Query param ?q= required' })

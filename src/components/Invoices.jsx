@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import { PURCHASE_UNITS } from '../utils/costCalculator'
 import styles from './Invoices.module.css'
 
@@ -504,7 +505,7 @@ export default function Invoices() {
     setView('processing')
     try {
       const base64 = await fileToBase64(file)
-      const res = await fetch('/api/parse-invoice', {
+      const res = await apiFetch('/api/parse-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pdf_base64: base64, ingredients }),
@@ -610,7 +611,7 @@ export default function Invoices() {
       }))
 
     try {
-      const res = await fetch('/api/apply-invoice', {
+      const res = await apiFetch('/api/apply-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
