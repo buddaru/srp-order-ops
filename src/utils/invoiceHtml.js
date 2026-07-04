@@ -9,7 +9,7 @@ function fmt$(n) {
 function fmtDateStr(ds) {
   if (!ds) return '—'
   const d = new Date(ds + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' })
 }
 
 function fmtTimeStr(ts) {
@@ -20,13 +20,16 @@ function fmtTimeStr(ts) {
 
 function fmtIssued(iso) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: '2-digit', day: '2-digit', year: 'numeric' })
 }
 
 export function buildInvoiceHtml({ order, locationName, locationContact = {}, logoSrc }) {
   const total = (order.items || []).reduce(
     (s, it) => s + (parseFloat(it.price) || 0) * (parseInt(it.qty) || 0), 0
   )
+
+  const cell = 'border:1px solid #000;padding:6px 8px;font-size:11px;color:#000;vertical-align:top;'
+  const cellRight = cell + 'text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;'
 
   const itemRows = (order.items || []).map(item => {
     const lineTotal = (parseFloat(item.price) || 0) * (parseInt(item.qty) || 0)
@@ -39,13 +42,13 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
     const desc = parts.join(' · ')
     return `
       <tr>
-        <td style="padding:14px 0;vertical-align:top;border-bottom:1px solid #E4D9C8;padding-right:24px;">
-          <div style="font-size:12px;font-weight:500;color:#3B241C;line-height:1.3;">${esc(item.name)}</div>
-          ${desc ? `<div style="font-size:10.5px;color:#9A8574;margin-top:3px;font-style:italic;">${esc(desc)}</div>` : ''}
+        <td style="${cell}">
+          ${esc(item.name)}
+          ${desc ? `<div style="font-size:10px;color:#333;margin-top:2px;">${esc(desc)}</div>` : ''}
         </td>
-        <td style="padding:14px 0;text-align:right;font-size:12px;color:#6B5347;border-bottom:1px solid #E4D9C8;font-variant-numeric:tabular-nums;white-space:nowrap;">${item.qty}</td>
-        <td style="padding:14px 0 14px 16px;text-align:right;font-size:12px;color:#6B5347;border-bottom:1px solid #E4D9C8;font-variant-numeric:tabular-nums;white-space:nowrap;">${fmt$(item.price)}</td>
-        <td style="padding:14px 0 14px 16px;text-align:right;font-size:12px;color:#6B5347;border-bottom:1px solid #E4D9C8;font-variant-numeric:tabular-nums;white-space:nowrap;">${lineTotal > 0 ? fmt$(lineTotal) : '—'}</td>
+        <td style="${cellRight}">${item.qty}</td>
+        <td style="${cellRight}">${fmt$(item.price)}</td>
+        <td style="${cellRight}">${lineTotal > 0 ? fmt$(lineTotal) : '—'}</td>
       </tr>`
   }).join('')
 
@@ -56,21 +59,15 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
     website,
   ].filter(Boolean).map(l => `${esc(l)}<br>`).join('')
 
-  const locLabel = locationContact.city || locationName || 'Carson, CA'
-  const logoTag = logoSrc
-    ? `<img src="${logoSrc}" alt="Sweet Red Peach" style="height:100px;width:auto;flex-shrink:0;">`
-    : ''
-
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Receipt ${esc(order.id)}</title>
+<title>Invoice ${esc(order.id)}</title>
 <meta name="viewport" content="width=1200">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:#EDE4D4;font-family:'Inter',Arial,sans-serif;-webkit-font-smoothing:antialiased;padding:48px 24px;}
+  body{background:#F2F2F2;font-family:Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding:48px 24px;color:#000;}
   @media print{
     body{background:#fff !important;padding:0 !important}
     .no-print{display:none !important}
@@ -81,87 +78,75 @@ export function buildInvoiceHtml({ order, locationName, locationContact = {}, lo
 <body>
 
 <div class="no-print" style="text-align:center;margin-bottom:20px;">
-  <button onclick="window.print()" style="background:#8A1F24;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',Arial,sans-serif;">Save as PDF / Print</button>
+  <button onclick="window.print()" style="background:#000;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:Helvetica,Arial,sans-serif;">Save as PDF / Print</button>
 </div>
 
-<div class="page" style="width:8.5in;min-height:11in;margin:0 auto;background:#FFFFFF;color:#3B241C;padding:0.65in 0.7in 0.6in;display:flex;flex-direction:column;box-shadow:0 4px 40px rgba(59,36,28,0.15);">
+<div class="page" style="width:8.5in;min-height:11in;margin:0 auto;background:#FFFFFF;color:#000;padding:0.7in 0.65in;box-shadow:0 4px 40px rgba(0,0,0,0.15);">
 
   <!-- Masthead -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:34px;">
-    <div>
-      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-style:italic;font-size:92px;line-height:0.88;color:#3B241C;letter-spacing:-0.02em;">Receipt</div>
-      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
-        <span style="width:24px;height:1px;background:#8A1F24;display:inline-block;flex-shrink:0;"></span>
-        <span style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#6B5347;">Sweet Red Peach · ${esc(locLabel)}</span>
-      </div>
-    </div>
-    ${logoTag}
-  </div>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:36px;">
+    <tr>
+      <td style="vertical-align:top;">
+        <div style="font-size:17px;font-weight:400;color:#000;">Invoice</div>
+      </td>
+      <td style="vertical-align:top;text-align:right;">
+        <div style="font-size:28px;font-weight:400;letter-spacing:0.45em;color:#000;white-space:nowrap;">SWEET RED PEACH</div>
+      </td>
+    </tr>
+  </table>
 
-  <!-- Meta band -->
-  <div style="background:#EFEFEF;padding:20px 26px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:36px;">
-    <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:5px;">Receipt No.</div>
-      <div style="font-size:14px;font-weight:500;">${esc(order.id)}</div>
-    </div>
-    <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:5px;">Issued</div>
-      <div style="font-size:14px;font-weight:500;">${fmtIssued(order.createdAt)}</div>
-    </div>
-    <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;opacity:0.65;margin-bottom:5px;">Pickup</div>
-      <div style="font-size:14px;font-weight:500;">${fmtDateStr(order.pickupDate)}${order.pickupTime ? ' · ' + fmtTimeStr(order.pickupTime) : ''}</div>
-    </div>
-  </div>
-
-  <!-- From / Billed to -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-bottom:38px;">
-    <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:12px;">From</div>
-      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:22px;color:#3B241C;line-height:1.1;margin-bottom:10px;">${esc(locationName || 'Sweet Red Peach')}</div>
-      <div style="font-size:11px;color:#6B5347;line-height:1.65;">${fromLines}</div>
-    </div>
-    <div>
-      <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:12px;">Billed to</div>
-      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:22px;color:#3B241C;line-height:1.1;margin-bottom:10px;">${esc(order.customer)}</div>
-      <div style="font-size:11px;color:#6B5347;line-height:1.65;">
+  <!-- From / Ship To / Meta -->
+  <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+    <tr>
+      <td style="vertical-align:top;width:36%;font-size:11px;line-height:1.6;color:#000;">
+        <strong>${esc(locationName || 'Sweet Red Peach')}</strong><br>
+        ${fromLines}
+      </td>
+      <td style="vertical-align:top;width:36%;font-size:11px;line-height:1.6;color:#000;">
+        <strong>Bill To</strong><br>
+        ${esc(order.customer)}<br>
         ${order.phone ? esc(order.phone) + '<br>' : ''}
         ${order.email ? esc(order.email) : ''}
-      </div>
-    </div>
-  </div>
+      </td>
+      <td style="vertical-align:top;text-align:right;font-size:11px;line-height:1.7;color:#000;white-space:nowrap;">
+        <strong>Date:</strong> ${fmtIssued(order.createdAt)}<br>
+        <strong>Invoice Number:</strong> ${esc(order.id)}<br>
+        <strong>Pickup:</strong> ${fmtDateStr(order.pickupDate)}${order.pickupTime ? ' · ' + fmtTimeStr(order.pickupTime) : ''}
+      </td>
+    </tr>
+  </table>
 
   <!-- Items table -->
   <table style="width:100%;border-collapse:collapse;">
     <thead>
-      <tr style="border-bottom:1px solid #E4D9C8;">
-        <th style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#9A8574;font-weight:400;padding:0 0 10px;text-align:left;">Item</th>
-        <th style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#9A8574;font-weight:400;padding:0 0 10px;text-align:right;white-space:nowrap;">Qty</th>
-        <th style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#9A8574;font-weight:400;padding:0 0 10px 16px;text-align:right;white-space:nowrap;">Unit Price</th>
-        <th style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#9A8574;font-weight:400;padding:0 0 10px 16px;text-align:right;white-space:nowrap;">Amount</th>
+      <tr>
+        <th style="${cell}font-weight:700;text-align:left;">Item</th>
+        <th style="${cell}font-weight:700;text-align:right;width:60px;">Qty</th>
+        <th style="${cell}font-weight:700;text-align:right;width:80px;">Price</th>
+        <th style="${cell}font-weight:700;text-align:right;width:90px;">Total</th>
       </tr>
     </thead>
-    <tbody>${itemRows}</tbody>
+    <tbody>
+      ${itemRows}
+      <tr>
+        <td style="${cell}font-weight:400;" colspan="3">Item Subtotal</td>
+        <td style="${cellRight}">${fmt$(total)}</td>
+      </tr>
+      <tr>
+        <td style="border:none;" colspan="2"></td>
+        <td style="${cell}font-weight:700;text-align:right;">Total</td>
+        <td style="${cellRight}font-weight:700;">${fmt$(total)}</td>
+      </tr>
+    </tbody>
   </table>
 
-  <!-- Totals -->
-  <div style="display:flex;justify-content:flex-end;margin-top:28px;">
-    <div style="width:260px;">
-      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#6B5347;border-bottom:1px solid #E4D9C8;">
-        <span>Subtotal</span><span>${fmt$(total)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding-top:12px;font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:22px;color:#3B241C;">
-        <span style="font-size:14px;align-self:flex-end;padding-bottom:2px;">Total</span>
-        <span>${fmt$(total)}</span>
-      </div>
-    </div>
-  </div>
-
   ${order.notes ? `<!-- Notes -->
-  <div style="margin-top:32px;padding-top:24px;border-top:1px solid #E4D9C8;">
-    <div style="font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:#9A8574;margin-bottom:10px;">Notes</div>
-    <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:14px;color:#6B5347;line-height:1.6;">${esc(order.notes)}</div>
+  <div style="margin-top:28px;">
+    <div style="font-size:11px;font-weight:700;margin-bottom:6px;">Notes</div>
+    <div style="font-size:11px;color:#000;line-height:1.6;">${esc(order.notes)}</div>
   </div>` : ''}
+
+  <div style="margin-top:48px;font-size:10px;color:#333;">Page 1 of 1</div>
 
 </div>
 </body>
