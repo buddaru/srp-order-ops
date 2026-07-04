@@ -114,8 +114,17 @@
 .customPriceWrap span { font-size: 12px; color: var(--text-muted); }
 .customPriceInput { width: 52px; border: none; background: transparent; font-size: 12px; color: var(--text); outline: none; padding: 0; font-family: 'DM Sans', sans-serif; }
 
+/* Quantity stepper */
+.qtyWrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.qtyLabel { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.qtyStepper { display: flex; align-items: center; border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden; background: var(--card); }
+.qtyBtn { width: 38px; height: 38px; border: none; background: var(--bg); color: var(--text); font-size: 18px; font-weight: 600; cursor: pointer; line-height: 1; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }
+.qtyBtn:hover { background: var(--border); }
+/* 16px font so iOS Safari doesn't zoom on focus */
+.qtyInput { width: 44px; height: 38px; border: none; text-align: center; font-size: 16px; font-weight: 600; color: var(--text); background: transparent; outline: none; padding: 0; font-family: 'DM Sans', sans-serif; }
+
 /* Save item button */
-.saveItemRow { display: flex; justify-content: flex-end; padding-top: 2px; }
+.saveItemRow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 2px; }
 .saveItemBtn { background: #1a1a1a; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
 .saveItemBtn:hover { opacity: 0.82; }
 
@@ -129,6 +138,7 @@
 .cartAddons { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
 .cartWriting { font-size: 11px; color: var(--brand); font-style: italic; margin-top: 2px; }
 .cartRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.cartQty { font-size: 12px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
 .cartPrice { font-size: 13px; font-weight: 700; color: var(--brand); }
 .cartEdit { background: none; border: 1px solid var(--border-2); border-radius: 5px; padding: 3px 8px; font-size: 11px; color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .cartEdit:hover { background: var(--bg); color: var(--text); }
@@ -145,6 +155,7 @@
   .sizeBtn { min-width: calc(50% - 4px); }
   .flavorRow { flex-direction: column; gap: 8px; }
   .catTab { padding: 8px 11px; font-size: 11px; }
+  .customItemFields { flex-wrap: wrap; }
 }
 
 /* ── Custom Item tab ── */

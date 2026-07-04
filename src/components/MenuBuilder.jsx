@@ -82,6 +82,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
   const [flavor1, setFlavor1]           = useState(CUPCAKE_FLAVORS[0])
   const [flavor2, setFlavor2]           = useState('None')
   const [addonsOpen, setAddonsOpen]     = useState(false)
+  const [qty, setQty]                   = useState(1)
   const [editIdx, setEditIdx]           = useState(null)
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName]     = useState('')
@@ -106,7 +107,35 @@ export default function MenuBuilder({ cartItems, onChange }) {
     setFlavor1(CUPCAKE_FLAVORS[0])
     setFlavor2('None')
     setAddonsOpen(false)
+    setQty(1)
   }
+
+  const qtyNum = Math.max(1, parseInt(qty) || 1)
+
+  const changeQty = (delta) => setQty(q => Math.max(1, (parseInt(q) || 1) + delta))
+
+  const handleQtyInput = (val) => {
+    const digits = val.replace(/\D/g, '')
+    setQty(digits === '' ? '' : Math.max(1, parseInt(digits)))
+  }
+
+  const qtyStepper = (
+    <div className={styles.qtyWrap}>
+      <span className={styles.qtyLabel}>Qty</span>
+      <div className={styles.qtyStepper}>
+        <button type="button" className={styles.qtyBtn} onClick={() => changeQty(-1)} aria-label="Decrease quantity">−</button>
+        <input
+          type="text" inputMode="numeric" pattern="[0-9]*"
+          className={styles.qtyInput}
+          value={qty}
+          onChange={e => handleQtyInput(e.target.value)}
+          onBlur={() => { if (!qty) setQty(1) }}
+          aria-label="Quantity"
+        />
+        <button type="button" className={styles.qtyBtn} onClick={() => changeQty(1)} aria-label="Increase quantity">+</button>
+      </div>
+    </div>
+  )
 
   const handleSelectChange = (e) => {
     const val = e.target.value
@@ -118,6 +147,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     if (val === '__custom__') {
       setSelectedItem(null)
       setShowCustomForm(true)
+      setQty(1)
       return
     }
     const [cat, ...rest] = val.split('::')
@@ -132,7 +162,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     const name  = buildItemName(selectedItem, size, flavor1, flavor2)
     const addonSummary = buildAddonSummary(selectedItem, addons)
     const newItem = {
-      name, price, qty: 1,
+      name, price, qty: qtyNum,
       category: selectedItem.category,
       size, addonSummary,
       flavor1: isCupcake ? flavor1 : undefined,
@@ -149,6 +179,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     setSelectedItem(null)
     setAddons(blankAddonState())
     setAddonsOpen(false)
+    setQty(1)
   }
 
   const removeFromCart = (idx) => onChange(cartItems.filter((_, i) => i !== idx))
@@ -178,6 +209,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     const ci = cartItems[idx]
     if (!ci) return
     setEditIdx(idx)
+    setQty(parseInt(ci.qty) || 1)
 
     if (ci.category === 'Custom') {
       setSelectedItem(null)
@@ -227,12 +259,14 @@ export default function MenuBuilder({ cartItems, onChange }) {
     }
   }
 
-  const cartTotal = cartItems.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
+  const cartTotal = cartItems.reduce(
+    (s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.qty) || 1), 0
+  )
 
   const handleAddCustomItem = () => {
     if (!customName.trim()) return
     const price = parseFloat(customItemPrice) || 0
-    const newItem = { name: customName.trim(), price, qty: 1, category: 'Custom', addonSummary: [] }
+    const newItem = { name: customName.trim(), price, qty: qtyNum, category: 'Custom', addonSummary: [] }
     if (editIdx !== null) {
       const next = [...cartItems]; next[editIdx] = newItem; onChange(next); setEditIdx(null)
     } else {
@@ -241,6 +275,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
     setCustomName('')
     setCustomItemPrice('')
     setShowCustomForm(false)
+    setQty(1)
   }
 
   const menuByCategory = categories.reduce((acc, cat) => {
@@ -298,6 +333,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
                   onChange={e => setCustomItemPrice(e.target.value)}
                 />
               </div>
+              {qtyStepper}
               <button
                 className={styles.saveItemBtn}
                 onClick={handleAddCustomItem}
@@ -314,7 +350,9 @@ export default function MenuBuilder({ cartItems, onChange }) {
           <div className={styles.customZone}>
             <div className={styles.selectedHeader}>
               <div className={styles.selectedName}>{selectedItem.name}</div>
-              <div className={styles.livePrice}>{fmt$(livePrice)}</div>
+              <div className={styles.livePrice}>
+                {qtyNum > 1 ? `${qtyNum} × ${fmt$(livePrice)} = ${fmt$(livePrice * qtyNum)}` : fmt$(livePrice)}
+              </div>
             </div>
 
             {isCake && (
@@ -487,6 +525,7 @@ export default function MenuBuilder({ cartItems, onChange }) {
             )}
 
             <div className={styles.saveItemRow}>
+              {qtyStepper}
               <button className={styles.saveItemBtn} onClick={handleAddToCart}>
                 {editIdx !== null ? '✓ Update item' : '✓ Save item to order'}
               </button>
@@ -512,7 +551,10 @@ export default function MenuBuilder({ cartItems, onChange }) {
                   )}
                 </div>
                 <div className={styles.cartRight}>
-                  <div className={styles.cartPrice}>{fmt$(ci.price)}</div>
+                  {(parseInt(ci.qty) || 1) > 1 && (
+                    <span className={styles.cartQty}>{parseInt(ci.qty)} ×</span>
+                  )}
+                  <div className={styles.cartPrice}>{fmt$((parseFloat(ci.price) || 0) * (parseInt(ci.qty) || 1))}</div>
                   <button className={styles.cartEdit} onClick={() => startEdit(idx)}>Edit</button>
                   <button className={styles.cartRemove} onClick={() => removeFromCart(idx)}>×</button>
                 </div>
