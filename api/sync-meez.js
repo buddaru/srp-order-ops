@@ -4,6 +4,7 @@
 // Now pulls: images, videos, allergens, recipe history
 
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from './_auth.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -216,6 +217,7 @@ async function seedIngredients(parsedIngredients) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (!(await requireAdmin(req, res))) return
   if (!MEEZ_TOKEN) return res.status(500).json({ error: 'MEEZ_API_TOKEN not set' })
 
   // Pass ?resync=true to force re-fetch all recipes (picks up new fields on existing recipes)

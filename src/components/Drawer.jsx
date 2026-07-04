@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiFetch } from '../lib/api'
 import { fmtDate, fmtTime, orderTotal, fmt$ } from '../utils/helpers'
 import { useCurrentLocation } from '../context/LocationContext'
 import { buildInvoiceHtml } from '../utils/invoiceHtml'
@@ -40,7 +41,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
     if (!order.email) return
     setSendingReceipt(true)
     try {
-      const res = await fetch('/api/send-receipt', {
+      const res = await apiFetch('/api/send-receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order, locationName, locationContact }),
@@ -79,7 +80,7 @@ export default function Drawer({ order, onClose, onSmsLog, showToast }) {
     setTimeout(() => setSent(false), 3000)
     onSmsLog(order.id, `📱 SMS to ${order.phone || 'customer'}: "${preview}"`)
     try {
-      const res = await fetch('/api/send-sms', {
+      const res = await apiFetch('/api/send-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: order.phone, message: text }),

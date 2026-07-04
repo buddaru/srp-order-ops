@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { STAGES } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import styles from './Header.module.css'
 import { useAuth } from '../context/AuthContext'
 import { useCurrentLocation } from '../context/LocationContext'
@@ -42,7 +43,7 @@ export default function Header({ orders, onJumpToOrder, profile, onSignOut, onMe
     setSyncMsg(null)
     try {
       const url  = retryFailed ? '/api/sync-orders?retryFailed=1' : '/api/sync-orders'
-      const res  = await fetch(url, { method: 'POST' })
+      const res  = await apiFetch(url, { method: 'POST' })
       const data = await res.json()
       setSyncMsg(data.error || data.message || 'No response')
       if (data.imported > 0 && onOrdersSynced) onOrdersSynced()

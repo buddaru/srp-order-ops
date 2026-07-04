@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase, safeQuery } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import { getCache, setCache } from '../lib/cache'
 import { useAuth } from '../context/AuthContext'
 import { useCurrentLocation } from '../context/LocationContext'
@@ -262,7 +263,7 @@ function SendAllModal({ employees, weekShifts, weekLabel, onClose }) {
     const sent=[], failed=[]
     for (const emp of empShifts) {
       try {
-        const res = await fetch('/api/send-schedule', {
+        const res = await apiFetch('/api/send-schedule', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ employee:emp, weekLabel, shifts:emp.shifts })
         })

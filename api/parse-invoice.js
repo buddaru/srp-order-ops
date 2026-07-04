@@ -3,12 +3,21 @@
 
 export const config = { maxDuration: 60 }
 
+import { requireUser } from './_auth.js'
+import { rateLimit } from './_rateLimit.js'
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://app.getcadro.com')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Spends Anthropic credit — authenticate and rate-limit.
+  if (!(await requireUser(req, res))) return
+  if (!rateLimit(req, { limit: 20, windowMs: 60_000 }).allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' })
+  }
 
   const { pdf_base64, ingredients } = req.body
   if (!pdf_base64) return res.status(400).json({ error: 'pdf_base64 is required' })

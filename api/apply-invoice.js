@@ -2,6 +2,7 @@
 // Saves invoice record, logs price history, updates ingredient current prices
 
 import { createClient } from '@supabase/supabase-js'
+import { requireUser } from './_auth.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -9,11 +10,14 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://app.getcadro.com')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+  // Writes ingredient prices/invoices with the service role — must be an authenticated user.
+  if (!(await requireUser(req, res))) return
 
   const {
     invoice_number,

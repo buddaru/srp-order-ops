@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Routes, Route, NavLink, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import { apiFetch } from './lib/api'
 import { STAGES, fmtDate, diffDays, STRIP_DAYS } from './utils/helpers'
 import Header     from './components/Header'
 import CalStrip   from './components/CalStrip'
@@ -316,7 +317,7 @@ export default function LocationApp() {
     if (!o) return
     const msg = o.stage === 'ready' ? readySms(o.customer) : pickupSms(o.customer)
     try {
-      const res = await fetch('/api/send-sms', {
+      const res = await apiFetch('/api/send-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: o.phone, message: msg }),

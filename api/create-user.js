@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from './_auth.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { email, password, full_name, role, location_id } = req.body
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' })
+
+  // Only an authenticated admin (org owner/admin, or manager of this location) may create users.
+  const caller = await requireAdmin(req, res, location_id || null)
+  if (!caller) return
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const supabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY)

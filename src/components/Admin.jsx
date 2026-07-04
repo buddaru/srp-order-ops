@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useCurrentLocation } from '../context/LocationContext'
 import styles from './Admin.module.css'
@@ -19,7 +20,7 @@ function CreateUserModal({ onClose, onCreated, locationId }) {
     setSaving(true)
     setError('')
     try {
-      const res = await fetch('/api/create-user', {
+      const res = await apiFetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password, full_name: name.trim(), role, location_id: locationId }),

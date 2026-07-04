@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase, safeQuery } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 import { useCurrentLocation } from '../context/LocationContext'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
 import Ingredients, { AddIngredientModal } from './Ingredients'
@@ -285,7 +286,7 @@ export default function Recipes() {
 
     const runChunk = async () => {
       try {
-        const res  = await fetch('/api/sync-meez', {
+        const res  = await apiFetch('/api/sync-meez', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resync: force }),
