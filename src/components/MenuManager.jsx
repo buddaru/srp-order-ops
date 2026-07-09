@@ -662,7 +662,7 @@ export default function MenuManager() {
     setCategories(cats)
     setOpenCat(Object.fromEntries(cats.map(c => [c, true])))
     setLoading(false)
-  }, [])
+  }, [currentLocation])
 
   useEffect(() => { load() }, [load])
 
@@ -685,7 +685,7 @@ export default function MenuManager() {
       name: m.name, category: m.category, price: m.price, active: true, sort_order: i,
       ...(locId ? { location_id: locId } : {}),
     }))
-    const { error } = await supabase.from('menu_items').upsert(rows, { onConflict: 'name,category' })
+    const { error } = await supabase.from('menu_items').upsert(rows, { onConflict: 'name,category,location_id' })
     if (error) setSeedMsg('Error: ' + error.message)
     else { setSeedMsg(`Loaded ${rows.length} items.`); invalidateMenuCache(locId); load() }
     setSeeding(false)
