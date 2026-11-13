@@ -77,12 +77,13 @@ async function gmailGetMessage(accessToken, messageId) {
 async function historyListAll(accessToken, startHistoryId) {
   const ids = new Set()
   let pageToken = null
+  let checkpoint = startHistoryId
   let pages = 0
   do {
     const params = new URLSearchParams({
       startHistoryId,
       historyTypes: 'messageAdded',
-      maxResults: '100',
+      maxResults: '500',
     })
     if (pageToken) params.set('pageToken', pageToken)
     const data = await gmailFetch(
@@ -95,14 +96,16 @@ async function historyListAll(accessToken, startHistoryId) {
       throw err
     }
     for (const h of data.history || []) {
+      checkpoint = h.id
       for (const m of h.messagesAdded || []) {
         if (m.message?.id) ids.add(m.message.id)
       }
     }
     pageToken = data.nextPageToken
+    if (!pageToken) checkpoint = data.historyId || checkpoint
     pages++
   } while (pageToken && pages < 20)
-  return [...ids]
+  return { ids: [...ids], checkpoint, hasMore: !!pageToken }
 }
 
 // Backfill: list all Bento-sender messages, paginated. Used on first run and
@@ -176,22 +179,31 @@ function stripHtml(html) {
 }
 
 // ── Order parser ──
-function parseOrder(html, messageId) {
+function parseOrder(html, receivedAt) {
   try {
     const lines = stripHtml(html)
     const text  = lines.join('\n')
+
+    if (lines.some(line => /^Order Cancelle?d$/i.test(line))) {
+      return { ignored: 'cancellation notice' }
+    }
 
     const orderNumMatch = text.match(/Order #(\d+)/)
     if (!orderNumMatch) return { error: 'no order number', snippet: text.slice(0, 300) }
     const bentoOrderId = orderNumMatch[1]
 
-    const dateMatch =
-      text.match(/Order for:[^]*?(\w{3}\s+\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i) ||
-      text.match(/Order for:[^]*?(\w{3}\s+\d{1,2})\s+(\d{1,2}:\d{2}(?:am|pm))/i)
+    // Bento puts the slot start and end after the same label used for regular orders.
+    const dateMatch = text.match(
+      /(?:^|\n)Order for:\s*((?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+)?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2})\s+(\d{1,2}:\d{2}\s*(?:am|pm))\b(?:\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:am|pm))\b)?/i
+    )
     if (!dateMatch) return { error: `no date match for #${bentoOrderId}`, snippet: text.slice(0, 300) }
 
-    const pickupDate = parseBentoDate(dateMatch[1])
+    const pickupDate = parseBentoDate(dateMatch[1], receivedAt)
     const pickupTime = parseTime(dateMatch[2])
+    const pickupEnd = dateMatch[3] ? parseTime(dateMatch[3]) : null
+    if (!pickupDate || !pickupTime || (dateMatch[3] && !pickupEnd)) {
+      return { error: `invalid pickup schedule for #${bentoOrderId}` }
+    }
 
     const custIdx = lines.findIndex(l => l.includes('Customer Details'))
     if (custIdx === -1) return { error: `no Customer Details for #${bentoOrderId}` }
@@ -221,7 +233,10 @@ function parseOrder(html, messageId) {
     if (!customer)        return { error: `no customer name for #${bentoOrderId}` }
     if (items.length === 0) return { error: `no line items for #${bentoOrderId}` }
 
-    const combinedNotes = buildNotes(items, notes)
+    const pickupWindow = pickupEnd
+      ? `Pickup window: ${dateMatch[2].toUpperCase()} – ${dateMatch[3].toUpperCase()}`
+      : ''
+    const combinedNotes = [pickupWindow, buildNotes(items, notes)].filter(Boolean).join('\n')
 
     return {
       order: {
@@ -277,7 +292,7 @@ function parseItems(html) {
     }
 
     const isCake = /cake/i.test(name)
-    const flavors = fields['Flavor'] || fields['Flavors'] ||
+    const flavors = fields['Flavor'] || fields['Flavors'] || fields['Flavor Choice'] ||
                     fields['Mini Cupcake Flavors'] || fields['Cupcake Flavors'] ||
                     fields['Pound Cake Flavors'] || fields['Cake Flavors'] || ''
 
@@ -318,21 +333,23 @@ function buildNotes(items, specialRequest) {
   return lines.join('\n')
 }
 
-function parseBentoDate(str) {
-  const cleaned = str.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i, '').trim()
-  const now     = new Date()
+function parseBentoDate(str, receivedAt) {
+  const cleaned = str.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i, '').replace(/\s+/g, ' ').trim()
+  // Anchor year inference to when Gmail received the order, including on retries.
+  const now     = Number(receivedAt) > 0 ? new Date(Number(receivedAt)) : new Date()
   const year    = now.getFullYear()
   const d       = new Date(`${cleaned} ${year}`)
-  if (isNaN(d)) return null
+  if (isNaN(d) || d.getDate() !== Number(cleaned.split(' ')[1])) return null
   if (d < new Date(now - 180 * 86400 * 1000)) d.setFullYear(year + 1)
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 function parseTime(str) {
-  const m = str.match(/(\d{1,2}):(\d{2})(am|pm)/i)
-  if (!m) return '12:00'
+  const m = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i)
+  if (!m) return null
   let h = parseInt(m[1])
   const min = m[2]
+  if (h < 1 || h > 12 || Number(min) > 59) return null
   const ap  = m[3].toLowerCase()
   if (ap === 'pm' && h !== 12) h += 12
   if (ap === 'am' && h === 12) h = 0
@@ -371,27 +388,25 @@ async function nextOrderId() {
 
 // ── Failure persistence ──
 async function recordFailure(messageId, subject, sender, reason, html) {
-  try {
-    await supabase.from('failed_imports').upsert({
-      gmail_message_id: messageId,
-      subject:          subject || '',
-      sender:           sender || '',
-      reason,
-      raw_html:         html ? html.slice(0, 50000) : null,
-      attempted_at:     new Date().toISOString(),
-      resolved_at:      null,
-    })
-  } catch (err) {
-    console.error('failed_imports write failed (table may not exist yet):', err.message)
-  }
+  const { error } = await supabase.from('failed_imports').upsert({
+    gmail_message_id: messageId,
+    subject:          subject || '',
+    sender:           sender || '',
+    reason,
+    raw_html:         html ? html.slice(0, 50000) : null,
+    attempted_at:     new Date().toISOString(),
+    resolved_at:      null,
+  })
+  if (error) throw new Error(`Couldn't save the import failure: ${error.message}`)
 }
 
 async function clearFailure(messageId) {
   try {
-    await supabase.from('failed_imports')
+    const { error } = await supabase.from('failed_imports')
       .update({ resolved_at: new Date().toISOString() })
       .eq('gmail_message_id', messageId)
       .is('resolved_at', null)
+    if (error) throw error
   } catch (err) {
     console.error('failed_imports clear failed:', err.message)
   }
@@ -413,11 +428,12 @@ export default async function handler(req, res) {
         const html  = getBody(full)
         const lines = html ? stripHtml(html) : []
         const text  = lines.join('\n')
-        const result = parseOrder(html, req.query.msgId)
+        const result = parseOrder(html, full.internalDate)
         return res.status(200).json({
           parsed: !!result.order,
           order: result.order,
           parseError: result.error,
+          ignored: result.ignored,
           subject: getHeader(full.payload, 'Subject'),
           from: getHeader(full.payload, 'From'),
           textPreview: text.slice(0, 800),
@@ -451,25 +467,34 @@ export default async function handler(req, res) {
     const accessToken = await getAccessToken()
 
     // 1. Discover candidate message IDs.
-    const { data: tokenRow } = await supabase
+    const { data: tokenRow, error: historyReadError } = await supabase
       .from('gmail_tokens')
       .select('last_history_id')
       .eq('id', 'default')
       .single()
+    if (historyReadError && historyReadError.code !== 'PGRST116') throw historyReadError
     const lastHistoryId = tokenRow?.last_history_id
 
     let candidateIds = []
     let mode = 'incremental'
+    let checkpoint
+    let hasMoreHistory = false
 
     if (wantsBackfill || !lastHistoryId) {
+      // Capture the starting history ID so new mail during the search is picked up next time.
+      checkpoint = (await getProfile(accessToken)).historyId
       candidateIds = await searchAllBento(accessToken)
       mode = 'backfill'
     } else {
       try {
-        candidateIds = await historyListAll(accessToken, lastHistoryId)
+        const history = await historyListAll(accessToken, lastHistoryId)
+        candidateIds = history.ids
+        checkpoint = history.checkpoint
+        hasMoreHistory = history.hasMore
       } catch (err) {
         if (err.status === 404) {
           // Saved historyId expired (Gmail keeps history ~7 days). Recover by backfilling.
+          checkpoint = (await getProfile(accessToken)).historyId
           candidateIds = await searchAllBento(accessToken)
           mode = 'backfill-recovered'
         } else {
@@ -479,38 +504,40 @@ export default async function handler(req, res) {
     }
 
     // 2. Optionally include unresolved failed messages (for retry after a parser fix).
-    let failedSet = new Set()
-    if (wantsRetryFailed) {
-      const { data: failedRows } = await supabase
-        .from('failed_imports')
-        .select('gmail_message_id')
-        .is('resolved_at', null)
-      const failedIds = (failedRows || []).map(r => r.gmail_message_id)
-      candidateIds = [...new Set([...candidateIds, ...failedIds])]
-    } else {
-      // Skip messages we've already failed on, so the user isn't stuck retrying broken parses.
-      const { data: failedRows } = await supabase
-        .from('failed_imports')
-        .select('gmail_message_id')
-        .is('resolved_at', null)
-      failedSet = new Set((failedRows || []).map(r => r.gmail_message_id))
-    }
+    const { data: failedRows, error: failedReadError } = await supabase
+      .from('failed_imports')
+      .select('gmail_message_id')
+      .is('resolved_at', null)
+    if (failedReadError) throw failedReadError
+    const failedSet = new Set((failedRows || []).map(r => r.gmail_message_id))
+    if (wantsRetryFailed) candidateIds = [...new Set([...failedSet, ...candidateIds])]
 
     // 3. Build dedup sets from existing orders.
-    const { data: existingOrders } = await supabase
-      .from('orders')
-      .select('gmail_message_id, bento_order_id')
-
     const processedMsgIds  = new Set()
     const existingBentoIds = new Set()
-    for (const r of existingOrders || []) {
-      if (r.gmail_message_id) processedMsgIds.add(r.gmail_message_id)
-      if (r.bento_order_id)   existingBentoIds.add(r.bento_order_id)
+    const pageSize = 500
+    let lastOrderId
+    while (true) {
+      let query = supabase.from('orders')
+        .select('id, gmail_message_id, bento_order_id')
+        .eq('location_id', BENTO_LOCATION_ID)
+        .or('gmail_message_id.not.is.null,bento_order_id.not.is.null')
+        .order('id').limit(pageSize)
+      if (lastOrderId) query = query.gt('id', lastOrderId)
+      const { data, error } = await query
+      if (error) throw error
+      for (const order of data) {
+        if (order.gmail_message_id) processedMsgIds.add(order.gmail_message_id)
+        if (order.bento_order_id) existingBentoIds.add(String(order.bento_order_id))
+      }
+      if (data.length < pageSize) break
+      lastOrderId = data.at(-1).id
     }
 
-    const toProcess = candidateIds.filter(id =>
-      !processedMsgIds.has(id) && !failedSet.has(id)
-    )
+    const toProcess = candidateIds.filter(id => {
+      if (failedSet.has(id)) return wantsRetryFailed
+      return !processedMsgIds.has(id)
+    })
 
     // 4. Process every candidate (no batch cap). Bail only if we're about to hit
     //    Vercel's wall-clock limit; the next click resumes from the same historyId.
@@ -522,12 +549,22 @@ export default async function handler(req, res) {
       processed++
 
       try {
+        const isRetry = wantsRetryFailed && failedSet.has(msgId)
+        if (processedMsgIds.has(msgId)) {
+          if (isRetry) await clearFailure(msgId)
+          skipped++
+          continue
+        }
+
         const full = await gmailGetMessage(accessToken, msgId)
 
         if (full.error) {
-          // Message was deleted between discovery and fetch — count as skipped, don't fail.
-          skipped++
-          continue
+          if (Number(full.error.code) === 404) {
+            if (isRetry) await clearFailure(msgId)
+            skipped++
+            continue
+          }
+          throw new Error(full.error.message || 'Gmail could not fetch the message')
         }
 
         const subject = getHeader(full.payload, 'Subject')
@@ -546,7 +583,12 @@ export default async function handler(req, res) {
           continue
         }
 
-        const result = parseOrder(html, msgId)
+        const result = parseOrder(html, full.internalDate)
+        if (result.ignored) {
+          if (isRetry) await clearFailure(msgId)
+          skipped++
+          continue
+        }
         if (!result.order) {
           await recordFailure(msgId, subject, from, result.error || 'parse failed', html)
           failedNow.push(msgId); errors++
@@ -557,10 +599,14 @@ export default async function handler(req, res) {
 
         // Fallback dedup: matching bento_order_id from a previous (pre-tracking) import.
         if (existingBentoIds.has(order.bento_order_id)) {
-          await supabase.from('orders')
+          const { error } = await supabase.from('orders')
             .update({ gmail_message_id: msgId })
+            .eq('location_id', BENTO_LOCATION_ID)
             .eq('bento_order_id', order.bento_order_id)
             .is('gmail_message_id', null)
+          if (error) throw error
+          processedMsgIds.add(msgId)
+          if (isRetry) await clearFailure(msgId)
           skipped++
           continue
         }
@@ -596,7 +642,7 @@ export default async function handler(req, res) {
         existingBentoIds.add(order.bento_order_id)
 
         // If this was a retry, mark the failure resolved.
-        if (wantsRetryFailed) await clearFailure(msgId)
+        if (isRetry) await clearFailure(msgId)
 
         imported++
       } catch (err) {
@@ -609,20 +655,15 @@ export default async function handler(req, res) {
     //    runtime budget, the next click picks up from the same point and dedup
     //    handles anything we already imported.
     const remaining = toProcess.length - processed
-    if (remaining === 0) {
-      try {
-        const profile = await getProfile(accessToken)
-        if (profile.historyId) {
-          await supabase.from('gmail_tokens')
-            .update({
-              last_history_id: profile.historyId,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', 'default')
-        }
-      } catch (err) {
-        console.error('historyId update failed:', err.message)
-      }
+    if (remaining === 0 && checkpoint && checkpoint !== lastHistoryId) {
+      const update = supabase.from('gmail_tokens')
+        .update({ last_history_id: checkpoint, updated_at: new Date().toISOString() })
+        .eq('id', 'default')
+      // Avoid overwriting a checkpoint saved by a concurrent sync.
+      const { error } = await (lastHistoryId
+        ? update.eq('last_history_id', lastHistoryId)
+        : update.is('last_history_id', null))
+      if (error) throw error
     }
 
     return res.status(200).json({
@@ -631,16 +672,19 @@ export default async function handler(req, res) {
       errors,
       processed,
       remaining,
+      hasMoreHistory,
       totalCandidates: candidateIds.length,
       mode,
       message:
         imported > 0
-          ? `${imported} order${imported > 1 ? 's' : ''} added${remaining > 0 ? ` — ${remaining} more, click Sync again` : ''}`
+          ? `${imported} order${imported > 1 ? 's' : ''} added${remaining > 0 || hasMoreHistory ? ' — more to process, click Sync again' : ''}`
           : remaining > 0
             ? `${remaining} more to process — click Sync again`
-            : errors > 0
-              ? `0 imported, ${errors} parse failure${errors > 1 ? 's' : ''} (see failed_imports)`
-              : 'Already up to date',
+            : hasMoreHistory
+              ? 'More messages to check — click Sync again'
+              : errors > 0
+                ? `0 imported, ${errors} import failure${errors > 1 ? 's' : ''} (see failed_imports)`
+                : 'Already up to date',
       failedIds: failedNow,
     })
   } catch (err) {
